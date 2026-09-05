@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+RECON/
+*.artifact.json
+.od-skills/
+.atl/
+.file-versions/
+openspec/

@@ -1,0 +1,58 @@
+@import "tailwindcss";
+@import "../assets/fonts/brand/brand-fonts.css";
+
+@theme {
+  /* --- Paleta del manual (valores textuales del PDF, no estimados) ---
+     Fuente: assets/site.css :root (líneas 9-47, solo lectura) */
+  --color-primary: #1b4f9c;
+  --color-primary-800: #163f7d;
+  --color-primary-900: #10305f;
+  --color-primary-300: #7ea3d3;
+  --color-interactive: #00a8c6;
+  --color-interactive-ink: #0a7a90; /* derivado: 5.0:1 sobre blanco, para texto */
+  --color-success: #1e8449;
+  --color-success-800: #196f3d;
+  --color-accent: #e8792b;
+  --color-accent-100: #fdeadb;
+
+  --color-ink: #152238;
+  --color-text: #3d4a5c;
+  --color-muted: #667487;
+
+  --color-surface-lowest: #ffffff;
+  --color-surface-bright: #f4f8fd;
+  --color-surface-low: #e7eff8;
+  --color-border: #d3e0ee;
+  --color-border-strong: #b8cee4;
+
+  /* --- Tipografía --- */
+  --font-display: "Montserrat", "Segoe UI", sans-serif;
+  --font-body: "Open Sans", "Segoe UI", sans-serif;
+
+  /* --- Geometría (gramática Comfacundi) --- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --container-shell: 1180px;
+
+  /* --- Sombras --- */
+  --shadow-low: 0 1px 2px rgba(21, 34, 56, 0.06), 0 8px 24px rgba(21, 34, 56, 0.07);
+  --shadow-high: 0 2px 4px rgba(21, 34, 56, 0.08), 0 24px 60px rgba(21, 34, 56, 0.14);
+
+  /* --- Breakpoints (no estándar, espejo de @media de site.css) --- */
+  --breakpoint-1080: 1080px;
+  --breakpoint-1000: 1000px;
+  --breakpoint-900: 900px;
+  --breakpoint-880: 880px;
+  --breakpoint-620: 620px;
+  --breakpoint-560: 560px;
+}
+
+@layer base {
+  :root {
+    /* Valores dinámicos/runtime: viven fuera de @theme (decisión D2) */
+    --gutter: clamp(20px, 4vw, 48px);
+    --header-h: 132px;
+  }
+}
