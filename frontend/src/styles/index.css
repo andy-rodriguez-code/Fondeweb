@@ -26,6 +26,17 @@
   --color-border: #d3e0ee;
   --color-border-strong: #b8cee4;
 
+  /* --- Derivados P3 (primitivas): tonos sobre superficies tinta ---
+     Fuente: assets/site.css reglas de componente (.acceso, .cifra,
+     .etiqueta, .seccion--tinta). Son el único origen para que el guard
+     9.4 ("no hex outside @theme") se cumpla en las primitivas. */
+  --color-ink-bright: #cfd8e6; /* texto principal sobre tinta */
+  --color-ink-soft: #b6c4d8; /* texto secundario sobre tinta (.acceso p) */
+  --color-ink-faint: #d7e2f0; /* secundario en hover (.acceso:hover p) */
+  --color-ink-muted: #9fb2ca; /* texto terciario sobre tinta (.cifra span) */
+  --color-interactive-bright: #6fd9ef; /* cian para superficies tinta */
+  --color-accent-ink: #8a3f08; /* texto sobre --color-accent-100 (.etiqueta) */
+
   /* --- Tipografía --- */
   --font-display: "Montserrat", "Segoe UI", sans-serif;
   --font-body: "Open Sans", "Segoe UI", sans-serif;

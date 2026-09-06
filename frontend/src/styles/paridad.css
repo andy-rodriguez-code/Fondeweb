@@ -1,7 +1,8 @@
 /* ==========================================================================
    paridad.css — reglas §4.4 que Tailwind no puede expresar
    Fuente: assets/site.css (solo lectura; el clon es la referencia de paridad).
-   Tres grupos documentados: tipografía clamp(), carrusel y mask-image.
+   Grupos documentados: tipografía clamp(), carrusel, mask-image,
+   contador de requisitos y separador de miga (P3).
    Los selectores y valores se portan verbatim; solo se renombran las
    variables al nombre del token @theme correspondiente.
    ========================================================================== */
@@ -167,5 +168,74 @@
     mask-image: radial-gradient(closest-side, #000 35%, transparent 82%);
     pointer-events: none;
     z-index: -1;
+  }
+}
+
+/* ---------- 4. Lista de requisitos: viñeta numerada con contador CSS ----------
+   Racional (§4.4): Tailwind no genera contadores (counter-reset/increment) ni
+   contenido de pseudo-elementos numéricos con decimal-leading-zero; la viñeta
+   01, 02… del clon se porta verbatim para paridad exacta.
+   Fuente: assets/site.css líneas 1194-1222. */
+@layer components {
+  .requisitos {
+    counter-reset: req;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+  .requisitos li {
+    counter-increment: req;
+    position: relative;
+    padding: 16px 20px 16px 62px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: #fff;
+    font-size: 0.97rem;
+  }
+  .requisitos li::before {
+    content: counter(req, decimal-leading-zero);
+    position: absolute;
+    left: 20px;
+    top: 16px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--color-accent);
+    letter-spacing: 0.04em;
+  }
+}
+
+/* ---------- 5. Miga de pan: separador "/" entre niveles ----------
+   Racional (§4.4): el separador es contenido de pseudo-elemento
+   (li + li::before) condicionado al hermano anterior; Tailwind no expresa
+   ::before con contenido textual selectivo. Se porta verbatim y la primitiva
+   Miga solo compone la estructura <ol>/<li>/<a>.
+   Fuente: assets/site.css líneas 1097-1122. */
+@layer components {
+  .miga {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 0;
+    list-style: none;
+    font-size: 0.83rem;
+    color: var(--color-muted);
+  }
+  .miga a {
+    color: var(--color-muted);
+    text-decoration: none;
+  }
+  .miga a:hover {
+    color: var(--color-primary-800);
+    text-decoration: underline;
+  }
+  .miga li + li::before {
+    content: "/";
+    margin-right: 8px;
+    color: var(--color-border-strong);
   }
 }
