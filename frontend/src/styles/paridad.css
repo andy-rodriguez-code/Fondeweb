@@ -1022,3 +1022,292 @@
   }
 }
 
+/* ---------- 15. Convenios: filtros, tarjetas, cajón lateral ----------
+   Racional (§4.4): estados por atributo (filtro[aria-pressed="true"],
+   cajon[data-abierto="si"]), keyframes del panel, regla [hidden] y
+   prefers-reduced-motion global; useConvenios (P8) reflejará estos atributos.
+   El [hidden] con !important gana a display:flex/grid de las clases (el clon
+   lo documenta para el filtro). Fuente: assets/site.css líneas 1224-1338,
+   1343-1450 y 75-79. */
+@layer components {
+  .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-bottom: 32px;
+  }
+  .filtro {
+    min-height: 40px;
+    padding: 9px 18px;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.16s, border-color 0.16s, color 0.16s;
+  }
+  .filtro:hover {
+    background: var(--color-surface-low);
+    border-color: var(--color-primary-300);
+    color: var(--color-primary-900);
+  }
+  .filtro[aria-pressed="true"] {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  .convenio {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    overflow: hidden;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  }
+  .convenio:hover {
+    border-color: var(--color-primary-300);
+    box-shadow: var(--shadow-low);
+    transform: translateY(-3px);
+  }
+  .convenio__marca {
+    display: grid;
+    place-items: center;
+    height: 132px;
+    padding: 18px;
+    background: var(--color-surface-bright);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .convenio__marca img {
+    max-height: 96px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  .convenio__inicial {
+    width: 62px;
+    height: 62px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
+    color: var(--color-white);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.5rem;
+  }
+  .convenio__cuerpo {
+    padding: 18px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+  .convenio__cuerpo h3 {
+    margin: 0;
+    font-size: 1.02rem;
+  }
+  .convenio__ver {
+    margin-top: auto;
+    padding-top: 10px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--color-interactive-ink);
+  }
+  .convenio:hover .convenio__ver {
+    color: var(--color-primary-800);
+  }
+
+  .vacio {
+    padding: 46px 20px;
+    text-align: center;
+    color: var(--color-muted);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md);
+  }
+
+  /* Cajón lateral de detalle */
+  .cajon {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+  }
+  .cajon[data-abierto="si"] {
+    display: block;
+  }
+  .cajon__velo {
+    position: absolute;
+    inset: 0;
+    background: rgba(21, 34, 56, 0.55);
+    border: 0;
+    width: 100%;
+    cursor: pointer;
+  }
+  .cajon__panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(100%, 470px);
+    padding: 28px clamp(20px, 3vw, 34px) 40px;
+    background: var(--color-white);
+    overflow-y: auto;
+    box-shadow: var(--shadow-high);
+    animation: entra-cajon 0.24s ease;
+  }
+  @keyframes entra-cajon {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  .cajon__cerrar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--color-border);
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-ink);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  .cajon__cerrar:hover {
+    background: var(--color-surface-low);
+    color: var(--color-primary-900);
+  }
+  .cajon__marca {
+    display: grid;
+    place-items: center;
+    min-height: 150px;
+    margin: 26px 0 22px;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-bright);
+  }
+  .cajon__marca img {
+    max-height: 116px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  .ficha {
+    margin: 0;
+    display: grid;
+    gap: 2px;
+  }
+  .ficha__campo {
+    padding: 14px 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .ficha dt {
+    font-size: 0.72rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: 4px;
+  }
+  .ficha dd {
+    margin: 0;
+    font-size: 0.98rem;
+    color: var(--color-ink);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* El atributo `hidden` debe ganar a `display:flex`/`grid` de las clases
+   (p. ej. las tarjetas .convenio del filtro); sin esto el filtro no oculta nada. */
+@layer components {
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ---------- 16. Notifondo: rejilla de páginas del boletín ----------
+   Racional (§4.4): la rejilla 4→2 columnas con media query 900 y el cursor
+   zoom-in de las hojas son la gramática del visor; el diálogo .visor se
+   agrega en P8 junto con useVisor (la hoja ya porta data-visor-src).
+   Fuente: assets/site.css líneas 1568-1620. */
+@layer components {
+  .notifondo {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 24px);
+  }
+  @media (max-width: 900px) {
+    .notifondo {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .notifondo__hoja {
+    display: block;
+    width: 100%;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    overflow: hidden;
+    cursor: zoom-in;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  }
+  .notifondo__hoja:hover {
+    border-color: var(--color-primary-300);
+    box-shadow: var(--shadow-low);
+    transform: translateY(-3px);
+  }
+  /* Páginas de boletín: son texto legible, van completas y sin recorte. */
+  .notifondo__hoja img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 819 / 1024;
+    object-fit: contain;
+    background: var(--color-white);
+  }
+  .notifondo__pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--color-ink);
+  }
+  .notifondo__pie span:last-child {
+    color: var(--color-interactive-ink);
+  }
+}
