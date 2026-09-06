@@ -841,3 +841,184 @@
   }
 }
 
+/* ---------- 12. Rejilla y cifras: gramática de contenedores ----------
+   Racional (§4.4): mismo criterio que .shell (P4) — tramos auto-fit minmax
+   con gap clamp que las secciones comparten por clase; las utilidades
+   obligarían a repetir la coreografía en cada JSX. .shell--estrecho es la
+   conversión §4.3 del max-width inline de la sección FAQ (900px).
+   Fuente: assets/site.css líneas 786-799 y 876-899; preguntas-frecuentes.html. */
+@layer components {
+  .shell--estrecho {
+    width: min(100% - (var(--gutter) * 2), 900px);
+  }
+
+  .rejilla {
+    display: grid;
+    gap: clamp(18px, 2.2vw, 28px);
+  }
+  .rejilla--2 {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+  .rejilla--3 {
+    grid-template-columns: repeat(auto-fit, minmax(286px, 1fr));
+  }
+  .rejilla--4 {
+    grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  }
+
+  .cifras {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: clamp(18px, 3vw, 40px);
+  }
+}
+
+/* ---------- 13. Lista de filas desplegables (acordeón FAQ) ----------
+   Racional (§4.4): el estado visible depende de [data-abierta="si"]
+   (display del cuerpo + rotación del signo) y del selector :hover del botón;
+   useAcordeon (P8) reflejará estos atributos, así la paridad CSS se mantiene
+   sin reescritura. Fuente: assets/site.css líneas 931-999. */
+@layer components {
+  .filas {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .fila {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    overflow: hidden;
+  }
+  .fila__boton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 22px;
+    border: 0;
+    background: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.16s;
+  }
+  .fila__boton:hover {
+    background: var(--color-surface-bright);
+    color: var(--color-primary-900);
+  }
+  .fila__boton span:first-child {
+    min-width: 0;
+  }
+  .fila__signo {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--color-surface-low);
+    color: var(--color-primary);
+    font-size: 1.15rem;
+    line-height: 1;
+    transition: background-color 0.18s, transform 0.24s;
+  }
+  .fila[data-abierta="si"] .fila__signo {
+    background: var(--color-primary);
+    color: var(--color-white);
+    transform: rotate(45deg);
+  }
+  .fila__cuerpo {
+    display: none;
+    padding: 0 22px 22px;
+    border-top: 1px solid var(--color-border);
+    padding-top: 18px;
+    color: var(--color-text);
+    font-size: 0.97rem;
+  }
+  .fila[data-abierta="si"] .fila__cuerpo {
+    display: block;
+  }
+}
+
+/* ---------- 14. Ficha de crédito ----------
+   Racional (§4.4): el resumen es sticky (top calc del header), la viñeta del
+   título de bloque es ::before y el colapso a 1 columna cambia el
+   posicionamiento en el media query 900; bloque cohesionado. Fuente:
+   assets/site.css líneas 1123-1191. */
+@layer components {
+  .credito {
+    display: grid;
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    gap: clamp(28px, 4vw, 56px);
+    align-items: start;
+  }
+  .credito__resumen {
+    position: sticky;
+    top: calc(var(--header-h) + 20px);
+    padding: 28px;
+    border-radius: var(--radius-md);
+    background: var(--color-ink);
+    color: var(--color-ink-bright);
+  }
+  .credito__resumen h2 {
+    color: var(--color-white);
+    font-size: 1.15rem;
+    margin-bottom: 20px;
+  }
+  .credito__dato {
+    padding: 14px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.13);
+  }
+  .credito__dato:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .credito__dato dt {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+    margin-bottom: 4px;
+  }
+  .credito__dato dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.28rem;
+    color: var(--color-white);
+    line-height: 1.25;
+  }
+  .credito__bloque + .credito__bloque {
+    margin-top: 34px;
+  }
+  .credito__bloque h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.28rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .credito__bloque h2::before {
+    content: "";
+    flex: 0 0 8px;
+    width: 8px;
+    height: 24px;
+    border-radius: 3px;
+    background: var(--color-interactive);
+  }
+  @media (max-width: 900px) {
+    .credito {
+      grid-template-columns: 1fr;
+    }
+    .credito__resumen {
+      position: static;
+    }
+  }
+}
+
