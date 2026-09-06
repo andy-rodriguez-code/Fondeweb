@@ -2,18 +2,18 @@
 @import "../assets/fonts/brand/brand-fonts.css";
 
 @theme {
-  /* --- Paleta del manual (valores textuales del PDF, no estimados) ---
-     Fuente: assets/site.css :root (líneas 9-47, solo lectura) */
-  --color-primary: #1b4f9c;
-  --color-primary-800: #163f7d;
+  /* --- Paleta de marca confirmada por el cliente (2026-09-05); shades derivados regenerados ---
+     Fuente: assets/site.css :root (líneas 9-47) */
+  --color-primary: #01509C;
+  --color-primary-800: #01407d;
   --color-primary-900: #10305f;
-  --color-primary-300: #7ea3d3;
+  --color-primary-300: #8db0d2;
   --color-interactive: #00a8c6;
   --color-interactive-ink: #0a7a90; /* derivado: 5.0:1 sobre blanco, para texto */
-  --color-success: #1e8449;
-  --color-success-800: #196f3d;
-  --color-accent: #e8792b;
-  --color-accent-100: #fdeadb;
+  --color-success: #84B822;
+  --color-success-800: #6a931b;
+  --color-accent: #F36F21;
+  --color-accent-100: #fde9de;
 
   --color-ink: #152238;
   --color-text: #3d4a5c;
