@@ -37,6 +37,18 @@
   --color-interactive-bright: #6fd9ef; /* cian para superficies tinta */
   --color-accent-ink: #8a3f08; /* texto sobre --color-accent-100 (.etiqueta) */
 
+  /* --- Derivados P4 (shell): tonos sobre --color-primary-900 ---
+     Fuente: assets/site.css .utilidad y .pie (líneas 320-343, 1663-1751).
+     Son el único origen para que el guard 9.4 ("no hex outside @theme")
+     se cumpla en el CSS §4.4 del shell. */
+  --color-white: #ffffff; /* emisión garantizada para var() en paridad.css */
+  --color-utilidad: #c9daf0; /* .utilidad color */
+  --color-utilidad-enlace: #dce8f8; /* .utilidad a color */
+  --color-pie: #b9cae2; /* .pie color + .pie a */
+  --color-pie-parrafo: #a9bcd6; /* .pie p */
+  --color-pie-legal: #9db2ce; /* .pie__legal */
+  --color-pie-redes: #cddcef; /* .redes a */
+
   /* --- Tipografía --- */
   --font-display: "Montserrat", "Segoe UI", sans-serif;
   --font-body: "Open Sans", "Segoe UI", sans-serif;

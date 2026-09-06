@@ -239,3 +239,346 @@
     color: var(--color-border-strong);
   }
 }
+
+/* ---------- 6. Shell: saltar + contenedor + utilidad + cabecera ----------
+   Racional (§4.4): el shell es un bloque CSS cohesionado que depende de
+   selectores de estado por atributo ([data-fijo="si"], [data-menu="abierto"],
+   [data-abierto="si"], [aria-current="page"]::after) y de un media query de
+   1080px que reorganiza la navegación; las utilidades no expresan esta
+   coreografía sin fragmentarla. Decisión de diseño "State model": el CSS del
+   clon debe seguir funcionando con los atributos data-* que reflejan los
+   hooks (P8); se porta verbatim y solo se renombran variables a tokens
+   @theme. Fuente: assets/site.css líneas 136-158 y 319-531. */
+@layer components {
+  .saltar {
+    position: absolute;
+    left: 16px;
+    top: -100px;
+    z-index: 200;
+    background: var(--color-primary);
+    color: var(--color-white);
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-weight: 600;
+    transition: top 0.18s;
+  }
+  .saltar:focus {
+    top: 16px;
+    color: var(--color-white);
+  }
+
+  .shell {
+    width: min(100% - (var(--gutter) * 2), var(--container-shell));
+    margin-inline: auto;
+  }
+
+  .utilidad {
+    background: var(--color-primary-900);
+    color: var(--color-utilidad);
+    font-size: 0.82rem;
+  }
+  .utilidad__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-height: 40px;
+    flex-wrap: wrap;
+  }
+  .utilidad a {
+    color: var(--color-utilidad-enlace);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .utilidad a:hover {
+    color: var(--color-white);
+    text-decoration: underline;
+  }
+  .utilidad__grupo {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    flex-wrap: wrap;
+  }
+
+  .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--color-white);
+    border-bottom: 1px solid var(--color-border);
+    transition: box-shadow 0.2s;
+  }
+  .cabecera[data-fijo="si"] {
+    box-shadow: 0 6px 22px rgba(21, 34, 56, 0.08);
+  }
+  .cabecera__fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 84px;
+  }
+  .marca {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .marca img {
+    width: 175px;
+    height: 68px;
+    object-fit: contain;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .nav__enlace {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 13px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.87rem;
+    color: var(--color-ink);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.16s, color 0.16s;
+  }
+  .nav__enlace:hover {
+    background: var(--color-surface-low);
+    color: var(--color-primary-900);
+  }
+  .nav__enlace[aria-current="page"] {
+    color: var(--color-primary);
+  }
+  .nav__enlace[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    left: 13px;
+    right: 13px;
+    bottom: 2px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--color-accent);
+  }
+  .nav__grupo {
+    position: relative;
+  }
+  .nav__disparador {
+    border: 0;
+    background: none;
+    font: inherit;
+  }
+  .nav__disparador svg {
+    transition: transform 0.2s;
+  }
+  .nav__grupo[data-abierto="si"] .nav__disparador svg {
+    transform: rotate(180deg);
+  }
+  .nav__panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    min-width: 286px;
+    padding: 10px;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-high);
+    display: none;
+    z-index: 20;
+  }
+  .nav__grupo[data-abierto="si"] .nav__panel {
+    display: block;
+  }
+  .nav__panel a {
+    display: block;
+    padding: 9px 13px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  .nav__panel a:hover {
+    background: var(--color-surface-low);
+    color: var(--color-primary-900);
+  }
+  .nav__panel a[aria-current="page"] {
+    background: var(--color-surface-low);
+    color: var(--color-primary);
+  }
+
+  .hamburguesa {
+    display: none;
+    align-items: center;
+    gap: 9px;
+    min-height: 44px;
+    padding: 10px 16px;
+    border: 1.5px solid var(--color-border-strong);
+    border-radius: var(--radius-pill);
+    background: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.86rem;
+    cursor: pointer;
+  }
+  .hamburguesa:hover {
+    background: var(--color-surface-low);
+  }
+
+  @media (max-width: 1080px) {
+    :root {
+      --header-h: 116px;
+    }
+    .hamburguesa {
+      display: inline-flex;
+    }
+    .nav {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 2px;
+      max-height: calc(100vh - var(--header-h));
+      overflow-y: auto;
+      padding: 14px var(--gutter) 26px;
+      background: var(--color-white);
+      border-bottom: 1px solid var(--color-border);
+      box-shadow: var(--shadow-high);
+    }
+    .cabecera[data-menu="abierto"] .nav {
+      display: flex;
+    }
+    .nav__enlace {
+      padding: 13px 12px;
+      font-size: 0.95rem;
+    }
+    .nav__enlace[aria-current="page"]::after {
+      left: 12px;
+      right: auto;
+      width: 22px;
+      bottom: 6px;
+    }
+    .nav__panel {
+      position: static;
+      display: none;
+      box-shadow: none;
+      min-width: 0;
+      margin: 2px 0 8px;
+      background: var(--color-surface-bright);
+    }
+  }
+}
+
+/* ---------- 7. Pie: rejilla de columnas + legal + redes ----------
+   Racional (§4.4): la rejilla del pie usa una coreografía por breakpoint
+   (1 col → 2 col @620px → 1.5fr+3 @1000px) documentada en el propio clon;
+   las utilidades no expresan esta mezcla de tramos explícitos sin repetirla
+   en cada breakpoint del JSX. Se porta verbatim con variables renombradas
+   a tokens @theme. Fuente: assets/site.css líneas 1662-1752. */
+@layer components {
+  .pie {
+    background: var(--color-primary-900);
+    color: var(--color-pie);
+    padding-block: clamp(48px, 6vw, 76px) 0;
+  }
+  .pie__rejilla {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 4vw, 48px);
+    padding-bottom: 44px;
+  }
+  @media (min-width: 620px) {
+    .pie__rejilla {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1000px) {
+    .pie__rejilla {
+      grid-template-columns: 1.5fr repeat(3, minmax(0, 1fr));
+    }
+  }
+  .pie img.pie__logo {
+    width: 168px;
+    height: 65px;
+    object-fit: contain;
+    background: var(--color-white);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-bottom: 18px;
+  }
+  .pie h4 {
+    color: var(--color-white);
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .pie ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .pie a {
+    color: var(--color-pie);
+    text-decoration: none;
+    font-size: 0.93rem;
+    overflow-wrap: anywhere;
+  }
+  .pie a:hover {
+    color: var(--color-white);
+    text-decoration: underline;
+  }
+  .pie p {
+    font-size: 0.9rem;
+    color: var(--color-pie-parrafo);
+  }
+  .pie__legal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-block: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.85rem;
+    color: var(--color-pie-legal);
+  }
+  .redes {
+    display: flex;
+    gap: 10px;
+  }
+  .redes a {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    color: var(--color-pie-redes);
+    transition: background-color 0.16s, border-color 0.16s, color 0.16s;
+  }
+  .redes a:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: var(--color-white);
+    color: var(--color-white);
+  }
+}
