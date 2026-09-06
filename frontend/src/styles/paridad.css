@@ -582,3 +582,262 @@
     color: var(--color-white);
   }
 }
+/* ---------- 8. Base de documento (html/body/img/p/a/:focus-visible) ----------
+   Racional (§4.4): el preflight de Tailwind v4 restablece estos elementos;
+   la gramática base del clon (tipografía del cuerpo, color y subrayado de
+   enlaces, margen de párrafos, anillo de foco, scroll-padding) debe ganar
+   para que las páginas Fase 2 se vean idénticas. Se porta verbatim con
+   variables renombradas a tokens @theme. Fuente: assets/site.css líneas
+   62-129 (h1-h4 ya portados en el grupo 1). */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-h) + 16px);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-surface-lowest);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  p {
+    margin: 0 0 1.1em;
+  }
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    color: var(--color-interactive-ink);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    color: var(--color-primary-800);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-interactive);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+/* ---------- 9. Banner de página interior: .encabezado ----------
+   Racional (§4.4): bloque cohesionado — el ::after del anillo, la rejilla
+   1.35fr/1fr con media query 880, los overrides de descendientes (miga,
+   cifra, img) y los colores forzados con !important (el propio clon comenta
+   "forzar tonos claros: hay color inline en algunas páginas") no se expresan
+   con utilidades sin fragmentarlos. El ::before con mask-image ya está en el
+   grupo 3 (P1); aquí se agrega su refinamiento móvil. Fuente:
+   assets/site.css líneas 997-1089. */
+@layer components {
+  .encabezado {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    min-height: clamp(340px, 40vw, 560px);
+    padding-block: clamp(52px, 6vw, 92px);
+    overflow: hidden;
+    color: var(--color-encabezado);
+    background: linear-gradient(118deg, var(--color-primary-900) 0%, var(--color-primary) 55%, var(--color-primary-800) 100%);
+    border-bottom: 0;
+  }
+  /* Máscara (anillo grueso) a la izquierda */
+  .encabezado::after {
+    content: "";
+    position: absolute;
+    left: clamp(-150px, -8vw, -40px);
+    bottom: -170px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    border: 54px solid rgba(255, 255, 255, 0.11);
+    box-shadow: 0 0 0 24px rgba(255, 255, 255, 0.045);
+    pointer-events: none;
+    z-index: -1;
+  }
+  .encabezado__rejilla {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 60px);
+    align-items: center;
+  }
+  .encabezado h1 {
+    color: var(--color-white);
+    margin-bottom: 14px;
+  }
+  .encabezado p {
+    color: var(--color-encabezado-parrafo);
+    max-width: 56ch;
+    font-size: 1.03rem;
+  }
+  .encabezado .miga,
+  .encabezado .miga a {
+    color: var(--color-encabezado-miga);
+  }
+  .encabezado .miga a:hover {
+    color: var(--color-white);
+  }
+  .encabezado .miga li + li::before {
+    color: rgba(255, 255, 255, 0.35);
+  }
+  /* Cifras e ícono sobre el banner: forzar tonos claros (hay color inline en algunas páginas) */
+  .encabezado .cifra strong {
+    color: var(--color-white) !important;
+  }
+  .encabezado .cifra span {
+    color: var(--color-ink-muted) !important;
+  }
+  .encabezado .cifra {
+    border-left-color: rgba(255, 255, 255, 0.32) !important;
+  }
+  .encabezado img {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-low);
+  }
+  @media (max-width: 880px) {
+    .encabezado {
+      min-height: 0;
+    }
+    .encabezado__rejilla {
+      grid-template-columns: 1fr;
+    }
+    .encabezado::before {
+      width: min(76vw, 380px);
+      right: -90px;
+      opacity: 0.4;
+    }
+  }
+}
+
+/* ---------- 10. Portada asimétrica (gramática Comfacundi) ----------
+   Racional (§4.4): bloque cohesionado de héroe — marca de agua absoluta,
+   rejilla minmax con media query 900 que también ajusta el marco desplazado;
+   las utilidades no expresan esta coreografía sin fragmentarla. Fuente:
+   assets/site.css líneas 534-571 y 713-720. */
+@layer components {
+  .portada {
+    position: relative;
+    padding-block: clamp(48px, 6vw, 88px) clamp(64px, 8vw, 120px);
+    background: linear-gradient(180deg, var(--color-surface-bright) 0%, var(--color-surface-lowest) 100%);
+    overflow: hidden;
+  }
+  .portada__marca-agua {
+    position: absolute;
+    right: -80px;
+    top: 40px;
+    width: min(46vw, 520px);
+    opacity: 0.14;
+    pointer-events: none;
+    user-select: none;
+  }
+  .portada__rejilla {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(32px, 5vw, 76px);
+  }
+  .portada__texto h1 {
+    margin-bottom: 18px;
+  }
+  .portada__bajada {
+    font-size: 1.1rem;
+    max-width: 46ch;
+    margin-bottom: 30px;
+  }
+  .portada__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+  }
+
+  @media (max-width: 900px) {
+    .portada__rejilla {
+      grid-template-columns: 1fr;
+    }
+    .portada__marca-agua {
+      display: none;
+    }
+  }
+}
+
+/* ---------- 11. Marco desplazado + dato flotante ----------
+   Racional (§4.4): el ::before sale 26px del grid en diagonal con z-index
+   negativo y cambia su inset en el media query 900; coreografía de
+   pseudo-elemento que las utilidades no expresan sin fragmentar. El dato
+   flotante combina backdrop-filter y sombra alta. Fuente: assets/site.css
+   líneas 572-592 y 682-716. */
+@layer components {
+  .marco-offset {
+    position: relative;
+    isolation: isolate;
+  }
+  .marco-offset::before {
+    content: "";
+    position: absolute;
+    inset: 26px -26px -26px 26px;
+    border-radius: var(--radius-lg);
+    background: var(--color-primary);
+    z-index: -1;
+  }
+  .marco-offset__caja {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--color-white);
+    box-shadow: var(--shadow-high);
+  }
+  @media (max-width: 900px) {
+    .marco-offset::before {
+      inset: 18px -14px -18px 14px;
+    }
+  }
+
+  .dato-flotante {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    box-shadow: var(--shadow-high);
+  }
+  .dato-flotante strong {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.35rem;
+    color: var(--color-primary);
+    line-height: 1;
+  }
+  .dato-flotante span {
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+  }
+}
+

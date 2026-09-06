@@ -49,6 +49,14 @@
   --color-pie-legal: #9db2ce; /* .pie__legal */
   --color-pie-redes: #cddcef; /* .redes a */
 
+  /* --- Derivados P5 (secciones): tonos de texto sobre el gradiente primario
+     del banner interior (.encabezado). Fuente: assets/site.css líneas
+     997-1072. Único origen para que el guard 9.4 ("no hex outside @theme")
+     se cumpla en el CSS §4.4 del banner. */
+  --color-encabezado: #c9d8ec; /* .encabezado color */
+  --color-encabezado-parrafo: #c3d2e6; /* .encabezado p */
+  --color-encabezado-miga: #8fb0d6; /* .encabezado .miga / .miga a */
+
   /* --- Tipografía --- */
   --font-display: "Montserrat", "Segoe UI", sans-serif;
   --font-body: "Open Sans", "Segoe UI", sans-serif;
