@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./paridad.css";
 @import "../assets/fonts/brand/brand-fonts.css";
 
 @theme {

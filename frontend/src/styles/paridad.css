@@ -1,0 +1,171 @@
+/* ==========================================================================
+   paridad.css — reglas §4.4 que Tailwind no puede expresar
+   Fuente: assets/site.css (solo lectura; el clon es la referencia de paridad).
+   Tres grupos documentados: tipografía clamp(), carrusel y mask-image.
+   Los selectores y valores se portan verbatim; solo se renombran las
+   variables al nombre del token @theme correspondiente.
+   ========================================================================== */
+
+/* ---------- 1. Tipografía fluida con clamp() ----------
+   Racional (§4.4): Tailwind v4 no ofrece una escala tipográfica fluida por
+   viewport con este rango; los tamaños del clon se portan verbatim para que
+   el resultado visual sea idéntico en cualquier ancho de pantalla.
+   Fuente: assets/site.css líneas 83-112. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    margin: 0 0 0.5em;
+    line-height: 1.14;
+    letter-spacing: -0.01em;
+    /* evita que la última línea quede con una sola palabra corta */
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-weight: 800;
+    font-size: clamp(2.15rem, 1.5rem + 2.4vw, 3.4rem);
+    letter-spacing: -0.025em;
+  }
+  h2 {
+    font-weight: 700;
+    font-size: clamp(1.6rem, 1.2rem + 1.5vw, 2.3rem);
+  }
+  h3 {
+    font-weight: 700;
+    font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.45rem);
+  }
+  h4 {
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+}
+
+/* ---------- 2. Carrusel de la portada ----------
+   Racional (§4.4): el estado visible depende de [data-activa="si"] y de una
+   transición de opacidad entre láminas absolutamente posicionadas; las
+   utilidades no cubren la coreografía completa ni el estado por atributo.
+   Los hooks de Fase 2 (useCarrusel) reflejan estos mismos atributos, así la
+   paridad CSS se mantiene sin reescritura.
+   Fuente: assets/site.css líneas 593-679. */
+@layer components {
+  .carrusel {
+    position: relative;
+  }
+  .carrusel__pista {
+    position: relative;
+  }
+  /* Las piezas son contenido, no fondo: se muestran enteras, sin recorte.
+     Las cuatro comparten proporción 768×960, así que la altura no salta. */
+  .carrusel__lamina {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .carrusel__lamina[data-activa="si"] {
+    position: relative;
+    opacity: 1;
+  }
+  .carrusel__lamina img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 768 / 960;
+    object-fit: contain;
+    background: #fff;
+  }
+  .carrusel__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--color-primary-900);
+    box-shadow: var(--shadow-low);
+    cursor: pointer;
+    transition: background-color 0.16s;
+    z-index: 3;
+  }
+  .carrusel__nav:hover {
+    background: #fff;
+    color: var(--color-primary);
+  }
+  .carrusel__nav--prev {
+    left: 12px;
+  }
+  .carrusel__nav--sig {
+    right: 12px;
+  }
+  .carrusel__puntos {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    z-index: 3;
+  }
+  .carrusel__punto {
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 0 0 1px rgba(21, 34, 56, 0.25);
+    cursor: pointer;
+  }
+  .carrusel__punto[aria-current="true"] {
+    width: 26px;
+    border-radius: var(--radius-pill);
+    background: var(--color-accent);
+  }
+
+  /* En pantallas chicas la píldora flotante vive abajo a la izquierda; se alinean
+     los puntos a la derecha para que no se pisen. */
+  @media (max-width: 560px) {
+    .carrusel__puntos {
+      left: auto;
+      right: 18px;
+      justify-content: flex-end;
+    }
+  }
+}
+
+/* ---------- 3. Banner de página interior: mask-image ----------
+   Racional (§4.4): Tailwind no expresa la máscara radial que funde los
+   bordes de la imagen difuminada del banner; un arbitrary property no cubre
+   la combinación -webkit-mask-image + mask-image + blur + filtro.
+   Fuente: assets/site.css líneas 1009-1026. La URL de la imagen la resuelve
+   Vite (hash en build).
+   Nota: depende de que el componente EncabezadoPagina (Fase P5) marque su
+   raíz con la clase .encabezado, posicionada (position: relative) y con
+   isolation: isolate, tal como en el clon. */
+@layer components {
+  .encabezado::before {
+    content: "";
+    position: absolute;
+    right: clamp(-140px, -5vw, -20px);
+    bottom: clamp(-150px, -11vw, -40px);
+    width: min(48vw, 580px);
+    aspect-ratio: 298 / 355;
+    background:
+      radial-gradient(58% 58% at 72% 62%, rgba(0, 168, 198, 0.28), transparent 72%),
+      url("../assets/images/fondefos.com.co/background_fondo_ico-e48e1f6f69.webp") center / contain no-repeat;
+    opacity: 0.5;
+    filter: blur(7px) saturate(0.9);
+    -webkit-mask-image: radial-gradient(closest-side, #000 35%, transparent 82%);
+    mask-image: radial-gradient(closest-side, #000 35%, transparent 82%);
+    pointer-events: none;
+    z-index: -1;
+  }
+}
