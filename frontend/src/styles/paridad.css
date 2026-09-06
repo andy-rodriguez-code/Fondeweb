@@ -1311,3 +1311,102 @@
     color: var(--color-interactive-ink);
   }
 }
+
+/* ---------- 17. Contacto: rejilla, formulario y aviso de envío ----------
+   Racional (§4.4): bloque cohesionado de la página de contacto — la rejilla
+   asimétrica 1fr/1.1fr con colapso 880, los estilos de campos
+   (label/input/select/textarea, focus, placeholder) y los estados por
+   atributo [data-error="si"]/[data-visible="si"] que la Fase 3 conducirá
+   sin reescribir CSS (decisión de diseño "State model"). El formulario se
+   renderiza inerte en P6 (sin handlers ni validación). Fuente:
+   assets/site.css líneas 1450-1563; variables renombradas a tokens @theme
+   (guard 9.4: sin hex fuera de @theme). */
+@layer components {
+  .contacto {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: clamp(28px, 4vw, 60px);
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .contacto {
+      grid-template-columns: 1fr;
+    }
+  }
+  .formulario {
+    padding: clamp(24px, 3vw, 34px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    box-shadow: var(--shadow-low);
+  }
+  .campo {
+    margin-bottom: 18px;
+  }
+  .campo label {
+    display: block;
+    margin-bottom: 7px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: var(--color-ink);
+  }
+  .campo input,
+  .campo select,
+  .campo textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 15px;
+    border: 1.5px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 0.97rem;
+    transition: border-color 0.16s, box-shadow 0.16s;
+  }
+  .campo textarea {
+    min-height: 132px;
+    resize: vertical;
+  }
+  .campo input::placeholder,
+  .campo textarea::placeholder {
+    color: var(--color-placeholder);
+  }
+  .campo input:focus,
+  .campo select:focus,
+  .campo textarea:focus {
+    outline: none;
+    border-color: var(--color-interactive);
+    box-shadow: 0 0 0 3px rgba(0, 168, 198, 0.22);
+  }
+  .campo[data-error="si"] input,
+  .campo[data-error="si"] select,
+  .campo[data-error="si"] textarea {
+    border-color: var(--color-error-strong);
+  }
+  .campo__error {
+    display: none;
+    margin-top: 6px;
+    font-size: 0.83rem;
+    color: var(--color-error-ink);
+  }
+  .campo[data-error="si"] .campo__error {
+    display: block;
+  }
+  .aviso-envio {
+    display: none;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    background: var(--color-aviso-bg);
+    border: 1px solid var(--color-aviso-border);
+    color: var(--color-aviso-ink);
+    font-size: 0.93rem;
+  }
+  .aviso-envio[data-visible="si"] {
+    display: flex;
+  }
+}

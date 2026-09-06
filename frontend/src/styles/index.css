@@ -57,6 +57,17 @@
   --color-encabezado-parrafo: #c3d2e6; /* .encabezado p */
   --color-encabezado-miga: #8fb0d6; /* .encabezado .miga / .miga a */
 
+  /* --- Derivados P6 (páginas): colores del formulario de contacto ---
+     Fuente: assets/site.css .formulario/.campo/.aviso-envio (líneas 1490-1563).
+     Son el único origen para que el guard 9.4 ("no hex outside @theme")
+     se cumpla en el CSS §4.4 del formulario. */
+  --color-placeholder: #90a0b3; /* input/textarea::placeholder */
+  --color-error-strong: #c0392b; /* borde de campo con data-error="si" */
+  --color-error-ink: #a5281b; /* texto .campo__error */
+  --color-aviso-bg: #e8f5ee; /* fondo .aviso-envio */
+  --color-aviso-border: #b7dcc6; /* borde .aviso-envio */
+  --color-aviso-ink: #14602f; /* texto .aviso-envio */
+
   /* --- Tipografía --- */
   --font-display: "Montserrat", "Segoe UI", sans-serif;
   --font-body: "Open Sans", "Segoe UI", sans-serif;
