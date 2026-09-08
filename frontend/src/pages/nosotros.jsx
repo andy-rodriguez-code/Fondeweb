@@ -1,24 +1,22 @@
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
 import Banda from '../sections/Banda.jsx'
-import Split from '../sections/Split.jsx'
-import MarcoOffset from '../sections/MarcoOffset.jsx'
 import Rotulo from '../components/ui/Rotulo.jsx'
 import TituloDual from '../components/ui/TituloDual.jsx'
 import Icono from '../components/ui/Icono.jsx'
 import Cifra from '../components/ui/Cifra.jsx'
-import notifondoPortada from '../assets/images/fondefos.com.co/notifondo-web-1-819x1024-d6a063db7d.webp'
 import visionFoto from '../assets/images/banner/vision-fondefos.webp'
 import misionFoto from '../assets/images/banner/mision-fondefos.webp'
+import objetivosFoto from '../assets/images/banner/principios-fondefos.webp'
 
-// nosotros — página institucional (clon nosotros.html). Banner con cifras +
-// Split visión/misión (tarjeta tinta) + principios (rejilla--3) + objetivos
-// (split invertido con marco-offset) + banda de cierre. Los literales
-// exclusivos de esta página no tienen módulo P2 propio (la especificación
-// exige módulos solo para líneas/faq/ahorro/convenios/notifondo/navegación):
-// viven aquí como constantes verbatim del clon. data-od-id del clon:
-// seccion-vision-mision, seccion-principios (principio-*), seccion-objetivos,
-// banda-cierre.
+// nosotros — página institucional. Banner con cifras + tres filas con
+// fotografía (visión, misión y objetivos) + principios sobre tinta + banda de
+// cierre. La estructura sigue a producción, medida el 2026-09-08, y ya no al
+// clon estático de agosto. Los literales exclusivos de esta página no tienen
+// módulo P2 propio (la especificación exige módulos solo para líneas/faq/
+// ahorro/convenios/notifondo/navegación): viven aquí como constantes.
+// data-od-id: seccion-vision-mision, seccion-mision, seccion-principios
+// (principio-*), seccion-objetivos, banda-cierre.
 
 const ENCABEZADO = {
   entrada: 'FONDEFOS es una empresa asociativa de derecho privado constituida para fomentar el ahorro y prestar servicios de crédito a sus asociados.',
@@ -68,6 +66,9 @@ const PRINCIPIOS = [
   { icono: 'transparencia', titulo: 'Transparencia', odId: 'principio-transparencia' },
 ]
 
+// Objetivos usa la misma fila que visión, con la foto a la derecha sobre fondo
+// blanco (medido en producción el 2026-09-08). Antes llevaba la portada del
+// Notifondo en un marco desplazado.
 const OBJETIVOS = {
   rotulo: 'Objetivos',
   titulo: (
@@ -75,11 +76,12 @@ const OBJETIVOS = {
       Ahorro, crédito y <strong>bienestar social</strong>
     </>
   ),
-  parrafos: [
+  texto: [
     'El Fondo de Empleados, como empresa asociativa y de derecho privado del orden legal, está constituido con el objeto de fomentar el ahorro y prestar los servicios de crédito en distintas formas a los asociados, y proporcionar otros servicios en forma permanente.',
     'Además, busca dar oportuno apoyo de previsión, solidaridad y bienestar social, fortaleciendo los lazos de compañerismo y ayuda mutua entre sus asociados.',
   ],
-  alt: 'Notifondo de Fondefos con las actividades y novedades del fondo.',
+  imagen: objetivosFoto,
+  alt: 'Equipo de Fondefos reunido en la sede del fondo.',
 }
 
 const BANDA_CIERRE = {
@@ -88,19 +90,26 @@ const BANDA_CIERRE = {
   accion: { etiqueta: 'Ver cómo afiliarme', to: '/como-ser-asociado' },
 }
 
-// Fila visión/misión: dos columnas iguales, como producción. `fotoIzquierda`
-// invierte el orden sin tocar el DOM, para que el texto siga leyéndose primero.
+// Fila de contenido con fotografía: dos columnas iguales, como producción.
+// La usan visión, misión y objetivos. `fotoIzquierda` invierte el orden sin
+// tocar el DOM, para que el texto siga leyéndose primero.
 // El radio y la sombra de la foto viven en paridad.css (grupo 22): un
 // box-shadow arbitrario de Tailwind con comas dentro del valor no compila.
 // El párrafo va justificado, verbatim de producción, y en teléfono todo se
 // centra y la foto pasa arriba, como el resto del sitio.
+// `texto` admite una cadena o varias: objetivos lleva dos párrafos.
 function FilaFoto({ datos, fotoIzquierda = false }) {
+  const parrafos = Array.isArray(datos.texto) ? datos.texto : [datos.texto]
   return (
     <div className="shell grid items-center gap-[clamp(32px,5vw,72px)] grid-cols-2 max-md:grid-cols-1">
       <div className={`max-md:text-center${fotoIzquierda ? ' order-2 max-md:order-none' : ''}`}>
         <Rotulo>{datos.rotulo}</Rotulo>
         <TituloDual tono="naranja">{datos.titulo}</TituloDual>
-        <p className="text-justify max-md:text-center">{datos.texto}</p>
+        {parrafos.map((parrafo) => (
+          <p className="text-justify max-md:text-center" key={parrafo.slice(0, 24)}>
+            {parrafo}
+          </p>
+        ))}
       </div>
       <div className={fotoIzquierda ? 'order-1 max-md:order-none' : ''}>
         <img src={datos.imagen} alt={datos.alt} loading="lazy" className="foto-marco" />
@@ -162,20 +171,7 @@ export default function NosotrosPage() {
       </Seccion>
 
       <Seccion data-od-id="seccion-objetivos">
-        <Split invertido>
-          <div className="split__media">
-            <MarcoOffset>
-              <img src={notifondoPortada} width="819" height="1024" loading="lazy" alt={OBJETIVOS.alt} />
-            </MarcoOffset>
-          </div>
-          <div className="max-md:text-center">
-            <Rotulo>{OBJETIVOS.rotulo}</Rotulo>
-            <TituloDual>{OBJETIVOS.titulo}</TituloDual>
-            {OBJETIVOS.parrafos.map((parrafo) => (
-              <p key={parrafo.slice(0, 24)}>{parrafo}</p>
-            ))}
-          </div>
-        </Split>
+        <FilaFoto datos={OBJETIVOS} />
       </Seccion>
 
       <Banda
