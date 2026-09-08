@@ -305,10 +305,15 @@
   .nav__grupo {
     position: relative;
   }
+  /* Sin `font: inherit`: ese atajo restablece familia, peso y tamaño de una
+     vez, y como esta regla va después de .nav__enlace le ganaba, dejando
+     "Servicios" en Open Sans 400 a 16px mientras el resto del menú iba en
+     Montserrat 600 a 0.87rem. El botón solo necesita perder su borde y su
+     fondo; la tipografía se la da .nav__enlace, que ya lleva puesta. */
   .nav__disparador {
     border: 0;
     background: none;
-    font: inherit;
+    cursor: pointer;
   }
   .nav__disparador svg {
     transition: transform 0.2s;
