@@ -1,5 +1,8 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import Icono from '../ui/Icono.jsx'
+import useCabeceraFija from '../../hooks/useCabeceraFija.js'
+import useMenuMovil from '../../hooks/useMenuMovil.js'
+import useSubmenu from '../../hooks/useSubmenu.js'
 import { marca, principal, servicios } from '../../data/navegacion.js'
 import logotipo from '../../assets/images/fondefos.com.co/cropped-fondefos_logo-300x116-2546eaee42.webp'
 
@@ -11,10 +14,10 @@ import logotipo from '../../assets/images/fondefos.com.co/cropped-fondefos_logo-
 //   its slug matches the current pathname (NavLink does this automatically);
 // - the "Servicios" trigger carries aria-current="page" when the current
 //   route is one of the servicios slugs (clone: ahorro.html line 39).
-// data-menu / data-fijo / data-abierto render the clone's initial state
-// ("cerrado"/"no"/"no"); the P8 hooks (useCabeceraFija, useMenuMovil,
-// useSubmenu) will drive them from state — the CSS contract (paridad.css
-// group 6) selects on these same attributes.
+// data-fijo (useCabeceraFija), data-menu (useMenuMovil) y data-abierto
+// (useSubmenu) se reflejan desde estado con los valores del clon
+// ("si"/"no"/"abierto"/"cerrado") — el CSS contract (paridad.css group 6)
+// selects on these same attributes.
 // All internal Link/NavLink use discover="none": react-router v7 defaults to
 // discover="render", which injects data-discover="true" — an attribute the
 // clone does not have; suppressed for markup parity (inert in library mode).
@@ -28,8 +31,16 @@ const SLUGS_SERVICIOS = servicios.map((servicio) => servicio.slug)
 export default function Header() {
   const { pathname } = useLocation()
   const enServicio = SLUGS_SERVICIOS.includes(pathname)
+  const fijo = useCabeceraFija()
+  const { abierto: menuAbierto, alternar: alternarMenu } = useMenuMovil()
+  const { abierto: submenuAbierto, alternar: alternarSubmenu } = useSubmenu()
   return (
-    <header className="cabecera" data-od-id="cabecera" data-menu="cerrado" data-fijo="no">
+    <header
+      className="cabecera"
+      data-od-id="cabecera"
+      data-menu={menuAbierto ? 'abierto' : 'cerrado'}
+      data-fijo={fijo ? 'si' : 'no'}
+    >
       <div className="shell cabecera__fila">
         <Link className="marca" to="/" data-od-id="marca" discover="none">
           <img src={logotipo} width="300" height="116" alt={marca.alt} />
@@ -37,8 +48,9 @@ export default function Header() {
         <button
           type="button"
           className="hamburguesa"
-          aria-expanded="false"
+          aria-expanded={menuAbierto}
           aria-label="Abrir el menú de navegación"
+          onClick={alternarMenu}
         >
           <Icono nombre="menu" size={18} />
           <span>Menú</span>
@@ -46,12 +58,13 @@ export default function Header() {
         <nav className="nav" aria-label="Navegación principal" data-od-id="nav-principal">
           {principal.map((item) =>
             item.submenu ? (
-              <div key={item.etiqueta} className="nav__grupo" data-abierto="no">
+              <div key={item.etiqueta} className="nav__grupo" data-abierto={submenuAbierto ? 'si' : 'no'}>
                 <button
                   type="button"
                   className="nav__enlace nav__disparador"
-                  aria-expanded="false"
+                  aria-expanded={submenuAbierto}
                   aria-current={enServicio ? 'page' : undefined}
+                  onClick={alternarSubmenu}
                 >
                   Servicios <Icono nombre="chevron-abajo" size={13} />
                 </button>
