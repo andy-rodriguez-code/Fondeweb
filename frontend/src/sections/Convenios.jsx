@@ -1,14 +1,17 @@
 import BotonCta from './BotonCta.jsx'
 import Etiqueta from '../components/ui/Etiqueta.jsx'
+import useConvenios from '../hooks/useConvenios.js'
 import { convenios } from '../data/convenios.js'
 
 // Convenios — composite de la página de convenios (clon convenios.html):
 // filtros por categoría + rejilla--4 de 28 tarjetas-botón + vacío oculto +
-// cajón lateral de detalle (data-abierto="no", campos vacíos que useConvenios
-// en P8 llena; el CSS del cajón — grupo 15 — selecciona por
-// [data-abierto="si"]). El clon coloca el cajón después del pie y lo llena
-// con site.js; en React vive junto a la sección (position: fixed → la paridad
-// visual es idéntica; el orden DOM difiere, documentado).
+// cajón lateral de detalle. useConvenios (P8) refleja desde estado los
+// atributos que el clon manipula con site.js (aria-pressed, hidden de
+// tarjetas, conteo aria-live, data-abierto del cajón y su ficha) — el CSS
+// del cajón (grupo 15) selecciona por [data-abierto="si"]. El clon coloca el
+// cajón después del pie y lo llena con site.js; en React vive junto a la
+// sección (position: fixed → la paridad visual es idéntica; el orden DOM
+// difiere, documentado).
 // Logos: los paths verbatim del módulo se resuelven por basename a imports
 // de Vite (glob eager de src/assets/images/convenios/); los 3 `logo: null`
 // usan el monograma .convenio__inicial. Los filtros conservan el orden fijo
@@ -47,7 +50,32 @@ const ETIQUETA_VACIA =
   'etiqueta self-start px-3 py-1 rounded-pill bg-accent-100 text-accent-ink ' +
   'font-body font-semibold text-[0.72rem] tracking-[0.06em] uppercase'
 
+// Ficha del cajón — port del clon site.js abrirCajon: lista de campos con
+// etiqueta, valor y transformación de enlace (tel:/mailto:), idénticas al
+// clon; los campos sin valor se omiten. La nota del monograma convierte los
+// inline styles del clon por §4.3 (margin 12px 0 0 → mt-3, font-size 0.85rem
+// → text-[0.85rem], color #667487 → token --color-muted).
+const CAMPOS_FICHA = [
+  { etiqueta: 'Asesor comercial', valor: (c) => c.asesor, href: null },
+  {
+    etiqueta: 'Teléfono',
+    valor: (c) => c.telefono,
+    href: (c) => (c.telefono ? 'tel:' + c.telefono.replace(/[^0-9+]/g, '') : null),
+  },
+  {
+    etiqueta: 'Correo',
+    valor: (c) => c.correo,
+    href: (c) => (c.correo ? 'mailto:' + c.correo.split(/[\s/]+/)[0] : null),
+  },
+  { etiqueta: 'Dirección', valor: (c) => c.direccion, href: null },
+]
+
 export default function Convenios({ datos = convenios }) {
+  const { categoria, filtrar, visibles, item, abierto, cajonRef, abrirCajon, cerrarCajon } =
+    useConvenios(datos)
+
+  const conteo = visibles.length === 1 ? '1 convenio' : `${visibles.length} convenios`
+
   return (
     <>
       <div className="shell">
@@ -62,7 +90,8 @@ export default function Convenios({ datos = convenios }) {
               type="button"
               className="filtro"
               data-categoria={filtro.id}
-              aria-pressed={filtro.id === 'todos'}
+              aria-pressed={categoria === filtro.id}
+              onClick={() => filtrar(filtro.id)}
               key={filtro.id}
             >
               {filtro.etiqueta}
@@ -73,39 +102,46 @@ export default function Convenios({ datos = convenios }) {
           className="mb-6 text-muted text-[0.92rem]"
           data-od-id="convenios-conteo"
           aria-live="polite"
-        ></p>
+        >
+          {conteo}
+        </p>
         <div className="rejilla rejilla--4" data-od-id="rejilla-convenios">
-          {datos.map((convenio) => (
-            <button
-              type="button"
-              className="convenio"
-              data-convenio={convenio.id}
-              data-categorias={convenio.categoria}
-              data-od-id={`convenio-${convenio.id}`}
-              key={convenio.id}
-            >
-              <span className="convenio__marca">
-                {convenio.logo ? (
-                  <img
-                    src={logoDe(convenio.logo)}
-                    loading="lazy"
-                    alt={`Logotipo de ${convenio.nombre}`}
-                  />
-                ) : (
-                  <span className="convenio__inicial" aria-hidden="true">
-                    {convenio.nombre[0]}
-                  </span>
-                )}
-              </span>
-              <span className="convenio__cuerpo">
-                <Etiqueta>{convenio.categoriaNombre}</Etiqueta>
-                <h3>{convenio.nombre}</h3>
-                <span className="convenio__ver">Ver datos del asesor →</span>
-              </span>
-            </button>
-          ))}
+          {datos.map((convenio) => {
+            const oculto = categoria !== 'todos' && convenio.categoria !== categoria
+            return (
+              <button
+                type="button"
+                className="convenio"
+                data-convenio={convenio.id}
+                data-categorias={convenio.categoria}
+                data-od-id={`convenio-${convenio.id}`}
+                hidden={oculto}
+                onClick={(e) => abrirCajon(convenio.id, e.currentTarget)}
+                key={convenio.id}
+              >
+                <span className="convenio__marca">
+                  {convenio.logo ? (
+                    <img
+                      src={logoDe(convenio.logo)}
+                      loading="lazy"
+                      alt={`Logotipo de ${convenio.nombre}`}
+                    />
+                  ) : (
+                    <span className="convenio__inicial" aria-hidden="true">
+                      {convenio.nombre[0]}
+                    </span>
+                  )}
+                </span>
+                <span className="convenio__cuerpo">
+                  <Etiqueta>{convenio.categoriaNombre}</Etiqueta>
+                  <h3>{convenio.nombre}</h3>
+                  <span className="convenio__ver">Ver datos del asesor →</span>
+                </span>
+              </button>
+            )
+          })}
         </div>
-        <p className="vacio" data-od-id="convenios-vacio" hidden>
+        <p className="vacio" data-od-id="convenios-vacio" hidden={visibles.length !== 0}>
           No hay convenios publicados en esta categoría.
         </p>
       </div>
@@ -113,20 +149,77 @@ export default function Convenios({ datos = convenios }) {
       <div
         className="cajon"
         data-od-id="cajon-convenio"
-        data-abierto="no"
+        data-abierto={abierto ? 'si' : 'no'}
         role="dialog"
         aria-modal="true"
         aria-labelledby="cajon-titulo"
+        ref={cajonRef}
       >
-        <button type="button" className="cajon__velo" data-cerrar-cajon aria-label="Cerrar el detalle del convenio"></button>
+        <button
+          type="button"
+          className="cajon__velo"
+          data-cerrar-cajon
+          aria-label="Cerrar el detalle del convenio"
+          onClick={cerrarCajon}
+        ></button>
         <div className="cajon__panel">
-          <button type="button" className="cajon__cerrar" data-cerrar-cajon aria-label="Cerrar el detalle del convenio">
+          <button
+            type="button"
+            className="cajon__cerrar"
+            data-cerrar-cajon
+            aria-label="Cerrar el detalle del convenio"
+            onClick={cerrarCajon}
+          >
             ✕
           </button>
-          <span className={ETIQUETA_VACIA} data-od-id="cajon-categoria"></span>
-          <h2 id="cajon-titulo" data-od-id="cajon-titulo" className="mt-3"></h2>
-          <div className="cajon__marca" data-od-id="cajon-marca"></div>
-          <dl className="ficha" data-od-id="cajon-ficha"></dl>
+          {item ? (
+            <>
+              <span className={ETIQUETA_VACIA} data-od-id="cajon-categoria">
+                {item.categoriaNombre}
+              </span>
+              <h2 id="cajon-titulo" data-od-id="cajon-titulo" className="mt-3">
+                {item.nombre}
+              </h2>
+              <div className="cajon__marca" data-od-id="cajon-marca">
+                {item.logo ? (
+                  <img
+                    src={logoDe(item.logo)}
+                    alt={`Logotipo de ${item.nombre}`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <>
+                    <span className="convenio__inicial" aria-hidden="true">
+                      {item.nombre.charAt(0)}
+                    </span>
+                    <p className="mt-3 text-[0.85rem] text-muted">
+                      Este convenio no publica logotipo en el sitio original.
+                    </p>
+                  </>
+                )}
+              </div>
+              <dl className="ficha" data-od-id="cajon-ficha">
+                {CAMPOS_FICHA.map((campo) => {
+                  const valor = campo.valor(item)
+                  if (!valor) return null
+                  const href = campo.href ? campo.href(item) : null
+                  return (
+                    <div className="ficha__campo" key={campo.etiqueta}>
+                      <dt>{campo.etiqueta}</dt>
+                      <dd>{href ? <a href={href}>{valor}</a> : valor}</dd>
+                    </div>
+                  )
+                })}
+              </dl>
+            </>
+          ) : (
+            <>
+              <span className={ETIQUETA_VACIA} data-od-id="cajon-categoria"></span>
+              <h2 id="cajon-titulo" data-od-id="cajon-titulo" className="mt-3"></h2>
+              <div className="cajon__marca" data-od-id="cajon-marca"></div>
+              <dl className="ficha" data-od-id="cajon-ficha"></dl>
+            </>
+          )}
           <BotonCta to="/contactenos" variant="secundario" className="w-full mt-[26px]">
             ¿Tu empresa quiere ser convenio?
           </BotonCta>
