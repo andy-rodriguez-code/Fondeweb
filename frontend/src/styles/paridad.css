@@ -638,7 +638,11 @@
   .encabezado .cifra {
     border-left-color: rgba(255, 255, 255, 0.32) !important;
   }
-  .encabezado img {
+  /* Marco claro para una imagen de contenido dentro del banner (el clon lo usa
+     en la ilustración de Beneficios). Excluye la fotografía de fondo: sobre
+     ella el relleno de 10px con fondo blanco translúcido se veía como un halo
+     alrededor del banner. */
+  .encabezado img:not(.banner-foto img) {
     background: rgba(255, 255, 255, 0.1);
     padding: 10px;
     border-radius: var(--radius-md);
