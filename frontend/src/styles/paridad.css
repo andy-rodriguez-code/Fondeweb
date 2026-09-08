@@ -1410,3 +1410,53 @@
     display: flex;
   }
 }
+
+/* ---------- 18. Visor de Notifondo ----------
+   Racional (§4.4): diálogo a pantalla completa diferido a P8 (nota del
+   grupo 16: "el diálogo .visor se agrega en P8 junto con useVisor"); estados
+   por atributo (visor[data-abierto="si"]) que useVisor refleja desde estado.
+   #fff del clon → var(--color-white); rgba() sobre tinta como el velo del
+   cajón (grupo 15) — sin hex fuera de @theme (guard 9.4).
+   Fuente: assets/site.css líneas 1621-1660. */
+@layer components {
+  .visor {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(16px, 3vw, 44px);
+    background: rgba(21, 34, 56, 0.88);
+  }
+  .visor[data-abierto="si"] {
+    display: flex;
+  }
+  .visor img {
+    max-width: min(100%, 760px);
+    max-height: 100%;
+    width: auto;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-high);
+  }
+  .visor__cerrar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-white);
+    font-size: 1.3rem;
+    cursor: pointer;
+  }
+  .visor__cerrar:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: var(--color-white);
+    color: var(--color-white);
+  }
+}
