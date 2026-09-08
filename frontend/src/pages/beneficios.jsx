@@ -1,14 +1,17 @@
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
 import Banda from '../sections/Banda.jsx'
+import FilaFoto from '../sections/FilaFoto.jsx'
 import Tarjeta from '../components/ui/Tarjeta.jsx'
-import Etiqueta from '../components/ui/Etiqueta.jsx'
-// beneficios — página de beneficios (clon beneficios.html). Banner interior
-// con la fotografía del cliente + rejilla--2 de 6 tarjetas numeradas +
-// banda de cierre primaria. Los literales de las 6 tarjetas no tienen módulo
-// P2 propio (la especificación exige módulos solo para líneas/faq/ahorro/
-// convenios/notifondo/navegación), así que viven aquí como constantes
-// verbatim del clon. data-od-id del clon: seccion-beneficios (beneficio-*),
+import iconoBeneficios from '../assets/images/content/icono-beneficios.jpg'
+
+// beneficios — página de beneficios. Banner con la fotografía del cliente +
+// fila de entrada con la ilustración + rejilla de tres con las 6 tarjetas
+// numeradas + banda de cierre. La estructura sigue a producción, medida el
+// 2026-09-08. Los literales de las 6 tarjetas no tienen módulo P2 propio
+// (la especificación exige módulos solo para líneas/faq/ahorro/convenios/
+// notifondo/navegación), así que viven aquí como constantes.
+// data-od-id: seccion-intro-beneficios, seccion-beneficios (beneficio-*),
 // banda-cierre.
 
 const BENEFICIOS = [
@@ -54,6 +57,22 @@ const ENCABEZADO = {
   entrada: 'Pertenecer a un fondo de empleados como FONDEFOS te puede brindar beneficios como:',
 }
 
+// Sección de entrada: la ilustración a la izquierda y el texto a la derecha,
+// como producción (medida el 2026-09-08). Es el lugar donde vive el icono de
+// beneficios; el banner de arriba ya no lo lleva.
+const INTRO = {
+  rotulo: 'Para ti',
+  titulo: (
+    <>
+      Seis beneficios <strong>que te encantarán</strong>
+    </>
+  ),
+  texto: 'Ventajas pensadas para acompañarte en cada etapa, facilitar tus proyectos y hacer que pertenecer a FONDEFOS realmente marque la diferencia.',
+  imagen: iconoBeneficios,
+  alt: 'Alcancía con forma de cerdito, símbolo del ahorro en Fondefos.',
+  ilustracion: true,
+}
+
 const BANDA_CIERRE = {
   titulo: 'Los beneficios empiezan con el primer aporte',
   texto: 'Desde el primer mes de ahorro ya podés tramitar un crédito de tesorería.',
@@ -73,14 +92,27 @@ export default function BeneficiosPage() {
         banner="beneficios"
       />
 
-      <Seccion data-od-id="seccion-beneficios">
+      <Seccion data-od-id="seccion-intro-beneficios">
+        <FilaFoto datos={INTRO} fotoIzquierda />
+      </Seccion>
+
+      {/* Rejilla de tres columnas como producción: el número en su cuadro
+          naranja a la izquierda, y a su lado el título con la descripción
+          debajo. Antes era una rejilla de dos con el número arriba del todo. */}
+      <Seccion tono="bright" data-od-id="seccion-beneficios">
         <div className="shell">
-          <div className="rejilla rejilla--2">
+          <div className="rejilla rejilla--3">
             {BENEFICIOS.map((beneficio) => (
               <Tarjeta as="article" data-od-id={beneficio.odId} key={beneficio.odId}>
-                <Etiqueta>{beneficio.numero}</Etiqueta>
-                <h3 className="mt-[14px]">{beneficio.titulo}</h3>
-                <p>{beneficio.texto}</p>
+                <div className="flex gap-4">
+                  <span className="flex-none grid place-items-center w-11 h-11 rounded-sm border border-accent font-display font-extrabold text-[1.05rem] text-accent">
+                    {beneficio.numero}
+                  </span>
+                  <div>
+                    <h3 className="m-0 text-[1.0625rem] leading-[1.25]">{beneficio.titulo}</h3>
+                    <p className="mt-2 mb-0">{beneficio.texto}</p>
+                  </div>
+                </div>
               </Tarjeta>
             ))}
           </div>

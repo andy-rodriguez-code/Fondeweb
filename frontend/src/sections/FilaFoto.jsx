@@ -15,7 +15,10 @@ import { ListaProsa } from '../components/ui/ListaRequisitos.jsx'
 // El radio y la sombra de la foto viven en paridad.css (grupo 22): un
 // box-shadow arbitrario de Tailwind con comas dentro del valor no compila.
 //
-// Contrato: { rotulo, titulo, texto, lista?, imagen, alt }
+// `ilustracion` marca la imagen como dibujo y no fotografía: va sin marco ni
+// sombra y con el ancho de 336px de producción, en vez de ocupar la columna.
+//
+// Contrato: { rotulo, titulo, texto, lista?, imagen, alt, ilustracion? }
 
 export default function FilaFoto({ datos, fotoIzquierda = false }) {
   const parrafos = Array.isArray(datos.texto) ? datos.texto : [datos.texto]
@@ -32,7 +35,16 @@ export default function FilaFoto({ datos, fotoIzquierda = false }) {
         {datos.lista ? <ListaProsa items={datos.lista} className="text-justify max-md:text-left" /> : null}
       </div>
       <div className={fotoIzquierda ? 'order-1 max-md:order-none' : ''}>
-        <img src={datos.imagen} alt={datos.alt} loading="lazy" className="foto-marco" />
+        <img
+          src={datos.imagen}
+          alt={datos.alt}
+          loading="lazy"
+          className={
+            datos.ilustracion
+              ? 'block w-[min(336px,100%)] h-auto mx-auto'
+              : 'foto-marco'
+          }
+        />
       </div>
     </div>
   )
