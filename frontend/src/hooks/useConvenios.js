@@ -13,8 +13,18 @@ import { convenios as conveniosDefecto } from '../data/convenios.js'
 // estática): la SPA restaura el body overflow al desmontar la sección para no
 // dejar la página sin scroll al navegar con el cajón abierto.
 
+// Normaliza para buscar: sin mayúsculas y sin tildes, así "prepagada" también
+// encuentra "Medicina Prepagada" y "asistencia medica" encuentra "Asistencia
+// Médica".
+const normalizar = (texto) =>
+  String(texto ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+
 export default function useConvenios(datos = conveniosDefecto) {
   const [categoria, setCategoria] = useState('todos')
+  const [busqueda, setBusqueda] = useState('')
   const cajonRef = useRef(null)
   const disparadorRef = useRef(null)
 
@@ -28,10 +38,18 @@ export default function useConvenios(datos = conveniosDefecto) {
     return datos.find((c) => c.id === window.location.hash.slice(1)) || null
   })
 
-  const visibles = useMemo(
-    () => datos.filter((c) => categoria === 'todos' || c.categoria === categoria),
-    [datos, categoria],
-  )
+  // El filtro por categoría y la búsqueda se combinan: una tarjeta se ve si
+  // pasa los dos. La búsqueda mira nombre, categoría y asesor, y admite varias
+  // palabras sueltas ("viajes decameron" encuentra igual).
+  const visibles = useMemo(() => {
+    const terminos = normalizar(busqueda).split(/\s+/).filter(Boolean)
+    return datos.filter((c) => {
+      if (categoria !== 'todos' && c.categoria !== categoria) return false
+      if (!terminos.length) return true
+      const heno = normalizar(`${c.nombre} ${c.categoriaNombre} ${c.asesor}`)
+      return terminos.every((termino) => heno.includes(termino))
+    })
+  }, [datos, categoria, busqueda])
 
   const cerrarCajon = useCallback(() => {
     setItem(null)
@@ -89,10 +107,13 @@ export default function useConvenios(datos = conveniosDefecto) {
   )
 
   const filtrar = useCallback((nueva) => setCategoria(nueva), [])
+  const buscar = useCallback((texto) => setBusqueda(texto), [])
 
   return {
     categoria,
     filtrar,
+    busqueda,
+    buscar,
     visibles,
     item,
     abierto: item !== null,

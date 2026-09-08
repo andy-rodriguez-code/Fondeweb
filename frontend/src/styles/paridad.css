@@ -785,8 +785,12 @@
   .rejilla--3 {
     grid-template-columns: repeat(auto-fit, minmax(286px, 1fr));
   }
+  /* auto-fill y no auto-fit: con auto-fit las pistas vacías colapsan y las
+     pocas tarjetas que quedan tras filtrar se estiran a lo ancho de la fila.
+     Con auto-fill las pistas se mantienen y una tarjeta sola conserva el mismo
+     ancho que cuando están las 28. */
   .rejilla--4 {
-    grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
   }
 
   .cifras {
@@ -1611,5 +1615,62 @@
     height: auto;
     border-radius: 15px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ---------- 23. Convenios: selector de categoría y buscador ----------
+   Racional: reemplazan la hilera de 15 botones .filtro del clon (grupo 15),
+   que a 1440px ocupaba tres renglones. Los dos controles comparten fila y se
+   apilan en teléfono. El grupo 15 conserva sus reglas .filtros/.filtro por si
+   la hilera vuelve, pero ya no hay consumidores. */
+@layer components {
+  .filtros-convenios {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 26px;
+  }
+  @media (max-width: 620px) {
+    .filtros-convenios {
+      grid-template-columns: 1fr;
+    }
+  }
+  .campo-filtro {
+    display: grid;
+    gap: 6px;
+  }
+  .campo-filtro label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .campo-filtro select,
+  .campo-filtro input {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+  }
+  .campo-filtro select:hover,
+  .campo-filtro input:hover {
+    border-color: var(--color-primary-300);
+  }
+  .campo-filtro select:focus-visible,
+  .campo-filtro input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-color: var(--color-primary);
+  }
+  .campo-filtro input::placeholder {
+    color: var(--color-placeholder);
   }
 }

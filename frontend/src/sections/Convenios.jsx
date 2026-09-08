@@ -71,32 +71,54 @@ const CAMPOS_FICHA = [
 ]
 
 export default function Convenios({ datos = convenios }) {
-  const { categoria, filtrar, visibles, item, abierto, cajonRef, abrirCajon, cerrarCajon } =
-    useConvenios(datos)
+  const {
+    categoria,
+    filtrar,
+    busqueda,
+    buscar,
+    visibles,
+    item,
+    abierto,
+    cajonRef,
+    abrirCajon,
+    cerrarCajon,
+  } = useConvenios(datos)
 
   const conteo = visibles.length === 1 ? '1 convenio' : `${visibles.length} convenios`
+  const idsVisibles = new Set(visibles.map((c) => c.id))
 
   return (
     <>
       <div className="shell">
-        <div
-          className="filtros"
-          data-od-id="filtros-convenios"
-          role="group"
-          aria-label="Filtrar convenios por categoría"
-        >
-          {FILTROS.map((filtro) => (
-            <button
-              type="button"
-              className="filtro"
-              data-categoria={filtro.id}
-              aria-pressed={categoria === filtro.id}
-              onClick={() => filtrar(filtro.id)}
-              key={filtro.id}
+        {/* Selector de categoría y buscador, en una sola fila. En teléfono se
+            apilan. Reemplazan la hilera de 15 botones del clon: con esa
+            cantidad de categorías la hilera ocupaba tres renglones. */}
+        <div className="filtros-convenios" data-od-id="filtros-convenios">
+          <div className="campo-filtro">
+            <label htmlFor="convenios-categoria">Categoría</label>
+            <select
+              id="convenios-categoria"
+              value={categoria}
+              onChange={(e) => filtrar(e.target.value)}
             >
-              {filtro.etiqueta}
-            </button>
-          ))}
+              {FILTROS.map((filtro) => (
+                <option value={filtro.id} key={filtro.id}>
+                  {filtro.etiqueta}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="campo-filtro">
+            <label htmlFor="convenios-busqueda">Buscar</label>
+            <input
+              id="convenios-busqueda"
+              type="search"
+              value={busqueda}
+              onChange={(e) => buscar(e.target.value)}
+              placeholder="Nombre, categoría o asesor"
+              autoComplete="off"
+            />
+          </div>
         </div>
         <p
           className="mb-6 text-muted text-[0.92rem]"
@@ -107,7 +129,9 @@ export default function Convenios({ datos = convenios }) {
         </p>
         <div className="rejilla rejilla--4" data-od-id="rejilla-convenios">
           {datos.map((convenio) => {
-            const oculto = categoria !== 'todos' && convenio.categoria !== categoria
+            // La visibilidad la decide el hook, que ya combina categoría y
+            // búsqueda; acá solo se refleja con `hidden`, como el clon.
+            const oculto = !idsVisibles.has(convenio.id)
             return (
               <button
                 type="button"
