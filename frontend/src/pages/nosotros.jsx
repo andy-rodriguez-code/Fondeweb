@@ -1,8 +1,7 @@
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
 import Banda from '../sections/Banda.jsx'
-import Rotulo from '../components/ui/Rotulo.jsx'
-import TituloDual from '../components/ui/TituloDual.jsx'
+import FilaFoto from '../sections/FilaFoto.jsx'
 import Icono from '../components/ui/Icono.jsx'
 import Cifra from '../components/ui/Cifra.jsx'
 import visionFoto from '../assets/images/banner/vision-fondefos.webp'
@@ -88,34 +87,6 @@ const BANDA_CIERRE = {
   titulo: '¿Querés hacer parte del fondo?',
   texto: 'La afiliación no tiene costo y el trámite se hace con tres documentos.',
   accion: { etiqueta: 'Ver cómo afiliarme', to: '/como-ser-asociado' },
-}
-
-// Fila de contenido con fotografía: dos columnas iguales, como producción.
-// La usan visión, misión y objetivos. `fotoIzquierda` invierte el orden sin
-// tocar el DOM, para que el texto siga leyéndose primero.
-// El radio y la sombra de la foto viven en paridad.css (grupo 22): un
-// box-shadow arbitrario de Tailwind con comas dentro del valor no compila.
-// El párrafo va justificado, verbatim de producción, y en teléfono todo se
-// centra y la foto pasa arriba, como el resto del sitio.
-// `texto` admite una cadena o varias: objetivos lleva dos párrafos.
-function FilaFoto({ datos, fotoIzquierda = false }) {
-  const parrafos = Array.isArray(datos.texto) ? datos.texto : [datos.texto]
-  return (
-    <div className="shell grid items-center gap-[clamp(32px,5vw,72px)] grid-cols-2 max-md:grid-cols-1">
-      <div className={`max-md:text-center${fotoIzquierda ? ' order-2 max-md:order-none' : ''}`}>
-        <Rotulo>{datos.rotulo}</Rotulo>
-        <TituloDual tono="naranja">{datos.titulo}</TituloDual>
-        {parrafos.map((parrafo) => (
-          <p className="text-justify max-md:text-center" key={parrafo.slice(0, 24)}>
-            {parrafo}
-          </p>
-        ))}
-      </div>
-      <div className={fotoIzquierda ? 'order-1 max-md:order-none' : ''}>
-        <img src={datos.imagen} alt={datos.alt} loading="lazy" className="foto-marco" />
-      </div>
-    </div>
-  )
 }
 
 export default function NosotrosPage() {

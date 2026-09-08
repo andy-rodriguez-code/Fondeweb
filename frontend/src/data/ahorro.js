@@ -18,6 +18,12 @@ export const ahorro = {
       etiqueta: 'Opcional',
       titulo: 'Voluntario',
       texto: 'Los asociados que así lo deseen podrán realizar aportes voluntarios, los cuales serán reglamentados por la Junta Directiva, al igual que los ahorros permanentes.',
+      // Los dos ítems son de producción (medida el 2026-09-08); el clon de
+      // agosto dejaba esta opción sin lista.
+      lista: [
+        'Elige ahorrar de manera voluntaria y fortalece tu respaldo financiero para alcanzar tus metas.',
+        'Realiza aportes adicionales de acuerdo con tus posibilidades, bajo las condiciones establecidas por FONDEFOS.',
+      ],
     },
   ],
   franja: {
