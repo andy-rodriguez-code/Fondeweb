@@ -782,6 +782,17 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: clamp(18px, 3vw, 40px);
   }
+
+  /* En teléfono las cifras van de a dos por fila. El minmax(200px) del
+     auto-fit dejaba una sola columna, porque dos pistas de 200px más el gap no
+     entran en los 350px útiles de un viewport de 390px; con minmax(0, 1fr) el
+     mínimo deja de ser el problema y las dos caben. */
+  @media (max-width: 767px) {
+    .cifras {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+  }
 }
 
 /* ---------- 13. Lista de filas desplegables (acordeón FAQ) ----------
