@@ -1418,11 +1418,22 @@
     z-index: -2;
     display: block;
   }
+  /* La foto va a sangre, sin marco ni franja alrededor. Tres cosas la
+     provocaban y las tres se apagan acá:
+     - `display: block`: un <img> es inline y reserva el hueco de la línea base
+       bajo la imagen, por donde asomaba el fondo de la sección. Es la
+       diferencia con el background-image de producción, que no tiene línea.
+     - `border-radius: 0`: una regla general de imágenes redondeaba las
+       esquinas y el fondo degradado se veía por ellas.
+     - `box-shadow: none` por el mismo motivo. */
   .banner-foto img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: 50% 50%;
+    border-radius: 0;
+    box-shadow: none;
   }
   /* Velo: mismo ángulo, mismas paradas y misma opacidad que producción.
      Sin z-index propio: dentro del contexto de apilado que crea .banner-foto
