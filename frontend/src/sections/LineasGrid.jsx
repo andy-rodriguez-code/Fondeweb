@@ -3,13 +3,20 @@ import Rotulo from '../components/ui/Rotulo.jsx'
 import TituloDual from '../components/ui/TituloDual.jsx'
 import Tarjeta from '../components/ui/Tarjeta.jsx'
 import Etiqueta from '../components/ui/Etiqueta.jsx'
+import { iconoDe } from '../data/iconos-lineas.js'
 
 // LineasGrid — composite "líneas de crédito" (clon: index #lineas-de-credito
 // con las 9 tarjetas y cada bloque "Otras líneas" con 3): encabezado (rótulo
 // + titulo-dual + texto opcional, §4.3 max-width/margen) + rejilla--3 de
-// tarjetas-enlace. Consume registros de creditos.js (P2): el texto de la
-// tarjeta es record.entrada y la etiqueta del pie es record.resumen[0].valor
-// (verificado contra index.html y todos los bloques "otras lineas").
+// tarjetas-enlace. Consume registros de creditos.js (P2): la etiqueta del pie
+// es record.resumen[0].valor.
+// La tarjeta muestra el icono de la línea a la izquierda del título, sin
+// descripción, igual que producción (2026-09-08). Antes llevaba record.entrada
+// como párrafo; se retiró por decisión del dueño del proyecto. El icono es
+// decorativo (alt=""): el título que va al lado ya nombra la línea.
+// La etiqueta de la tasa va en minúsculas (className="normal-case") porque así
+// la escribe producción; la primitiva Etiqueta la pone en mayúsculas por
+// defecto y el resto del sitio la sigue usando así.
 // Tarjeta es polimórfica (as={Link}); su rama hover está condicionada a
 // `href`, que Link no acepta, así que las mismas utilidades hover se pasan
 // por className. discover="none" por paridad de markup (nota P4).
@@ -40,7 +47,12 @@ export default function LineasGrid({
   const { rotulo, titulo, texto } = encabezado
   return (
     <div className="shell">
-      <div className={`${ANCHOS[maxAncho] ?? ANCHOS['60ch']} ${MARGENES[margen] ?? MARGENES['34px']}`}>
+      <div
+        className={
+          `${ANCHOS[maxAncho] ?? ANCHOS['60ch']} ${MARGENES[margen] ?? MARGENES['34px']}` +
+          ' max-md:mx-auto max-md:text-center'
+        }
+      >
         <Rotulo>{rotulo}</Rotulo>
         <TituloDual>{titulo}</TituloDual>
         {texto ? <p>{texto}</p> : null}
@@ -54,10 +66,24 @@ export default function LineasGrid({
             className={TARJETA_ENLACE}
             key={linea.slug}
             data-od-id={`${prefijoId}-${linea.slug}`}
-            pie={<Etiqueta>{linea.resumen[0].valor}</Etiqueta>}
+            pie={<Etiqueta className="normal-case">{linea.resumen[0].valor}</Etiqueta>}
           >
-            <h3>{linea.titulo}</h3>
-            <p>{linea.entrada}</p>
+            <div className="flex items-center gap-4">
+              {iconoDe(linea.slug) ? (
+                <img
+                  className="flex-none w-[75px] h-[75px]"
+                  src={iconoDe(linea.slug)}
+                  width="75"
+                  height="75"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : null}
+              {/* 17px / 1.2 e icono de 75px: medidas de producción. El h3 del
+                  grupo 1 usa una escala fluida que acá llegaba a 23,2px. */}
+              <h3 className="m-0 text-[1.0625rem] leading-[1.2]">{linea.titulo}</h3>
+            </div>
           </Tarjeta>
         ))}
       </div>
