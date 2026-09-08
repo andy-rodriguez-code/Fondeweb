@@ -54,12 +54,10 @@ export default function LineasGrid({
             className={TARJETA_ENLACE}
             key={linea.slug}
             data-od-id={`${prefijoId}-${linea.slug}`}
+            pie={<Etiqueta>{linea.resumen[0].valor}</Etiqueta>}
           >
             <h3>{linea.titulo}</h3>
             <p>{linea.entrada}</p>
-            <div className="tarjeta__pie">
-              <Etiqueta>{linea.resumen[0].valor}</Etiqueta>
-            </div>
           </Tarjeta>
         ))}
       </div>

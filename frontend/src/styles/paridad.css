@@ -76,7 +76,7 @@
     height: auto;
     aspect-ratio: 768 / 960;
     object-fit: contain;
-    background: #fff;
+    background: var(--color-white);
   }
   .carrusel__nav {
     position: absolute;
@@ -96,7 +96,7 @@
     z-index: 3;
   }
   .carrusel__nav:hover {
-    background: #fff;
+    background: var(--color-white);
     color: var(--color-primary);
   }
   .carrusel__nav--prev {
@@ -150,7 +150,10 @@
    Vite (hash en build).
    Nota: depende de que el componente EncabezadoPagina (Fase P5) marque su
    raíz con la clase .encabezado, posicionada (position: relative) y con
-   isolation: isolate, tal como en el clon. */
+   isolation: isolate, tal como en el clon.
+   Nota (guard 9.4): la máscara usa la palabra clave `black`, no un token de
+   marca. En mask-image solo cuenta el canal alfa — el color no pinta nada, y
+   darle un token de color sugeriría una relación con la paleta que no existe. */
 @layer components {
   .encabezado::before {
     content: "";
@@ -164,8 +167,8 @@
       url("../assets/images/fondefos.com.co/background_fondo_ico-e48e1f6f69.webp") center / contain no-repeat;
     opacity: 0.5;
     filter: blur(7px) saturate(0.9);
-    -webkit-mask-image: radial-gradient(closest-side, #000 35%, transparent 82%);
-    mask-image: radial-gradient(closest-side, #000 35%, transparent 82%);
+    -webkit-mask-image: radial-gradient(closest-side, black 35%, transparent 82%);
+    mask-image: radial-gradient(closest-side, black 35%, transparent 82%);
     pointer-events: none;
     z-index: -1;
   }
@@ -191,7 +194,7 @@
     padding: 16px 20px 16px 62px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    background: #fff;
+    background: var(--color-white);
     font-size: 0.97rem;
   }
   .requisitos li::before {
@@ -1458,5 +1461,28 @@
     background: rgba(255, 255, 255, 0.25);
     border-color: var(--color-white);
     color: var(--color-white);
+  }
+}
+
+/* ---------- 19. Split: orden e imagen del bloque .split__media ----------
+   Racional (§4.4): estas tres reglas apuntan a un descendiente BEM desde el
+   contenedor. Expresarlas como arbitrary variants exigía escapar los guiones
+   bajos (Tailwind traduce `_` a espacio), y el escape no sobrevive al viaje
+   entre el texto del archivo que escanea Tailwind y la cadena que produce el
+   template literal en tiempo de ejecución: el selector generado y la clase del
+   DOM quedaban distintos y la regla no aplicaba nunca. Portadas verbatim.
+   Fuente: assets/site.css líneas 910-928. */
+@layer components {
+  .split--invertido .split__media {
+    order: 2;
+  }
+  .split__media img {
+    width: 100%;
+    border-radius: var(--radius-md);
+  }
+  @media (max-width: 880px) {
+    .split--invertido .split__media {
+      order: 0;
+    }
   }
 }
