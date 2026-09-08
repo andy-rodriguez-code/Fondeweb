@@ -1568,3 +1568,17 @@
     }
   }
 }
+
+/* ---------- 22. Foto enmarcada de las filas visión/misión ----------
+   Racional (§4.4): el box-shadow lleva una función rgba() con comas dentro del
+   valor, que Tailwind no admite en una utilidad arbitraria. Radio y sombra se
+   portan verbatim de producción (medido el 2026-09-08 en /nosotros). */
+@layer components {
+  .foto-marco {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+}

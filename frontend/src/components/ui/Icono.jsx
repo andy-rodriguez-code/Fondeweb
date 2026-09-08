@@ -113,6 +113,42 @@ const iconos = {
       <path d="M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5M12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5" />
     </svg>
   ),
+
+  // Los cinco principios de /nosotros. No vienen del clon: producción los
+  // ilustra con PNG propios que el cliente no entregó, así que se dibujan en
+  // el mismo lenguaje del set (trazo 1.7, viewBox 24, remates redondeados).
+  honestidad: (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3 5 6v5.5c0 4.3 2.9 8.3 7 9.5 4.1-1.2 7-5.2 7-9.5V6l-7-3Z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  ),
+  democracia: (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="11" width="18" height="9" rx="1.5" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      <path d="M12 14v3" />
+    </svg>
+  ),
+  solidaridad: (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20s-6.5-4-6.5-8.5A3.5 3.5 0 0 1 12 9a3.5 3.5 0 0 1 6.5 2.5C18.5 16 12 20 12 20Z" />
+      <path d="M4 21c1.5-1.5 3-2 5-2M20 21c-1.5-1.5-3-2-5-2" />
+    </svg>
+  ),
+  equidad: (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 4v16M7 20h10" />
+      <path d="M4 8h16M12 4 4 8M12 4l8 4" />
+      <path d="M4 8 1.5 13a2.5 2.5 0 0 0 5 0L4 8ZM20 8l-2.5 5a2.5 2.5 0 0 0 5 0L20 8Z" />
+    </svg>
+  ),
+  transparencia: (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
+      <circle cx="12" cy="12" r="2.6" />
+    </svg>
+  ),
 }
 
 export default function Icono({ nombre, size = 18 }) {
