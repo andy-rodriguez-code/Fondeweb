@@ -31,5 +31,7 @@ export default function useSubmenu() {
     setAbierto((prev) => !prev)
   }, [])
 
-  return { abierto, alternar }
+  const cerrar = useCallback(() => setAbierto(false), [])
+
+  return { abierto, alternar, cerrar }
 }
