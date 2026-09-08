@@ -1,6 +1,5 @@
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
-import { Fragment } from 'react'
 import Rotulo from '../components/ui/Rotulo.jsx'
 import TituloDual from '../components/ui/TituloDual.jsx'
 import DatoContacto from '../components/ui/DatoContacto.jsx'
@@ -8,27 +7,35 @@ import Icono from '../components/ui/Icono.jsx'
 import Button from '../components/ui/Button.jsx'
 import { contacto } from '../data/navegacion.js'
 
-// contactenos — página de contacto (clon contactenos.html). Rejilla .contacto
-// con datos de atención a la izquierda (los tres celulares y el correo se
-// reutilizan del bloque Atención de navegacion.js) y formulario INERTE a la
-// derecha: markup completo del clon sin handlers, validación ni envío
-// (la Fase 3 lo cablea). Los estados del clon (data-error="no",
-// data-visible="no") se renderizan en su valor inicial; el CSS §4.4
-// (grupo 17) selecciona por esos atributos. Los literales del formulario no
-// tienen módulo P2 propio (mismo criterio que beneficios/nosotros).
-// data-od-id del clon: seccion-contacto (formulario-contacto).
+// contactenos — página de contacto. Rejilla .contacto con los datos de
+// atención a la izquierda (celular, correo, horario y sede, en el orden de
+// producción) y el formulario a la derecha, con sus mismas etiquetas,
+// marcadores y opciones de asunto (medido el 2026-09-08).
+//
+// El formulario sigue INERTE: markup completo sin handlers, validación ni
+// envío; lo cablea la Fase 3. Los estados (data-error="no", data-visible="no")
+// se renderizan en su valor inicial y el CSS §4.4 (grupo 17) selecciona por
+// ellos. Los literales no tienen módulo P2 propio (mismo criterio que
+// beneficios/nosotros). data-od-id: seccion-contacto (formulario-contacto).
 
 const ENCABEZADO = {
   entrada: 'Atendemos de forma presencial en Floridablanca y respondemos por teléfono y correo.',
 }
 
-const CELULARES = contacto.celulares
-const CORREO = contacto.correo
+// Los cuatro datos de atención, en el orden de producción (medido el
+// 2026-09-08): celular, correo, horario y sede. Producción publica un solo
+// celular en esta página.
+const DATOS = [
+  { icono: 'telefono', titulo: 'Celular', enlace: contacto.celulares[2] },
+  { icono: 'correo', titulo: 'Correo', enlace: contacto.correo },
+  { icono: 'reloj', titulo: 'Horario de atención', texto: contacto.horario },
+  { icono: 'pin', titulo: 'Sede', texto: contacto.sedeCorta },
+]
 
-const ASUNTOS = ['Afiliación', 'Créditos', 'Ahorro', 'Convenios', 'Estado de cuenta', 'Otro']
+const ASUNTOS = ['Afiliación', 'Créditos', 'Ahorro', 'Convenios', 'Estados de cuenta', 'Otro']
 
 const FORMULARIO = {
-  titulo: 'Escribinos',
+  titulo: 'Dejanos tus datos, pronto te responderemos',
   aviso: {
     antes: 'Listo. Este formulario es una demostración del prototipo: no envía datos a ningún servidor. Escribinos a ',
     enlace: { etiqueta: 'fondo.empleados@foscal.com.co', href: 'mailto:fondo.empleados@foscal.com.co' },
@@ -63,26 +70,15 @@ export default function ContactenosPage() {
               </TituloDual>
             </div>
             <div className="mt-[26px]">
-              <DatoContacto icono="telefono" titulo="Celulares">
-                {CELULARES.map((celular, i) => (
-                  <Fragment key={celular.href}>
-                    {i > 0 ? ' · ' : ''}
-                    <a href={celular.href}>{celular.etiqueta}</a>
-                  </Fragment>
-                ))}
-              </DatoContacto>
-              <DatoContacto icono="telefono" titulo="Fijo">
-                {contacto.fijo}
-              </DatoContacto>
-              <DatoContacto icono="correo" titulo="Correo">
-                <a href={CORREO.href}>{CORREO.etiqueta}</a>
-              </DatoContacto>
-              <DatoContacto icono="reloj" titulo="Horario de atención">
-                {contacto.horario}
-              </DatoContacto>
-              <DatoContacto icono="pin" titulo="Sede">
-                {contacto.sede}
-              </DatoContacto>
+              {DATOS.map((dato) => (
+                <DatoContacto icono={dato.icono} titulo={dato.titulo} key={dato.titulo}>
+                  {dato.enlace ? (
+                    <a href={dato.enlace.href}>{dato.enlace.etiqueta}</a>
+                  ) : (
+                    dato.texto
+                  )}
+                </DatoContacto>
+              ))}
             </div>
           </div>
 
@@ -95,28 +91,29 @@ export default function ContactenosPage() {
                 {FORMULARIO.aviso.despues}
               </span>
             </div>
-            <h2 className="text-[1.3rem]">{FORMULARIO.titulo}</h2>
+            <h2 className="text-[1.3rem] text-center">{FORMULARIO.titulo}</h2>
             <div className="campo" data-error="no">
-              <label htmlFor="c-nombre">Nombre completo *</label>
-              <input id="c-nombre" name="nombre" type="text" required autoComplete="name" placeholder="María Gómez" />
+              <label htmlFor="c-nombre">Nombre completo</label>
+              <input id="c-nombre" name="nombre" type="text" required autoComplete="name" placeholder="Ingresa tu nombre" />
               <span className="campo__error">Ingresá tu nombre completo.</span>
             </div>
             <div className="campo" data-error="no">
-              <label htmlFor="c-correo">Correo electrónico *</label>
-              <input id="c-correo" name="correo" type="email" required autoComplete="email" placeholder="nombre@correo.com" />
+              <label htmlFor="c-correo">Correo electrónico</label>
+              <input id="c-correo" name="correo" type="email" required autoComplete="email" placeholder="Email" />
               <span className="campo__error">Ingresá un correo electrónico válido.</span>
             </div>
             <div className="campo" data-error="no">
               <label htmlFor="c-telefono">Teléfono</label>
-              <input id="c-telefono" name="telefono" type="tel" autoComplete="tel" placeholder="300 000 0000" />
+              <input id="c-telefono" name="telefono" type="tel" required autoComplete="tel" placeholder="Ingresa tu teléfono" />
+              <span className="campo__error">Ingresá tu teléfono.</span>
             </div>
             <div className="campo" data-error="no">
-              <label htmlFor="c-asunto">Asunto *</label>
+              <label htmlFor="c-asunto">Asunto</label>
               {/* Sin defaultValue: React añadiría selected al primer option,
                   atributo que el clon no tiene (el navegador ya selecciona la
                   primera opción). */}
               <select id="c-asunto" name="asunto" required>
-                <option value="">Elegí un asunto</option>
+                <option value="">Selecciona un asunto</option>
                 {ASUNTOS.map((asunto) => (
                   <option value={asunto} key={asunto}>
                     {asunto}
@@ -126,8 +123,10 @@ export default function ContactenosPage() {
               <span className="campo__error">Seleccioná un asunto.</span>
             </div>
             <div className="campo" data-error="no">
-              <label htmlFor="c-mensaje">Mensaje *</label>
-              <textarea id="c-mensaje" name="mensaje" required placeholder="Contanos en qué te podemos ayudar."></textarea>
+              <label htmlFor="c-mensaje">Mensaje</label>
+              {/* Sin `required`: producción deja el mensaje opcional y exige
+                  los otros cuatro campos. */}
+              <textarea id="c-mensaje" name="mensaje" placeholder="Mensaje"></textarea>
               <span className="campo__error">Escribí tu mensaje.</span>
             </div>
             <Button type="submit" className="w-full">

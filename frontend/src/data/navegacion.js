@@ -104,7 +104,9 @@ export const contacto = {
   },
   fijo: '67008000 ext 2167',
   sede: 'AP Floridablanca – Calle 155 A 23 09, frente a la Fundación Cardiovascular, junto a consulta externa – Nueva EPS.',
-  horario: 'Lunes a viernes: 7:30 a. m. – 12:00 m. y 1:00 p. m. – 5:00 p. m.',
+  // Versión corta, la que publica producción en Contáctenos y en el pie.
+  sedeCorta: 'Calle 155 A 23 09, frente a la Fundación Cardiovascular',
+  horario: 'Lunes a viernes: 8:00 a. m. – 12:00 m. y 1:00 p. m. – 5:00 p. m.',
   telefonos: ['304 4962328 · 302 2619797 · 317 4357685', 'Fijo: 67008000 ext 2167'],
   comoLlegar: { etiqueta: 'Cómo llegar', href: 'https://www.google.com/maps/search/?api=1&query=Calle+155A+%2323-09+Floridablanca+Santander' },
 }
