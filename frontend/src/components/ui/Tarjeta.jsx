@@ -5,6 +5,9 @@
 //   relleno="contacto" clamp(24px,3vw,34px)  (index "Dónde estamos")
 //   relleno="amplio"   clamp(26px,3vw,38px)  (ahorro / nosotros inline styles)
 // tono="tinta" reproduces the dark card (nosotros "Visión" inline styles).
+// El realce al pasar el cursor (borde primary-300, sombra y 2px hacia arriba)
+// aplica a toda tarjeta, no solo a las que son enlace: decisión del cliente
+// (2026-09-08) para unificar el comportamiento en todo el sitio.
 
 const RELLENOS = {
   base: 'p-[26px]',
@@ -27,11 +30,10 @@ export default function Tarjeta({ as, href, relleno = 'base', tono = '', pie, cl
   const clases =
     `tarjeta flex flex-col border rounded-md ` +
     `transition-[border-color,box-shadow,transform] duration-[180ms] ` +
+    `hover:border-primary-300 hover:shadow-low hover:-translate-y-0.5 ` +
     `[&_h3]:mb-2 [&_h4]:mb-2 [&_p]:text-[0.95rem] ` +
     `${RELLENOS[relleno] ?? RELLENOS.base} ${TONOS[tono] ?? TONOS['']} ` +
-    (esEnlace
-      ? 'no-underline text-inherit hover:border-primary-300 hover:shadow-low hover:-translate-y-0.5 hover:text-inherit '
-      : '') +
+    (esEnlace ? 'no-underline text-inherit hover:text-inherit ' : '') +
     className
   return (
     <Componente {...(esEnlace ? { href } : {})} className={clases.trim()} {...rest}>

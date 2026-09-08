@@ -105,6 +105,13 @@
     border-radius: var(--radius-md);
     background: var(--color-white);
     font-size: 0.97rem;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  }
+  /* Mismo realce que el resto de las tarjetas del sitio (2026-09-08). */
+  .requisitos li:hover {
+    border-color: var(--color-primary-300);
+    box-shadow: var(--shadow-low);
+    transform: translateY(-2px);
   }
   .requisitos li::before {
     content: counter(req, decimal-leading-zero);
@@ -811,6 +818,14 @@
     border-radius: var(--radius-md);
     background: var(--color-white);
     overflow: hidden;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  /* Mismo realce que el resto de las tarjetas, sin el desplazamiento vertical:
+     una fila abierta del acordeón mide bastante y moverla al pasar el cursor
+     desacomoda la lectura. */
+  .fila:hover {
+    border-color: var(--color-primary-300);
+    box-shadow: var(--shadow-low);
   }
   .fila__boton {
     width: 100%;
