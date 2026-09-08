@@ -8,11 +8,10 @@ import Rotulo from '../components/ui/Rotulo.jsx'
 import TituloDual from '../components/ui/TituloDual.jsx'
 import Acceso from '../components/ui/Acceso.jsx'
 import Cifra from '../components/ui/Cifra.jsx'
-import Tarjeta from '../components/ui/Tarjeta.jsx'
 import DatoContacto from '../components/ui/DatoContacto.jsx'
 import Button from '../components/ui/Button.jsx'
 import { creditos } from '../data/creditos.js'
-import { contacto } from '../data/navegacion.js'
+import { contacto, ubicacionInicio } from '../data/navegacion.js'
 
 // portada — página de inicio (clon index.html). Compone Portada + banda de
 // registro + Notifondo + accesos rápidos en tinta + líneas de crédito +
@@ -31,17 +30,29 @@ const PORTADA = {
     </>
   ),
   bajada: 'Conocé nuestra variedad de créditos, convenios y servicios que tenemos para ofrecerte.',
+  // Variantes para superficie oscura: el héroe pasó a llevar la fotografía real
+  // de producción, y las de fondo claro ('' y 'secundario') quedaban con
+  // contraste insuficiente sobre ella. Es el mismo par que usa producción:
+  // botón blanco sólido y botón de contorno blanco.
+  // `clase` achica el par en pantallas angostas para que quepan en un renglón:
+  // con el relleno y el cuerpo de texto por defecto suman 404px y el ancho útil
+  // a 390px es 350px. Va como utilidad en el botón y no en paridad.css porque
+  // las utilidades de Tailwind viven en una capa posterior y ganan siempre.
   acciones: [
-    { etiqueta: 'Conocé el fondo', to: '/nosotros', odId: 'cta-portada' },
-    { etiqueta: 'Ver líneas de crédito', href: '#lineas-de-credito', variante: 'secundario' },
+    {
+      etiqueta: 'Conocé el fondo',
+      to: '/nosotros',
+      variante: 'claro',
+      odId: 'cta-portada',
+      clase: 'max-[480px]:px-3 max-[480px]:text-[0.78rem] max-[480px]:whitespace-nowrap',
+    },
+    {
+      etiqueta: 'Ver líneas de crédito',
+      href: '#lineas-de-credito',
+      variante: 'fantasma',
+      clase: 'max-[480px]:px-3 max-[480px]:text-[0.78rem] max-[480px]:whitespace-nowrap',
+    },
   ],
-  laminas: [
-    { alt: 'Pieza de Fondefos: ganadores del ahorro Plan 100 de noviembre de 2025.' },
-    { alt: 'Pieza de Fondefos: sorteo Mercamil de noviembre.' },
-    { alt: 'Pieza de Fondefos: convocatoria a los asociados del fondo.' },
-    { alt: 'Pieza de Fondefos: segunda convocatoria a los asociados del fondo.' },
-  ],
-  datoFlotante: { valor: '1.200+', etiqueta: 'Asociados' },
 }
 
 const BANDA_REGISTRO = {
@@ -73,17 +84,17 @@ const ENCABEZADO_LINEAS = {
   texto: 'Cada línea tiene su propia tasa, plazo y requisitos. Estos son los valores vigentes publicados por el fondo.',
 }
 
-// Orden visual del clon en la rejilla "Nueve líneas" (index.html): el array
-// de creditos.js (P2, solo lectura) tiene libre-inversión e impuestos en otro
-// orden; la página reproduce el orden de tarjetas del clon, que es el que
-// manda (misma clase de discrepancia que 9-vs-10 creditos, reconciliar en P9).
+// Orden visual de la rejilla "Nueve líneas". Manda producción, verificada el
+// 2026-09-08: recreación y turismo va antes que impuestos, y coincide con la
+// numeración de los iconos (5_recreacion_turismo, 6_impuestos). El array de
+// creditos.js (P2, solo lectura) trae otro orden.
 const ORDEN_LINEAS = [
   'crediaportes-10',
   'credito-de-confianza',
   'credito-de-consumo-por-bonos',
   'credito-de-libre-inversion',
-  'credito-de-impuestos',
   'credito-de-recreacion-y-turismo',
+  'credito-de-impuestos',
   'credito-educativo',
   'creditos-de-tesoreria',
   'tarjeta-express',
@@ -98,8 +109,6 @@ export default function PortadaPage() {
         titulo={PORTADA.titulo}
         bajada={PORTADA.bajada}
         acciones={PORTADA.acciones}
-        laminas={PORTADA.laminas}
-        datoFlotante={PORTADA.datoFlotante}
       />
 
       <Banda
@@ -115,10 +124,10 @@ export default function PortadaPage() {
 
       <Seccion tono="tinta" data-od-id="seccion-accesos">
         <div className="shell">
-          <div className="max-w-[58ch] mb-[34px]">
-            <Rotulo>Accesos rápidos</Rotulo>
-            <TituloDual>
-              Todo lo que el fondo <strong>hace por vos</strong>
+          <div className="max-w-[58ch] mb-[34px] max-md:mx-auto max-md:text-center">
+            <Rotulo tono="blanco">Accesos rápidos</Rotulo>
+            <TituloDual tono="naranja">
+              Todo lo que el fondo <strong>tiene para ti</strong>
             </TituloDual>
           </div>
           <div className="rejilla rejilla--4">
@@ -127,6 +136,7 @@ export default function PortadaPage() {
                 href={acceso.href}
                 icono={acceso.icono}
                 titulo={acceso.titulo}
+                tono="naranja"
                 data-od-id={acceso.odId}
                 key={acceso.odId}
               >
@@ -149,28 +159,54 @@ export default function PortadaPage() {
       <Seccion data-od-id="seccion-ubicacion">
         <Split>
           <div>
-            <Rotulo>Dónde estamos</Rotulo>
-            <TituloDual>
-              ¿Dónde estamos <strong>ubicados</strong>?
-            </TituloDual>
-            <p>Atendemos de manera presencial en la sede de Floridablanca, Santander.</p>
-            <Button href={contacto.comoLlegar.href} variant="secundario" target="_blank" rel="noopener">
-              Cómo llegar
-            </Button>
+            {/* Centrado solo en teléfono; en escritorio queda a la izquierda.
+                La lista de datos conserva su alineación en ambos casos, por eso
+                el text-center vive solo acá. El botón usa min-w y no px-*: el
+                relleno chocaría con el px-[26px] de la primitiva, y ese
+                conflicto lo resuelve el orden de la hoja, no el atributo. */}
+            <div className="max-md:text-center">
+              <Rotulo>Aquí nos encontrarás.</Rotulo>
+              <TituloDual>
+                ¿Dónde estamos <strong>ubicados</strong>?
+              </TituloDual>
+              <p className="max-md:mx-auto">
+                Atendemos de manera presencial en la sede de Floridablanca, Santander.
+              </p>
+            </div>
+            <div className="mt-6 mb-7" data-od-id="datos-ubicacion">
+              {ubicacionInicio.items.map((item) => (
+                <DatoContacto
+                  icono={item.icono}
+                  titulo={item.titulo}
+                  tituloEnMayuscula
+                  key={item.titulo}
+                >
+                  {item.texto}
+                </DatoContacto>
+              ))}
+            </div>
+            <div className="max-md:text-center">
+              <Button
+                href={contacto.comoLlegar.href}
+                variant="secundario"
+                target="_blank"
+                rel="noopener"
+                className="max-md:min-w-[260px]"
+              >
+                Cómo llegar
+              </Button>
+            </div>
           </div>
-          <Tarjeta relleno="contacto">
-            <DatoContacto icono="pin" titulo="Sede">
-              {contacto.sede}
-            </DatoContacto>
-            <DatoContacto icono="reloj" titulo="Horario de atención">
-              {contacto.horario}
-            </DatoContacto>
-            <DatoContacto icono="telefono" titulo="Teléfonos">
-              {contacto.telefonos[0]}
-              <br />
-              {contacto.telefonos[1]}
-            </DatoContacto>
-          </Tarjeta>
+          <div className="split__media" data-od-id="mapa-sede">
+            <iframe
+              className="w-full aspect-[4/3] rounded-md border border-border"
+              src={ubicacionInicio.mapa.src}
+              title={ubicacionInicio.mapa.titulo}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
         </Split>
       </Seccion>
     </>

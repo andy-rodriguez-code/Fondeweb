@@ -30,6 +30,7 @@ export default function CreditoPage({ slug }) {
         ]}
         titulo={datos.titulo}
         entrada={datos.entrada}
+        banner={slug}
       />
       <Seccion data-od-id="seccion-credito">
         <Credito datos={datos} />

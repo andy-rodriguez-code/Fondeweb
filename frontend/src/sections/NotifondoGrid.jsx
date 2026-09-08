@@ -17,11 +17,14 @@ const PAGINAS = import.meta.glob('../assets/images/fondefos.com.co/notifondo-*',
 
 const imagenDe = (src) => PAGINAS[`../assets/images/fondefos.com.co/${src.split('/').pop()}`]
 
+// `centrado` centra el encabezado (rótulo, título y bajada) solo en teléfono
+// (≤767px); en escritorio queda alineado a la izquierda. La rejilla no cambia.
+
 export default function NotifondoGrid({ datos = notifondo, encabezado, ...rest }) {
   const { rotulo, titulo, texto } = encabezado ?? datos.encabezado
   return (
     <div className="shell">
-      <div className="max-w-[60ch] mb-[34px]">
+      <div className={`max-w-[60ch] mb-[34px]$ max-md:mx-auto max-md:text-center`}>
         <Rotulo>{rotulo}</Rotulo>
         <TituloDual>
           {titulo.inicio}

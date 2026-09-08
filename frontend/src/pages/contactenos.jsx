@@ -6,7 +6,7 @@ import TituloDual from '../components/ui/TituloDual.jsx'
 import DatoContacto from '../components/ui/DatoContacto.jsx'
 import Icono from '../components/ui/Icono.jsx'
 import Button from '../components/ui/Button.jsx'
-import { contacto, pie } from '../data/navegacion.js'
+import { contacto } from '../data/navegacion.js'
 
 // contactenos — página de contacto (clon contactenos.html). Rejilla .contacto
 // con datos de atención a la izquierda (los tres celulares y el correo se
@@ -22,8 +22,8 @@ const ENCABEZADO = {
   entrada: 'Atendemos de forma presencial en Floridablanca y respondemos por teléfono y correo.',
 }
 
-const CELULARES = pie.columnas[2].enlaces.slice(0, 3)
-const CORREO = pie.columnas[2].enlaces[3]
+const CELULARES = contacto.celulares
+const CORREO = contacto.correo
 
 const ASUNTOS = ['Afiliación', 'Créditos', 'Ahorro', 'Convenios', 'Estado de cuenta', 'Otro']
 
@@ -48,15 +48,20 @@ export default function ContactenosPage() {
         ]}
         titulo="Contáctenos"
         entrada={ENCABEZADO.entrada}
+        banner="contactenos"
       />
 
       <Seccion data-od-id="seccion-contacto">
         <div className="shell contacto">
           <div>
-            <Rotulo>Datos de atención</Rotulo>
-            <TituloDual>
-              Hablemos <strong>directo</strong>
-            </TituloDual>
+            {/* Solo el encabezado se centra en teléfono: los datos de contacto
+                y el formulario conservan su alineación. */}
+            <div className="max-md:text-center">
+              <Rotulo>Datos de atención</Rotulo>
+              <TituloDual>
+                Hablemos <strong>directo</strong>
+              </TituloDual>
+            </div>
             <div className="mt-[26px]">
               <DatoContacto icono="telefono" titulo="Celulares">
                 {CELULARES.map((celular, i) => (
@@ -67,7 +72,7 @@ export default function ContactenosPage() {
                 ))}
               </DatoContacto>
               <DatoContacto icono="telefono" titulo="Fijo">
-                67008000 ext 2167
+                {contacto.fijo}
               </DatoContacto>
               <DatoContacto icono="correo" titulo="Correo">
                 <a href={CORREO.href}>{CORREO.etiqueta}</a>

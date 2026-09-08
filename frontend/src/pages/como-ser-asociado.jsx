@@ -90,11 +90,12 @@ export default function ComoSerAsociadoPage() {
         ]}
         titulo="Cómo ser asociado"
         entrada={ENCABEZADO.entrada}
+        banner="como-ser-asociado"
       />
 
       <Seccion data-od-id="seccion-pasos">
         <Split>
-          <div>
+          <div className="max-md:text-center">
             <Rotulo>{TRAMITE.rotulo}</Rotulo>
             <TituloDual>{TRAMITE.titulo}</TituloDual>
             <p>{TRAMITE.texto}</p>
@@ -127,7 +128,7 @@ export default function ComoSerAsociadoPage() {
 
       <Seccion tono="bright" data-od-id="seccion-documentos">
         <div className="shell">
-          <div className="max-w-[56ch] mb-[30px]">
+          <div className="max-w-[56ch] mb-[30px] max-md:mx-auto max-md:text-center">
             <Rotulo>Documentos</Rotulo>
             <TituloDual>
               Lo que tenés que <strong>llevar</strong>

@@ -21,6 +21,7 @@ export default function PreguntasFrecuentesPage() {
         ]}
         titulo="Preguntas frecuentes"
         entrada={faq.entrada}
+        banner="preguntas-frecuentes"
       />
 
       <Seccion data-od-id="seccion-faq">

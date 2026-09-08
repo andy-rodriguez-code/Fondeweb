@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import Icono from '../ui/Icono.jsx'
 import { marca, pie } from '../../data/navegacion.js'
-import logotipo from '../../assets/images/fondefos.com.co/cropped-fondefos_logo-300x116-2546eaee42.webp'
+import logotipo from '../../assets/images/banner/Logo-Fondefos-blanco.png'
 
 // Footer — clone .pie (data-od-id="pie"), byte-identical across all 18 pages
 // (verified: diff of the footer block between index.html and ahorro.html is
@@ -21,9 +21,11 @@ export default function Footer() {
       <div className="shell">
         <div className="pie__rejilla">
           <div>
-            <img className="pie__logo" src={logotipo} width="300" height="116" alt={marca.alt} />
+            <img className="pie__logo" src={logotipo} width="295" height="61" alt={marca.alt} />
+            <h4>{pie.tituloUbicacion}</h4>
             <p>{pie.direccion}</p>
-            <p className="mt-3">{pie.horario}</p>
+            <h4 className="mt-5">{pie.tituloHorario}</h4>
+            <p>{pie.horario}</p>
           </div>
           {pie.columnas.map((columna) => (
             <div key={columna.titulo}>
@@ -44,7 +46,10 @@ export default function Footer() {
             </div>
           ))}
         </div>
-        <p className="max-w-[70ch]">{pie.proteccion}</p>
+        {/* Sin max-width: el aviso de la Ley 1581 va en un solo renglón en
+            escritorio. En teléfono se parte solo (forzarlo con nowrap metería
+            scroll horizontal), y ahí va centrado y un punto más chico. */}
+        <p className="max-md:text-center max-md:text-[0.78rem]">{pie.proteccion}</p>
         <div className="pie__legal">
           <span>{pie.legal}</span>
           <div className="redes">

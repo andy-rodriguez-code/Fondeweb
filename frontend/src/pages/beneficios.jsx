@@ -3,10 +3,8 @@ import Seccion from '../sections/Seccion.jsx'
 import Banda from '../sections/Banda.jsx'
 import Tarjeta from '../components/ui/Tarjeta.jsx'
 import Etiqueta from '../components/ui/Etiqueta.jsx'
-import iconoBeneficios from '../assets/images/content/icono-beneficios.jpg'
-
 // beneficios — página de beneficios (clon beneficios.html). Banner interior
-// con imagen de regalo a la derecha + rejilla--2 de 6 tarjetas numeradas +
+// con la fotografía del cliente + rejilla--2 de 6 tarjetas numeradas +
 // banda de cierre primaria. Los literales de las 6 tarjetas no tienen módulo
 // P2 propio (la especificación exige módulos solo para líneas/faq/ahorro/
 // convenios/notifondo/navegación), así que viven aquí como constantes
@@ -72,16 +70,8 @@ export default function BeneficiosPage() {
         ]}
         titulo="Beneficios"
         entrada={ENCABEZADO.entrada}
-      >
-        <img
-          src={iconoBeneficios}
-          width="1024"
-          height="1024"
-          className="w-[min(180px,42vw)] ml-auto rounded-md"
-          loading="lazy"
-          alt="Icono de regalo usado por Fondefos para identificar la sección de beneficios."
-        />
-      </EncabezadoPagina>
+        banner="beneficios"
+      />
 
       <Seccion data-od-id="seccion-beneficios">
         <div className="shell">

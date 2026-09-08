@@ -54,15 +54,20 @@ export default function EstadoDeCuentaPage() {
         ]}
         titulo="Estado de cuenta"
         entrada={ENCABEZADO.entrada}
+        banner="estado-de-cuenta"
       />
 
       <Seccion data-od-id="seccion-extracto">
         <Split>
           <div>
-            <Rotulo>Primer ingreso</Rotulo>
-            <TituloDual>
-              Consultá tu extracto <strong>¡aquí!</strong>
-            </TituloDual>
+            {/* Solo el encabezado se centra en teléfono: la lista numerada de
+                pasos conserva su alineación. */}
+            <div className="max-md:text-center">
+              <Rotulo>Primer ingreso</Rotulo>
+              <TituloDual>
+                Consultá tu extracto <strong>¡aquí!</strong>
+              </TituloDual>
+            </div>
             <ListaRequisitos items={PASOS} className="mt-6" />
           </div>
           <Tarjeta relleno="amplio" tono="tinta">

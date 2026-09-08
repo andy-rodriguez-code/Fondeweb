@@ -35,6 +35,8 @@ export default function ConveniosPage() {
         ]}
         titulo="Convenios"
         entrada={ENCABEZADO.entrada}
+        banner="convenios"
+        debajo
       >
         <div className="cifras">
           {ENCABEZADO.cifras.map((cifra) => (

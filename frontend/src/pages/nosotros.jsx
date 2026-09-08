@@ -81,6 +81,8 @@ export default function NosotrosPage() {
         ]}
         titulo="Nosotros"
         entrada={ENCABEZADO.entrada}
+        banner="nosotros"
+        debajo
       >
         <div className="cifras">
           {ENCABEZADO.cifras.map((cifra) => (
@@ -91,12 +93,12 @@ export default function NosotrosPage() {
 
       <Seccion data-od-id="seccion-vision-mision">
         <Split>
-          <Tarjeta relleno="amplio" tono="tinta">
+          <Tarjeta relleno="amplio" tono="tinta" className="max-md:text-center">
             <Rotulo tono="claro">{VISION.rotulo}</Rotulo>
             <h2>{VISION.titulo}</h2>
             <p>{VISION.texto}</p>
           </Tarjeta>
-          <div>
+          <div className="max-md:text-center">
             <Rotulo>{MISION.rotulo}</Rotulo>
             <TituloDual>{MISION.titulo}</TituloDual>
             <p>{MISION.texto}</p>
@@ -106,7 +108,7 @@ export default function NosotrosPage() {
 
       <Seccion tono="bright" data-od-id="seccion-principios">
         <div className="shell">
-          <div className="max-w-[56ch] mb-8">
+          <div className="max-w-[56ch] mb-8 max-md:mx-auto max-md:text-center">
             <Rotulo>Principios</Rotulo>
             <TituloDual>
               Cinco principios que <strong>ordenan cada decisión</strong>
@@ -130,7 +132,7 @@ export default function NosotrosPage() {
               <img src={notifondoPortada} width="819" height="1024" loading="lazy" alt={OBJETIVOS.alt} />
             </MarcoOffset>
           </div>
-          <div>
+          <div className="max-md:text-center">
             <Rotulo>{OBJETIVOS.rotulo}</Rotulo>
             <TituloDual>{OBJETIVOS.titulo}</TituloDual>
             {OBJETIVOS.parrafos.map((parrafo) => (

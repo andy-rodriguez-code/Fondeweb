@@ -14,7 +14,9 @@ export const marca = {
 export const utilidad = [
   { etiqueta: '304 4962328', href: 'tel:+573044962328' },
   { etiqueta: 'fondo.empleados@foscal.com.co', href: 'mailto:fondo.empleados@foscal.com.co' },
-  { etiqueta: 'Consultar mi extracto', href: 'estado-de-cuenta.html', slug: '/estado-de-cuenta' },
+  // Apunta al portal transaccional del fondo, fuera de este sitio. La página
+  // interna /estado-de-cuenta sigue existiendo y se llega a ella por el menú.
+  { etiqueta: 'Consultar mi extracto', href: 'https://fondefos.sflfintech.com/administrador/componentes/index.php' },
 ]
 
 export const servicios = [
@@ -43,8 +45,10 @@ export const principal = [
 ]
 
 export const pie = {
-  direccion: 'AP Floridablanca – Calle 155 A 23 09, frente a la Fundación Cardiovascular, junto a consulta externa – Nueva EPS.',
-  horario: 'Lunes a viernes: 7:30 a. m. – 12:00 m. y 1:00 p. m. – 5:00 p. m.',
+  tituloUbicacion: 'Estamos ubicados',
+  direccion: 'Calle 155 A 23 09, frente a la Fundación Cardiovascular',
+  tituloHorario: 'Horarios de atención',
+  horario: 'Lunes a viernes: 8:30 a. m. – 12:00 m. y 1:00 p. m. – 5:00 p. m.',
   columnas: [
     {
       titulo: 'Servicios',
@@ -71,8 +75,6 @@ export const pie = {
     {
       titulo: 'Atención',
       enlaces: [
-        { etiqueta: '304 4962328', href: 'tel:+573044962328' },
-        { etiqueta: '302 2619797', href: 'tel:+573022619797' },
         { etiqueta: '317 4357685', href: 'tel:+573174357685' },
         { etiqueta: 'fondo.empleados@foscal.com.co', href: 'mailto:fondo.empleados@foscal.com.co' },
       ],
@@ -87,10 +89,55 @@ export const pie = {
 }
 
 export const contacto = {
+  // Teléfonos y correo propios, no derivados de las columnas del pie: el pie
+  // dejó de listar dos de los celulares (2026-09-08) y la página de contacto
+  // los sigue mostrando. Antes contactenos.jsx los tomaba por posición desde
+  // `pie.columnas[2].enlaces`, y recortar esa lista la dejaba sin renderizar.
+  celulares: [
+    { etiqueta: '304 4962328', href: 'tel:+573044962328' },
+    { etiqueta: '302 2619797', href: 'tel:+573022619797' },
+    { etiqueta: '317 4357685', href: 'tel:+573174357685' },
+  ],
+  correo: {
+    etiqueta: 'fondo.empleados@foscal.com.co',
+    href: 'mailto:fondo.empleados@foscal.com.co',
+  },
+  fijo: '67008000 ext 2167',
   sede: 'AP Floridablanca – Calle 155 A 23 09, frente a la Fundación Cardiovascular, junto a consulta externa – Nueva EPS.',
   horario: 'Lunes a viernes: 7:30 a. m. – 12:00 m. y 1:00 p. m. – 5:00 p. m.',
   telefonos: ['304 4962328 · 302 2619797 · 317 4357685', 'Fijo: 67008000 ext 2167'],
   comoLlegar: { etiqueta: 'Cómo llegar', href: 'https://www.google.com/maps/search/?api=1&query=Calle+155A+%2323-09+Floridablanca+Santander' },
+}
+
+// Bloque "Aquí nos encontrarás" de la portada. Va aparte de `contacto` a
+// propósito: la página de contacto sigue mostrando los tres celulares y el
+// fijo, mientras que la portada muestra solo el número que pidió el cliente.
+// Los títulos se escriben en minúscula y la mayúscula la aplica el CSS, para
+// que el texto siga siendo legible en un lector de pantalla.
+export const ubicacionInicio = {
+  items: [
+    {
+      icono: 'pin',
+      titulo: 'Sede',
+      texto: 'Calle 155 A 23 09, frente a la Fundación Cardiovascular',
+    },
+    {
+      icono: 'reloj',
+      titulo: 'Horario de atención',
+      texto: 'Lunes a viernes: 8:00 a. m. – 12:00 m. y 1:00 p. m. – 5:00 p. m.',
+    },
+    {
+      icono: 'telefono',
+      titulo: 'Teléfono',
+      texto: '317 4357685',
+    },
+  ],
+  // `output=embed` sirve el mapa sin clave de API. La consulta es la misma del
+  // enlace "Cómo llegar" que entregó el cliente.
+  mapa: {
+    src: 'https://www.google.com/maps?q=Calle+155A+%2323-09+Floridablanca+Santander&output=embed',
+    titulo: 'Mapa de la sede de Fondefos en Floridablanca, Santander',
+  },
 }
 
 export default principal

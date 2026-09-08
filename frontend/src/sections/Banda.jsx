@@ -9,16 +9,25 @@ import BotonCta from './BotonCta.jsx'
 // variante 'fantasma' por defecto (el caso común del clon; index usa
 // 'claro'). El slot `children` permite CTA compuestos fuera del patrón.
 
+// En teléfono (≤767px) la banda siempre apila título, texto y CTA en una
+// columna centrada; en escritorio conserva la fila con el CTA a la derecha.
+// Era una opción de la portada y pasó a ser el comportamiento de todo el sitio
+// por decisión del cliente (2026-09-08).
+
 export default function Banda({ primario = false, titulo, texto, accion, children, ...rest }) {
   const clases =
     `banda py-[clamp(34px,4vw,52px)] text-white ` +
     (primario ? 'banda--primario bg-primary ' : 'bg-success ') +
     `[&_h2]:text-white [&_h2]:m-0 [&_h2]:max-w-[40ch] [&_h2]:text-[clamp(1.25rem,1rem+1vw,1.7rem)] ` +
     `[&_h3]:text-white [&_h3]:m-0 [&_h3]:max-w-[40ch] [&_h3]:text-[clamp(1.25rem,1rem+1vw,1.7rem)] ` +
-    `[&_p]:text-[rgba(255,255,255,0.88)] [&_p]:mt-2 [&_p]:mb-0 [&_p]:max-w-[52ch]`
+    `[&_p]:text-[rgba(255,255,255,0.88)] [&_p]:mt-2 [&_p]:mb-0 [&_p]:max-w-[52ch]` +
+    ' max-md:[&_h2]:mx-auto max-md:[&_h3]:mx-auto max-md:[&_p]:mx-auto max-md:text-center'
+  const fila =
+    'shell banda__fila flex items-center justify-between gap-7 flex-wrap ' +
+    'max-md:flex-col max-md:items-center max-md:justify-center max-md:gap-5'
   return (
     <section className={clases} {...rest}>
-      <div className="shell banda__fila flex items-center justify-between gap-7 flex-wrap">
+      <div className={fila}>
         {titulo || texto ? (
           <div>
             {titulo ? <h2>{titulo}</h2> : null}

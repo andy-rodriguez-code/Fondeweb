@@ -1,10 +1,11 @@
+import { useEffect } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import Icono from '../ui/Icono.jsx'
 import useCabeceraFija from '../../hooks/useCabeceraFija.js'
 import useMenuMovil from '../../hooks/useMenuMovil.js'
 import useSubmenu from '../../hooks/useSubmenu.js'
 import { marca, principal, servicios } from '../../data/navegacion.js'
-import logotipo from '../../assets/images/fondefos.com.co/cropped-fondefos_logo-300x116-2546eaee42.webp'
+import logotipo from '../../assets/images/banner/Logo-Fondefos-sin-fondo.png'
 
 // Header — clone .cabecera (data-od-id="cabecera"): marca + hamburguesa +
 // nav (8 plain links + "Servicios" trigger with 10-link panel).
@@ -32,8 +33,21 @@ export default function Header() {
   const { pathname } = useLocation()
   const enServicio = SLUGS_SERVICIOS.includes(pathname)
   const fijo = useCabeceraFija()
-  const { abierto: menuAbierto, alternar: alternarMenu } = useMenuMovil()
-  const { abierto: submenuAbierto, alternar: alternarSubmenu } = useSubmenu()
+  const { abierto: menuAbierto, alternar: alternarMenu, cerrar: cerrarMenu } = useMenuMovil()
+  const { abierto: submenuAbierto, alternar: alternarSubmenu, cerrar: cerrarSubmenu } = useSubmenu()
+
+  // Al navegar se repliegan el panel móvil y el submenú. El clic en el enlace
+  // ya los cierra; este efecto cubre los casos donde la ruta cambia sin pasar
+  // por ellos: atrás/adelante del navegador o una redirección.
+  useEffect(() => {
+    cerrarMenu()
+    cerrarSubmenu()
+  }, [pathname, cerrarMenu, cerrarSubmenu])
+
+  const alNavegar = () => {
+    cerrarMenu()
+    cerrarSubmenu()
+  }
   return (
     <header
       className="cabecera"
@@ -43,7 +57,7 @@ export default function Header() {
     >
       <div className="shell cabecera__fila">
         <Link className="marca" to="/" data-od-id="marca" discover="none">
-          <img src={logotipo} width="300" height="116" alt={marca.alt} />
+          <img src={logotipo} width="295" height="61" alt={marca.alt} />
         </Link>
         <button
           type="button"
@@ -75,6 +89,7 @@ export default function Header() {
                       to={servicio.slug}
                       discover="none"
                       className={() => undefined}
+                      onClick={alNavegar}
                     >
                       {servicio.etiqueta}
                     </NavLink>
@@ -88,6 +103,7 @@ export default function Header() {
                 to={item.slug}
                 end={item.slug === '/'}
                 discover="none"
+                onClick={alNavegar}
               >
                 {item.etiqueta}
               </NavLink>

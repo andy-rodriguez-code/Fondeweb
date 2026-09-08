@@ -45,102 +45,11 @@
   }
 }
 
-/* ---------- 2. Carrusel de la portada ----------
-   Racional (§4.4): el estado visible depende de [data-activa="si"] y de una
-   transición de opacidad entre láminas absolutamente posicionadas; las
-   utilidades no cubren la coreografía completa ni el estado por atributo.
-   Los hooks de Fase 2 (useCarrusel) reflejan estos mismos atributos, así la
-   paridad CSS se mantiene sin reescritura.
-   Fuente: assets/site.css líneas 593-679. */
-@layer components {
-  .carrusel {
-    position: relative;
-  }
-  .carrusel__pista {
-    position: relative;
-  }
-  /* Las piezas son contenido, no fondo: se muestran enteras, sin recorte.
-     Las cuatro comparten proporción 768×960, así que la altura no salta. */
-  .carrusel__lamina {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-  }
-  .carrusel__lamina[data-activa="si"] {
-    position: relative;
-    opacity: 1;
-  }
-  .carrusel__lamina img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 768 / 960;
-    object-fit: contain;
-    background: var(--color-white);
-  }
-  .carrusel__nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    border: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.94);
-    color: var(--color-primary-900);
-    box-shadow: var(--shadow-low);
-    cursor: pointer;
-    transition: background-color 0.16s;
-    z-index: 3;
-  }
-  .carrusel__nav:hover {
-    background: var(--color-white);
-    color: var(--color-primary);
-  }
-  .carrusel__nav--prev {
-    left: 12px;
-  }
-  .carrusel__nav--sig {
-    right: 12px;
-  }
-  .carrusel__puntos {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 14px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    z-index: 3;
-  }
-  .carrusel__punto {
-    width: 9px;
-    height: 9px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.55);
-    box-shadow: 0 0 0 1px rgba(21, 34, 56, 0.25);
-    cursor: pointer;
-  }
-  .carrusel__punto[aria-current="true"] {
-    width: 26px;
-    border-radius: var(--radius-pill);
-    background: var(--color-accent);
-  }
-
-  /* En pantallas chicas la píldora flotante vive abajo a la izquierda; se alinean
-     los puntos a la derecha para que no se pisen. */
-  @media (max-width: 560px) {
-    .carrusel__puntos {
-      left: auto;
-      right: 18px;
-      justify-content: flex-end;
-    }
-  }
-}
+/* ---------- 2. (libre) ----------
+   El grupo del carrusel de portada se retiró el 2026-09-08 junto con el
+   carrusel del héroe: producción no lo tiene y tapaba la fotografía. Se
+   conserva el número de grupo para no renumerar las referencias de los
+   comentarios del resto del archivo. Historial desde el commit 15501a7. */
 
 /* ---------- 3. Banner de página interior: mask-image ----------
    Racional (§4.4): Tailwind no expresa la máscara radial que funde los
@@ -305,6 +214,18 @@
     align-items: center;
     gap: 22px;
     flex-wrap: wrap;
+  }
+
+  /* Móvil: fuera el teléfono y el correo, y el extracto centrado en la barra.
+     El centrado vertical ya lo daba `align-items: center` con el min-height de
+     40px; acá se agrega el horizontal. */
+  @media (max-width: 767px) {
+    .utilidad__grupo--contacto {
+      display: none;
+    }
+    .utilidad__fila {
+      justify-content: center;
+    }
   }
 
   .cabecera {
@@ -517,14 +438,23 @@
       grid-template-columns: 1.5fr repeat(3, minmax(0, 1fr));
     }
   }
+  /* El logo del pie es la versión blanca sobre transparente (2026-09-08): ya
+     no lleva la pastilla blanca de fondo que necesitaba el logotipo a color,
+     que lo dejaba invisible. Sin padding ni fondo, y con la proporción real
+     295×61 del archivo. */
   .pie img.pie__logo {
+    display: block;
     width: 168px;
-    height: 65px;
+    height: auto;
     object-fit: contain;
-    background: var(--color-white);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
     margin-bottom: 18px;
+  }
+  /* Solo en teléfono el logo se centra dentro de su columna; el texto de la
+     columna sigue alineado a la izquierda. */
+  @media (max-width: 767px) {
+    .pie img.pie__logo {
+      margin-inline: auto;
+    }
   }
   .pie h4 {
     color: var(--color-white);
@@ -814,34 +744,8 @@
     }
   }
 
-  .dato-flotante {
-    position: absolute;
-    left: 18px;
-    bottom: 18px;
-    z-index: 4;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 18px;
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(8px);
-    box-shadow: var(--shadow-high);
-  }
-  .dato-flotante strong {
-    display: block;
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 1.35rem;
-    color: var(--color-primary);
-    line-height: 1;
-  }
-  .dato-flotante span {
-    font-size: 0.76rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--color-muted);
-  }
+  /* La píldora .dato-flotante se retiró junto con el carrusel del héroe
+     (2026-09-08): era su único consumidor. Historial desde el commit 15501a7. */
 }
 
 /* ---------- 12. Rejilla y cifras: gramática de contenedores ----------
@@ -1483,6 +1387,169 @@
   @media (max-width: 880px) {
     .split--invertido .split__media {
       order: 0;
+    }
+  }
+}
+
+/* ---------- 20. Encabezado con foto real ----------
+   Racional (§4.4): variante del grupo 9 para las 16 páginas que en producción
+   llevan una fotografía de fondo. Se porta la receta medida en
+   fondefos.com.co el 2026-09-08: la foto a `cover` centrada, y encima un velo
+   `linear-gradient(266deg, rgba(1,80,156,0) 0%, #10305f 100%)` al 89% de
+   opacidad, que son los tokens --color-primary y --color-primary-900.
+   Alturas de producción: 720px en escritorio, 351px entre 768 y 1024, y 720px
+   en móvil salvo Nosotros, que baja a 594px (atributo data-alto-movil).
+   La foto la aporta un <picture> en vez de dos background-image, para no
+   escribir URLs en un `style=` inline (guarda 9.4) y dejar la elección de
+   fuente al navegador. La máscara y el anillo decorativos del grupo 9 se
+   apagan acá: producción no los tiene y competirían con la fotografía. */
+@layer components {
+  .encabezado--foto {
+    min-height: 720px;
+    background: var(--color-primary-900);
+  }
+  .encabezado--foto::before,
+  .encabezado--foto::after {
+    display: none;
+  }
+  .banner-foto {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    display: block;
+  }
+  .banner-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
+  /* Velo: mismo ángulo, mismas paradas y misma opacidad que producción.
+     Sin z-index propio: dentro del contexto de apilado que crea .banner-foto
+     el ::after ya pinta encima del <img> por orden de árbol. */
+  .banner-foto::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.89;
+    background-image: linear-gradient(
+      266deg,
+      rgba(1, 80, 156, 0) 0%,
+      var(--color-primary-900) 100%
+    );
+  }
+
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .encabezado--foto {
+      min-height: 351px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    /* Mismo criterio que el héroe del inicio: en teléfono el contenido baja
+       dentro del banner en vez de quedar al medio.
+       Acá se ancla al borde inferior en vez de sumar relleno arriba: estos
+       banners llevan un bloque al costado (cifras en Nosotros, imagen en
+       Beneficios) que estira la fila, y con el bloque centrado no queda
+       espacio libre que repartir, así que el relleno superior no lo movía. */
+    /* Los 594px que producción usa en Nosotros se dejan de lado en teléfono:
+       nuestro banner muestra además las cifras, el contenido llena esa altura
+       y no queda margen para bajarlo. Con 720px, como el resto, sí entra. */
+    .encabezado--foto,
+    .encabezado--foto[data-alto-movil="594"] {
+      min-height: 720px;
+      align-items: flex-end;
+      padding-bottom: 110px;
+    }
+  }
+
+  /* Portada: misma receta que las páginas interiores, con la altura de
+     producción para el inicio (720px en escritorio y en móvil). La marca de
+     agua no se renderiza cuando hay foto (decisión en Portada.jsx).
+     `isolation: isolate` es imprescindible: sin contexto de apilado propio, el
+     <picture> en z-index -2 cae por detrás del fondo de la propia sección y no
+     se ve. El grupo 9 ya lo trae en .encabezado; .portada no.
+     Los colores de texto del grupo 10 asumen fondo claro, así que sobre la
+     fotografía se invierten igual que en el encabezado. */
+  .portada--foto {
+    min-height: 720px;
+    display: flex;
+    align-items: center;
+    isolation: isolate;
+    background: var(--color-primary-900);
+    color: var(--color-encabezado);
+  }
+  .portada--foto h1 {
+    color: var(--color-white);
+  }
+  .portada--foto .portada__bajada {
+    color: var(--color-encabezado-parrafo);
+  }
+  /* El color del rótulo lo pone el propio componente (Rotulo tono="blanco"):
+     una regla acá no ganaría, porque las utilidades de Tailwind viven en la
+     capa `utilities`, posterior a `components`, sin importar la especificidad. */
+
+  /* Héroe centrado: una sola columna con todo el bloque al eje. */
+  /* El centrado del héroe es solo para teléfono: en escritorio el bloque sigue
+     alineado a la izquierda, como estaba.
+     minmax(0, 1fr) y no 1fr: el mínimo automático de una pista `1fr` es
+     min-content, así que los botones en una sola línea estiraban la columna a
+     404px dentro de un contenedor de 350px y descentraban todo el héroe. */
+  @media (max-width: 767px) {
+    /* En teléfono el contenido baja dentro del banner en vez de quedar al
+       medio: el relleno superior corre el bloque centrado hacia abajo, y como
+       el centrado reparte el espacio libre del área de contenido, el
+       desplazamiento real es la mitad de lo que se agregue acá. */
+    .portada--foto {
+      padding-top: 230px;
+    }
+    .portada__rejilla--centrada {
+      grid-template-columns: minmax(0, 1fr);
+      justify-items: center;
+      text-align: center;
+    }
+    .portada__rejilla--centrada .portada__bajada {
+      margin-inline: auto;
+    }
+    .portada__rejilla--centrada .portada__acciones {
+      justify-content: center;
+    }
+  }
+  /* Los dos CTA del héroe en un solo renglón también en móvil. El achique del
+     botón se aplica como utilidad en el propio elemento (portada.jsx): desde
+     acá no se puede, porque las utilidades de Tailwind viven en una capa
+     posterior a `components` y ganan sin importar la especificidad. */
+  @media (max-width: 480px) {
+    .portada__rejilla--centrada .portada__acciones {
+      flex-wrap: nowrap;
+      gap: 10px;
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .portada--foto {
+      min-height: 351px;
+    }
+  }
+}
+
+/* ---------- 21. Centrado en teléfono ----------
+   Racional: en pantallas angostas los encabezados de sección van centrados en
+   todo el sitio (decisión del cliente, 2026-09-08). La mayoría se resuelve con
+   utilidades `max-md:` en cada componente; acá quedan las piezas que Tailwind
+   no alcanza desde el JSX porque son contenedores flex del clon o listas con
+   su propio eje.
+   Escritorio y tablet no cambian: todo vive dentro del media query. */
+@layer components {
+  @media (max-width: 767px) {
+    /* La miga es flex: text-align no la mueve. */
+    .encabezado .miga {
+      justify-content: center;
+    }
+    /* Las cifras del banner (nosotros, convenios) se alinean al eje. */
+    .encabezado .cifras {
+      justify-content: center;
+      text-align: center;
     }
   }
 }

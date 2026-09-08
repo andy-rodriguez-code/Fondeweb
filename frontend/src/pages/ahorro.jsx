@@ -26,6 +26,7 @@ export default function AhorroPage() {
         ]}
         titulo="Ahorro"
         entrada={ahorro.entrada}
+        banner="ahorro"
       />
 
       <Seccion data-od-id="seccion-ahorro">

@@ -3,10 +3,13 @@
 // expressed with Tailwind before: utilities (content:'' width/height/background).
 // tono="claro" reproduces the clone's tinta-section override
 // (.seccion--tinta .rotulo / nosotros inline #6fd9ef).
+// tono="blanco" es el blanco suave del banner (--color-encabezado): sobre una
+// fotografía el cian compite con la barra naranja del ::before.
 
 const TONOS = {
   '': 'text-interactive-ink',
   claro: 'text-interactive-bright',
+  blanco: 'text-encabezado',
 }
 
 export default function Rotulo({ tono = '', className = '', children }) {
