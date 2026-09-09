@@ -1943,3 +1943,379 @@
     }
   }
 }
+
+/* ---------- 26. Programa 100: formulario de inscripción ----------
+   Racional (§4.4): documento de una sola página con rejilla de 12 columnas,
+   grupos con cabecera propia y un pad de firma con estados (data-firmado,
+   data-error). Reutiliza los estilos de campo del grupo 17 — label, input,
+   select, foco y [data-error="si"] — y solo agrega lo que ese grupo no tiene:
+   el ancho por columnas, el prefijo de moneda y las firmas. */
+@layer components {
+  .registro {
+    max-width: 1024px;
+    margin-inline: auto;
+    padding: clamp(20px, 3vw, 34px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow: var(--shadow-low);
+  }
+
+  /* Cabecera del documento */
+  .registro__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 22px;
+    margin-bottom: 26px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .registro__logo {
+    height: 46px;
+    width: auto;
+  }
+  .registro__titulos h2 {
+    margin: 0;
+    font-size: clamp(1.4rem, 2.4vw, 1.75rem);
+    color: var(--color-primary);
+    line-height: 1.1;
+  }
+  .registro__titulos p {
+    margin: 2px 0 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.82rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .registro__consecutivo {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    padding: 9px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-bright);
+  }
+  .registro__consecutivo span {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .registro__consecutivo strong {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    color: var(--color-accent);
+  }
+  @media (max-width: 620px) {
+    .registro__cabecera {
+      justify-content: center;
+      text-align: center;
+    }
+    .registro__titulos {
+      width: 100%;
+    }
+  }
+
+  .registro__meta {
+    margin-bottom: 26px;
+  }
+
+  /* Grupos */
+  .registro__grupo {
+    margin-bottom: 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+  .registro__grupo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-bright);
+    font-size: 1.02rem;
+    color: var(--color-ink);
+  }
+  .registro__grupo-icono {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-low);
+    color: var(--color-primary);
+  }
+  .registro__nota {
+    margin-left: auto;
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+  }
+  .registro__grupo-cuerpo {
+    padding: 18px;
+  }
+  .registro__calculo {
+    margin: 14px 0 0;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+  }
+
+  /* Rejilla de campos: 12 columnas en escritorio, una sola en teléfono.
+     El gap sustituye al margen inferior que el grupo 17 da a .campo. */
+  .rejilla-campos {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .rejilla-campos .campo {
+    margin-bottom: 0;
+  }
+  /* En columnas angostas la etiqueta ocupa dos renglones y, sin esto, el campo
+     de al lado queda un renglón más arriba. Reservar el alto de dos líneas
+     alinea todos los recuadros de la fila. En teléfono no hace falta: cada
+     campo va solo, a ancho completo. */
+  @media (min-width: 621px) {
+    .rejilla-campos .campo > label {
+      min-height: 2.7em;
+    }
+  }
+  .rejilla-campos .campo[data-col='2'] {
+    grid-column: span 2;
+  }
+  .rejilla-campos .campo[data-col='3'] {
+    grid-column: span 3;
+  }
+  .rejilla-campos .campo[data-col='7'] {
+    grid-column: span 7;
+  }
+  .rejilla-campos .campo[data-col='4'] {
+    grid-column: span 4;
+  }
+  .rejilla-campos .campo[data-col='6'] {
+    grid-column: span 6;
+  }
+  .rejilla-campos .campo[data-col='8'] {
+    grid-column: span 8;
+  }
+  @media (max-width: 900px) {
+    .rejilla-campos {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .rejilla-campos .campo[data-col='8'],
+    .rejilla-campos .campo[data-col='7'],
+    .rejilla-campos .campo[data-col='6'] {
+      grid-column: span 6;
+    }
+    .rejilla-campos .campo[data-col='2'] {
+      grid-column: span 2;
+    }
+    .rejilla-campos .campo[data-col='4'] {
+      grid-column: span 3;
+    }
+  }
+  @media (max-width: 620px) {
+    .rejilla-campos {
+      grid-template-columns: 1fr;
+    }
+    .rejilla-campos .campo[data-col] {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* Campo de moneda: el signo va dentro del recuadro, sin desalinear el texto. */
+  .campo__moneda {
+    position: relative;
+  }
+  .campo__moneda span {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+  }
+  .campo__moneda input {
+    padding-left: 30px;
+  }
+  .campo input[readonly] {
+    background: var(--color-surface-bright);
+    color: var(--color-text);
+  }
+
+  /* Términos */
+  .registro__terminos {
+    margin-bottom: 24px;
+    padding: 18px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-bright);
+  }
+  .registro__terminos .registro__grupo-titulo {
+    padding: 0 0 12px;
+    background: none;
+  }
+  .registro__terminos ul {
+    list-style: disc;
+    margin: 16px 0 0;
+    padding-left: 20px;
+    display: grid;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--color-text);
+  }
+  .registro__terminos li::marker {
+    color: var(--color-accent);
+  }
+
+  .campo--check {
+    margin: 18px 0 0;
+  }
+  .campo--check label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .campo--check input {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    min-height: 0;
+    margin-top: 1px;
+    accent-color: var(--color-primary);
+  }
+  .campo--check[data-error='si'] label {
+    color: var(--color-error-ink);
+  }
+
+  /* Firmas */
+  .registro__firmas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(20px, 3vw, 40px);
+    align-items: end;
+  }
+  @media (max-width: 780px) {
+    .registro__firmas {
+      grid-template-columns: 1fr;
+    }
+  }
+  .firma {
+    margin-bottom: 0;
+  }
+  .firma__lienzo {
+    position: relative;
+    height: 128px;
+    border: 2px dashed var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    transition: border-color 0.16s, background-color 0.16s;
+  }
+  .firma__lienzo:hover {
+    background: var(--color-surface-bright);
+  }
+  .firma__lienzo canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-md);
+    /* Sin esto el gesto de firmar arrastra la página en teléfono. */
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .firma__pista {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    pointer-events: none;
+  }
+  .firma__lienzo[data-firmado='si'] {
+    border-style: solid;
+    border-color: var(--color-border);
+  }
+  .firma__lienzo[data-firmado='si'] .firma__pista {
+    display: none;
+  }
+  .campo.firma[data-error='si'] .firma__lienzo {
+    border-color: var(--color-error-strong);
+  }
+  .firma__pie {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .firma__rotulo {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .firma__limpiar {
+    border: 0;
+    background: none;
+    padding: 0;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    color: var(--color-primary);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .firma__limpiar:disabled {
+    color: var(--color-placeholder);
+    text-decoration: none;
+    cursor: default;
+  }
+  /* Las dos firmas que pone FONDEFOS: línea impresa, no editable. */
+  .firma--fondo {
+    text-align: center;
+  }
+  .firma__linea {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 64px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--color-border-strong);
+  }
+  .firma__linea span {
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--color-muted);
+  }
+
+  .registro__acciones {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 26px;
+  }
+  @media (max-width: 620px) {
+    .registro__acciones .btn {
+      width: 100%;
+    }
+  }
+}

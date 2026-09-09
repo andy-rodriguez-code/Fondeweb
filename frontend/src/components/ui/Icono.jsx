@@ -114,6 +114,14 @@ const iconos = {
     </svg>
   ),
 
+  // Pad de firma del Programa 100. Fuera del clon, mismo lenguaje del set.
+  firma: (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 20h18" />
+      <path d="M5 16c2.5 0 3-9 5.5-9 1.8 0 1.4 6 3 6 1.2 0 1.6-3 3-3 1.1 0 1.4 2 2.5 2" />
+    </svg>
+  ),
+
   // Botón "volver arriba". Tampoco viene del clon; se dibuja en el mismo
   // lenguaje del set (viewBox 24, remates redondeados) con trazo más grueso
   // porque se ve pequeño y sobre fondo de color.
