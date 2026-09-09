@@ -3,6 +3,7 @@ import SkipLink from './SkipLink.jsx'
 import UtilityBar from './UtilityBar.jsx'
 import Header from './Header.jsx'
 import Footer from './Footer.jsx'
+import VolverArriba from './VolverArriba.jsx'
 import useVisor from '../../hooks/useVisor.js'
 
 // Layout — the clone's body shell order: saltar > utilidad > cabecera >
@@ -51,6 +52,7 @@ export default function Layout() {
         </button>
         <img src={src || undefined} alt={alt} />
       </div>
+      <VolverArriba />
       <ScrollRestoration />
     </>
   )

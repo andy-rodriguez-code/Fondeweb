@@ -1798,6 +1798,17 @@
     background: var(--color-surface-bright);
   }
 
+  /* Listas del documento. El preflight de Tailwind quita las viñetas a todo
+     ul; acá hacen falta, porque son enumeraciones dentro de texto legal y sin
+     marca se leen como párrafos sueltos. */
+  .politica__seccion ul {
+    list-style: disc;
+    max-width: 68ch;
+  }
+  .politica__seccion ul li::marker {
+    color: var(--color-accent);
+  }
+
   /* Lista numerada del documento: contador propio en naranja. */
   .politica__pasos {
     counter-reset: punto;
@@ -1878,5 +1889,57 @@
   .politica__cierre p:last-child {
     max-width: 60ch;
     margin-inline: auto;
+  }
+}
+
+/* ---------- 25. Botón "volver arriba" ----------
+   Racional (§4.4): pieza flotante con estado (data-visible) que combina
+   posición fija, transición de entrada y salida, y visibility para salir del
+   orden de tabulación cuando está oculto. Va acá y no en utilidades porque el
+   estado oculto/visible se expresa en un solo selector. */
+@layer components {
+  .volver-arriba {
+    position: fixed;
+    right: clamp(16px, 3vw, 28px);
+    bottom: clamp(16px, 3vw, 28px);
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: var(--color-white);
+    box-shadow: var(--nhigh);
+    cursor: pointer;
+    /* Oculto: sin opacidad, un poco más abajo y fuera del foco. */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition:
+      opacity 200ms ease,
+      transform 200ms ease,
+      visibility 200ms,
+      background-color 160ms ease;
+  }
+  .volver-arriba[data-visible='si'] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  .volver-arriba:hover {
+    background: var(--color-accent);
+  }
+  .volver-arriba:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .volver-arriba {
+      transition: opacity 200ms ease, visibility 200ms;
+      transform: none;
+    }
   }
 }

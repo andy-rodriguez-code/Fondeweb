@@ -114,6 +114,15 @@ const iconos = {
     </svg>
   ),
 
+  // Botón "volver arriba". Tampoco viene del clon; se dibuja en el mismo
+  // lenguaje del set (viewBox 24, remates redondeados) con trazo más grueso
+  // porque se ve pequeño y sobre fondo de color.
+  'flecha-arriba': (size) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20V5m0 0-6 6m6-6 6 6" />
+    </svg>
+  ),
+
   // Los cinco principios de /nosotros. No vienen del clon: producción los
   // ilustra con PNG propios que el cliente no entregó, así que se dibujan en
   // el mismo lenguaje del set (trazo 1.7, viewBox 24, remates redondeados).
