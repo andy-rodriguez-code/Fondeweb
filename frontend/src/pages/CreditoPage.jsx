@@ -10,16 +10,29 @@ import { creditos } from '../data/creditos.js'
 // "Servicios" apunta a ahorro.html — verbatim del clon), sección .credito
 // (resumen + bloques + requisitos) y sección bright "Otras líneas" con las 3
 // tarjetas derivadas del campo `otras` del registro (P2).
-// Estructura verificada contra las 9 páginas: mismos data-od-id
-// (seccion-credito, resumen-credito, bloque-*, seccion-otras-lineas, otra-*),
-// mismo encabezado "Compará antes de <strong>decidir</strong>" con
-// max-width 52ch / margen 28px.
+// La rejilla del pie muestra las nueve líneas, incluida la de la página
+// abierta, como producción (medido el 2026-09-08); antes mostraba solo las
+// tres del campo `otras` de cada registro, que queda sin consumidores.
 // Helper interno de páginas (patrón BotonCta de P5): el router (P7) importa
 // cada página por su propio archivo.
 
+// Las nueve líneas, en el orden de la rejilla de la portada: recreación y
+// turismo va antes que impuestos, igual que la numeración de sus iconos.
+const ORDEN = [
+  'crediaportes-10',
+  'credito-de-confianza',
+  'credito-de-consumo-por-bonos',
+  'credito-de-libre-inversion',
+  'credito-de-recreacion-y-turismo',
+  'credito-de-impuestos',
+  'credito-educativo',
+  'creditos-de-tesoreria',
+  'tarjeta-express',
+]
+const TODAS = ORDEN.map((s) => creditos.find((credito) => credito.slug === s))
+
 export default function CreditoPage({ slug }) {
   const datos = creditos.find((credito) => credito.slug === slug)
-  const otras = creditos.filter((credito) => datos.otras.includes(credito.slug))
   return (
     <>
       <EncabezadoPagina
@@ -37,9 +50,9 @@ export default function CreditoPage({ slug }) {
       </Seccion>
       <Seccion tono="bright" data-od-id="seccion-otras-lineas">
         <LineasGrid
-          lineas={otras}
+          lineas={TODAS}
           encabezado={{
-            rotulo: 'Otras líneas',
+            rotulo: 'Nuestras líneas',
             titulo: (
               <>
                 Compará antes de <strong>decidir</strong>
