@@ -3,7 +3,7 @@
 // byte-copy (percentages, distribution figures, call-to-action bands).
 
 export const ahorro = {
-  entrada: 'Dos formas de ahorro dentro del fondo: la permanente, que es obligatoria y periódica, y la voluntaria.',
+  entrada: 'Construye hoy la tranquilidad que quieres para mañana. En FONDEFOS cuentas con alternativas de ahorro que se adaptan a tus necesidades: una opción permanente para fortalecer tu respaldo financiero y una alternativa voluntaria para alcanzar tus metas con mayor libertad.',
   opciones: [
     {
       etiqueta: 'Obligatorio',

@@ -19,7 +19,7 @@ import { contacto } from '../data/navegacion.js'
 // beneficios/nosotros). data-od-id: seccion-contacto (formulario-contacto).
 
 const ENCABEZADO = {
-  entrada: 'Atendemos de forma presencial en Floridablanca y respondemos por teléfono y correo.',
+  entrada: 'Estamos aquí para escucharte y ayudarte. Ponte en contacto con nuestro equipo y encuentra la orientación que necesitas para resolver tus inquietudes, conocer nuestros servicios y aprovechar todas las oportunidades que FONDEFOS tiene para ti.',
 }
 
 // Los cuatro datos de atención, en el orden de producción (medido el

@@ -90,8 +90,9 @@ Las imágenes van en `src/assets/images/`, no en `public/`: así Vite las proces
 
 **Diferencias abiertas con el sitio anterior**, a la espera de confirmación:
 
-- Las tasas de *crédito de recreación y turismo* (1,5 %) e *impuestos* (1,2 %) están cruzadas respecto de lo publicado en WordPress
 - El horario de atención aparece como 8:00 a. m. en Contáctenos y 8:30 a. m. en el pie
+- *Convenios* y *Preguntas frecuentes* no tienen bajada en el sitio anterior; acá llevan una redactada para este proyecto
+- Las tarjetas de la portada del sitio anterior publican 1,2 % para *recreación y turismo* y 1,5 % para *impuestos*, cruzadas respecto de sus propias páginas de detalle. Este sitio sigue las páginas de detalle
 
 ## Notas de operación
 

@@ -18,7 +18,7 @@ import Icono from '../components/ui/Icono.jsx'
 // banda-cierre.
 
 const ENCABEZADO = {
-  entrada: 'Sé parte del Fondo de Empleados. La afiliación no tiene ningún costo.',
+  entrada: 'Sé parte del Fondo de Empleados. La afiliación no tiene ningún costo',
 }
 
 const TRAMITE = {

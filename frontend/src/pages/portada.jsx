@@ -29,7 +29,7 @@ const PORTADA = {
       Tu Fondo de <br />Servicios
     </>
   ),
-  bajada: 'Conocé nuestra variedad de créditos, convenios y servicios que tenemos para ofrecerte.',
+  bajada: 'Conoce nuestra variedad de créditos, convenios y servicios que tenemos para ofrecerte.',
   // Variantes para superficie oscura: el héroe pasó a llevar la fotografía real
   // de producción, y las de fondo claro ('' y 'secundario') quedaban con
   // contraste insuficiente sobre ella. Es el mismo par que usa producción:

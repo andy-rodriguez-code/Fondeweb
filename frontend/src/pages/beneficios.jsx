@@ -54,7 +54,7 @@ const BENEFICIOS = [
 ]
 
 const ENCABEZADO = {
-  entrada: 'Pertenecer a un fondo de empleados como FONDEFOS te puede brindar beneficios como:',
+  entrada: 'En FONDEFOS, ser asociado tiene beneficios: disfruta oportunidades y soluciones creadas pensando en tu bienestar.',
 }
 
 // Sección de entrada: la ilustración a la izquierda y el texto a la derecha,

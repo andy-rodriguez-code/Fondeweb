@@ -17,7 +17,7 @@ import ListaRequisitos from '../components/ui/ListaRequisitos.jsx'
 // seccion-extracto (cta-extracto).
 
 const ENCABEZADO = {
-  entrada: 'Consultá tu extracto en línea. Si es la primera vez que vas a ingresar, seguí estos pasos.',
+  entrada: 'Accede fácilmente a la información de tus productos y movimientos. Consulta tu estado de cuenta en línea y mantén siempre el control de tus finanzas desde cualquier lugar.',
 }
 
 const PASOS = [

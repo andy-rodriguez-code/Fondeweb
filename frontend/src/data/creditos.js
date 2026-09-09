@@ -12,7 +12,7 @@ export const creditos = [
   {
     slug: 'crediaportes-10',
     titulo: 'Crediaportes + 10%',
-    entrada: 'Un crédito respaldado por lo que ya tenés en el fondo: se otorga hasta el monto de tus aportes sociales y tu ahorro permanente.',
+    entrada: 'Tu ahorro puede abrirte nuevas puertas. Usa lo que ya has construido en FONDEFOS como respaldo y haz realidad tus proyectos.',
     resumen: [
       { etiqueta: 'Interés', valor: '0,8% mensual' },
       { etiqueta: 'Plazo máximo', valor: '72 meses' },
@@ -37,7 +37,7 @@ export const creditos = [
   {
     slug: 'credito-de-confianza',
     titulo: 'Crédito de confianza',
-    entrada: 'Aprobado por la Junta Directiva según tu capacidad de pago. Disponible desde el primer mes de afiliación.',
+    entrada: 'Empieza a cumplir tus proyectos desde el primer mes. Un crédito pensado para ti, aprobado de acuerdo con tu capacidad de pago y bajo las condiciones establecidas por FONDEFOS.',
     resumen: [
       { etiqueta: 'Interés por libranza', valor: '1,6% sobre saldo' },
       { etiqueta: 'Interés por caja', valor: '1,8% sobre saldo' },
@@ -59,7 +59,7 @@ export const creditos = [
   {
     slug: 'credito-de-consumo-por-bonos',
     titulo: 'Crédito de consumo por bonos',
-    entrada: 'Para compra de mercancías a través de bonos, con cuantía máxima de 3 salarios mínimos mensuales legales vigentes.',
+    entrada: 'Convierte tus bonos en oportunidades y haz realidad eso que necesitas. Un respaldo pensado para que puedas acceder a recursos cuando más los necesitas.',
     resumen: [
       { etiqueta: 'Interés', valor: '2% sobre saldo' },
       { etiqueta: 'Plazo máximo', valor: '12 meses' },
@@ -82,7 +82,7 @@ export const creditos = [
   {
     slug: 'credito-de-impuestos',
     titulo: 'Crédito de impuestos',
-    entrada: 'Para cubrir obligaciones tributarias dentro del año, con la tasa más baja del fondo después de la línea educativa.',
+    entrada: 'Tú eliges el destino, FONDEFOS te brinda el respaldo. Obtén el impulso que necesitas para hacer realidad tus proyectos, resolver tus necesidades o cumplir eso que tienes en mente.',
     resumen: [
       { etiqueta: 'Interés por libranza', valor: '1,2% sobre saldo' },
       { etiqueta: 'Interés por caja', valor: '1,4% sobre saldo' },
@@ -104,7 +104,7 @@ export const creditos = [
   {
     slug: 'credito-de-libre-inversion',
     titulo: 'Crédito de libre inversión',
-    entrada: 'La línea de mayor cupo del fondo: hasta cinco veces tu capital ahorrado cuando el pago se hace por libranza.',
+    entrada: 'Tú eliges el destino, FONDEFOS te brinda el respaldo. Obtén el impulso que necesitas para hacer realidad tus proyectos, resolver tus necesidades o cumplir eso que tienes en mente.',
     resumen: [
       { etiqueta: 'Cupo con libranza', valor: '5× capital ahorrado' },
       { etiqueta: 'Cupo por caja', valor: '3× capital ahorrado' },
@@ -128,7 +128,7 @@ export const creditos = [
   {
     slug: 'credito-de-recreacion-y-turismo',
     titulo: 'Crédito de recreación y turismo',
-    entrada: 'Para viajes y planes de descanso con las agencias en convenio. Requiere cotización previa del prestador del servicio.',
+    entrada: 'Haz realidad tus planes de viaje y disfruta de nuevas experiencias con un crédito diseñado para cumplir tus sueños',
     resumen: [
       { etiqueta: 'Interés por libranza', valor: '1,5% sobre saldo' },
       { etiqueta: 'Interés por caja', valor: '1,7% sobre saldo' },
@@ -151,7 +151,7 @@ export const creditos = [
   {
     slug: 'credito-educativo',
     titulo: 'Crédito educativo',
-    entrada: 'La tasa más baja del fondo, extendida al cónyuge y a los hijos en primer grado de consanguinidad.',
+    entrada: 'Financia tus estudios, cursos y proyectos educativos con un crédito pensado para impulsar tu formación y ayudarte a alcanzar tus metas profesionales.',
     resumen: [
       { etiqueta: 'Interés', valor: '1% sobre saldo' },
       { etiqueta: 'Cuantía máxima', valor: '6 a 12 SMMLV' },
@@ -173,7 +173,7 @@ export const creditos = [
   {
     slug: 'creditos-de-tesoreria',
     titulo: 'Créditos de tesorería',
-    entrada: 'Disponible desde el momento en que cancelás tu primera cuota de aporte social. Un solo crédito activo por esta línea.',
+    entrada: 'Impulsa tus proyectos, atiende tus necesidades de liquidez y fortalece tu flujo de caja. Obtén el respaldo financiero que necesitas de manera ágil y oportuna para seguir avanzando con tranquilidad y confianza.',
     resumen: [
       { etiqueta: 'Interés', valor: '2% sobre saldo' },
       { etiqueta: 'Plazo máximo', valor: '36 cuotas' },
@@ -192,7 +192,7 @@ export const creditos = [
   {
     slug: 'tarjeta-express',
     titulo: 'Tarjeta expréss',
-    entrada: 'Cupo rotativo de trámite rápido, con la misma tasa por libranza o por caja.',
+    entrada: 'La solución rápida y práctica para tener acceso a recursos cuando más los necesitas. Disfruta de mayor flexibilidad financiera para realizar tus compras, atender imprevistos y cumplir tus metas con confianza y facilidad.',
     resumen: [
       { etiqueta: 'Interés', valor: '2% sobre saldo' },
       { etiqueta: 'Plazo máximo', valor: '24 meses' },
