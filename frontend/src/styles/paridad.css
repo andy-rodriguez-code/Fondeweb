@@ -1674,3 +1674,209 @@
     color: var(--color-placeholder);
   }
 }
+
+/* ---------- 24. Política de datos: documento largo con índice ----------
+   Racional (§4.4): la página legal es una rejilla de dos columnas con un
+   índice pegajoso, numeración por contador CSS en los pasos y una lista de
+   definiciones con borde lateral. Son piezas cohesionadas con estado
+   (aria-current en el índice) y contadores, que Tailwind no expresa sin
+   fragmentarlas en cada nodo. */
+@layer components {
+  .politica {
+    display: grid;
+    grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+    gap: clamp(28px, 4vw, 64px);
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .politica {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Índice */
+  .politica__indice {
+    position: sticky;
+    /* 40px de la barra de utilidad + 85px de cabecera + aire */
+    top: 140px;
+    max-height: calc(100vh - 170px);
+    overflow-y: auto;
+    padding: 22px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-bright);
+  }
+  @media (max-width: 900px) {
+    .politica__indice {
+      position: static;
+      max-height: none;
+    }
+  }
+  .politica__indice-titulo {
+    margin: 0 0 14px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .politica__indice ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 2px;
+  }
+  .politica__indice a {
+    display: flex;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.88rem;
+    line-height: 1.3;
+    transition: background-color 0.16s, color 0.16s;
+  }
+  .politica__indice a:hover {
+    background: var(--color-surface-low);
+    color: var(--color-primary-900);
+  }
+  .politica__indice a[aria-current="true"] {
+    background: var(--color-surface-low);
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+  .politica__indice-num {
+    flex: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.76rem;
+    color: var(--color-accent);
+  }
+  .politica__actualizacion {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.8rem;
+    color: var(--color-muted);
+  }
+
+  /* Cuerpo */
+  .politica__seccion {
+    padding-block: clamp(24px, 3vw, 38px);
+    border-top: 1px solid var(--color-border);
+    /* Deja aire bajo la cabecera fija al saltar desde el índice. */
+    scroll-margin-top: 150px;
+  }
+  .politica__seccion:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .politica__seccion h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    font-size: clamp(1.25rem, 1.05rem + 0.7vw, 1.55rem);
+    margin-bottom: 16px;
+  }
+  .politica__num {
+    flex: none;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--color-accent);
+    letter-spacing: 0.04em;
+  }
+  .politica__seccion p {
+    max-width: 68ch;
+  }
+  .politica__seccion--destacada {
+    padding-inline: clamp(20px, 3vw, 32px);
+    border: 1px solid var(--color-primary-300);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-bright);
+  }
+
+  /* Lista numerada del documento: contador propio en naranja. */
+  .politica__pasos {
+    counter-reset: punto;
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+    max-width: 68ch;
+  }
+  .politica__pasos li {
+    counter-increment: punto;
+    position: relative;
+    padding-left: 40px;
+    font-size: 0.97rem;
+  }
+  .politica__pasos li::before {
+    content: counter(punto, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: var(--color-accent);
+  }
+
+  /* Principios: término destacado con barra lateral. */
+  .politica__principios {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    max-width: 68ch;
+  }
+  .politica__principios > div {
+    padding-left: 16px;
+    border-left: 3px solid var(--color-border-strong);
+  }
+  .politica__principios dt {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-ink);
+    margin-bottom: 2px;
+  }
+  .politica__principios dd {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--color-text);
+  }
+
+  /* Cierre */
+  .politica__cierre {
+    margin-top: clamp(32px, 4vw, 52px);
+    padding: clamp(28px, 4vw, 44px);
+    border-radius: var(--radius-lg);
+    background: var(--color-ink);
+    color: var(--color-ink-bright);
+    text-align: center;
+  }
+  .politica__cierre-icono {
+    display: grid;
+    place-items: center;
+    width: 62px;
+    height: 62px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-accent);
+  }
+  .politica__cierre-destacado {
+    max-width: 52ch;
+    margin: 14px auto;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.08rem;
+    color: var(--color-white);
+  }
+  .politica__cierre p:last-child {
+    max-width: 60ch;
+    margin-inline: auto;
+  }
+}

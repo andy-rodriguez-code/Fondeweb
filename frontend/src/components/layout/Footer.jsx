@@ -49,7 +49,12 @@ export default function Footer() {
         {/* Sin max-width: el aviso de la Ley 1581 va en un solo renglón en
             escritorio. En teléfono se parte solo (forzarlo con nowrap metería
             scroll horizontal), y ahí va centrado y un punto más chico. */}
-        <p className="max-md:text-center max-md:text-[0.78rem]">{pie.proteccion}</p>
+        <p className="max-md:text-center max-md:text-[0.78rem]">
+          {pie.proteccion}{' '}
+          <Link to="/politica-de-datos" discover="none">
+            {pie.politica}
+          </Link>
+        </p>
         <div className="pie__legal">
           <span>{pie.legal}</span>
           <div className="redes">

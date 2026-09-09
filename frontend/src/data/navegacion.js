@@ -82,6 +82,7 @@ export const pie = {
   ],
   legal: 'Copyright © 2026 | Fondefos',
   proteccion: 'FONDEFOS cumple con la Ley 1581 de 2012 y el Decreto 1377 de 2013, en el marco general de la protección de datos personales.',
+  politica: 'Ver la política de tratamiento de datos',
   redes: [
     { etiqueta: 'Fondefos en Facebook', href: 'https://www.facebook.com/fondefos' },
     { etiqueta: 'Fondefos en Instagram', href: 'https://www.instagram.com/fondefos.oficial/' },

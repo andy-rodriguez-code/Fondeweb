@@ -18,6 +18,7 @@ import BeneficiosPage from './pages/beneficios.jsx'
 import EstadoDeCuentaPage from './pages/estado-de-cuenta.jsx'
 import PreguntasFrecuentesPage from './pages/preguntas-frecuentes.jsx'
 import ContactenosPage from './pages/contactenos.jsx'
+import PoliticaDeDatosPage from './pages/politica-de-datos.jsx'
 import NotFoundPage from './pages/NotFound.jsx'
 
 // router — cableado createBrowserRouter (react-router-dom 7.18.3, decisión de
@@ -61,6 +62,7 @@ const router = createBrowserRouter([
       { path: 'estado-de-cuenta', element: <EstadoDeCuentaPage /> },
       { path: 'preguntas-frecuentes', element: <PreguntasFrecuentesPage /> },
       { path: 'contactenos', element: <ContactenosPage /> },
+      { path: 'politica-de-datos', element: <PoliticaDeDatosPage /> },
       // Alias heredados — entradas duplicadas, misma página canónica.
       { path: 'credito-de-impuestos-2', element: <CreditoDeImpuestos /> },
       { path: 'como-ser_asociado', element: <ComoSerAsociadoPage /> },
