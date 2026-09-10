@@ -120,7 +120,7 @@ function guardarEnvio(
                 ':envio'    => $envioId,
                 ':clave'    => $clave,
                 ':etiqueta' => $campo['etiqueta'],
-                ':valor'    => $campos[$campo['etiqueta']] ?? '',
+                ':valor'    => $campos[$clave] ?? '',
                 ':orden'    => $orden++,
             ]);
         }
@@ -174,31 +174,31 @@ function enviosPendientesDeHoja(int $limite = 50): array
     $pendientes = [];
     foreach ($consulta->fetchAll() as $envio) {
         $campos = bd()->prepare(
-            'SELECT etiqueta, valor FROM envio_campos WHERE envio_id = :envio ORDER BY orden'
+            'SELECT clave, valor FROM envio_campos WHERE envio_id = :envio ORDER BY orden'
         );
         $campos->execute([':envio' => $envio['id']]);
 
+        // Indexado por clave, igual que lo manda enviar.php: es lo que leen
+        // los Apps Script.
         $valores = [];
         foreach ($campos->fetchAll() as $campo) {
-            $valores[$campo['etiqueta']] = $campo['valor'];
-        }
-
-        $firma = '';
-        if ($envio['firma_archivo'] && is_file($envio['firma_archivo'])) {
-            $firma = 'data:image/png;base64,' . base64_encode(
-                (string) file_get_contents($envio['firma_archivo'])
-            );
+            $valores[$campo['clave']] = $campo['valor'];
         }
 
         $pendientes[] = [
-            'token'      => TOKEN_HOJA,
-            'formulario' => $envio['nombre_formulario'],
-            'radicado'   => $envio['radicado'],
-            'fecha'      => $envio['recibido_en'],
-            'campos'     => $valores,
-            'firma'      => $firma,
-            'ip'         => $envio['ip'],
-            'autoriza'   => (bool) $envio['autoriza_datos'],
+            // El envío pendiente conserva su formulario de origen para saber a
+            // cuál de las dos hojas hay que reenviarlo.
+            'clave_formulario' => $envio['formulario'],
+            'token'            => TOKEN_HOJA,
+            'formulario'       => $envio['nombre_formulario'],
+            'radicado'         => $envio['radicado'],
+            'fecha'            => $envio['recibido_en'],
+            'campos'           => $valores,
+            // Booleano y no la imagen: la hoja solo registra si hubo firma.
+            // El PNG vive en el servidor y va adjunto en el correo.
+            'firma'            => $envio['firma_archivo'] !== null,
+            'ip'               => $envio['ip'],
+            'autoriza'         => (bool) $envio['autoriza_datos'],
         ];
     }
 

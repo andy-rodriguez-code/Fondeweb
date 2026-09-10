@@ -113,7 +113,11 @@ foreach ($definicion['campos'] as $id => $campo) {
         $correoRemitente = $valor;
     }
 
-    $valores[$campo['etiqueta']] = $valor;
+    // Se indexa por el id del campo y NO por su etiqueta. La etiqueta es texto
+    // de pantalla que el cliente puede cambiar cualquier día —una tilde, una
+    // palabra— y eso rompería en silencio el Apps Script, la base y el correo:
+    // columnas vacías sin un solo error. El id es el identificador estable.
+    $valores[$id] = $valor;
 }
 
 // Autorización de tratamiento de datos (Ley 1581 de 2012). Obligatoria: sin
@@ -175,14 +179,18 @@ $enviado = enviarCorreos($definicion, $valores, $radicado, $fecha, $firma, $corr
 marcarEnvio($radicado, 'correo_enviado', $enviado);
 
 $escrita = escribirEnHoja([
-    'token'      => TOKEN_HOJA,
-    'formulario' => $definicion['nombre'],
-    'radicado'   => $radicado,
-    'fecha'      => $fecha,
-    'campos'     => $valores,
-    'firma'      => $firma,
-    'ip'         => $ip,
-    'autoriza'   => $autoriza,
+    'clave_formulario' => $clave,
+    'token'            => TOKEN_HOJA,
+    'formulario'       => $definicion['nombre'],
+    'radicado'         => $radicado,
+    'fecha'            => $fecha,
+    'campos'           => $valores,
+    // Booleano, no la imagen: la hoja solo registra si hubo firma. Mandar los
+    // 60 KB de base64 en cada envío es tráfico que nadie usa y arriesga el
+    // tiempo de espera del Apps Script.
+    'firma'            => $firma !== '',
+    'ip'               => $ip,
+    'autoriza'         => $autoriza,
 ]);
 marcarEnvio($radicado, 'hoja_escrita', $escrita);
 

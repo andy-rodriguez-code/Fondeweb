@@ -49,8 +49,20 @@ const BD_USUARIO = 'usuario_fondeweb';
 const BD_CLAVE   = 'REEMPLAZAR';
 
 // ── Google Sheets ─────────────────────────────────────────────────────────
-const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/REEMPLAZAR/exec';
-const TOKEN_HOJA      = 'REEMPLAZAR';
+// Una hoja de cálculo por formulario, cada una con su propio Apps Script y su
+// propio encabezado. La clave del arreglo es la misma que la de FORMULARIOS.
+//
+// Agregar un formulario nuevo con hoja propia es agregar su línea acá; si un
+// formulario no tiene hoja, se omite y el envío se guarda igual en MySQL.
+const URLS_APPS_SCRIPT = [
+    'contacto'     => 'https://script.google.com/macros/s/REEMPLAZAR_CONTACTO/exec',
+    'programa-100' => 'https://script.google.com/macros/s/REEMPLAZAR_PROGRAMA100/exec',
+];
+
+// El mismo token en los dos Apps Script, como propiedad del script.
+// Sin él, cualquiera que averigüe la URL puede inyectar filas en la hoja del
+// fondo: una URL larga no es una contraseña.
+const TOKEN_HOJA = 'REEMPLAZAR';
 
 // ── Estado en disco ───────────────────────────────────────────────────────
 // Registro, límite por IP y las firmas en PNG. El consecutivo del radicado y

@@ -192,14 +192,16 @@ function enviarCorreos(
     // entrada corrompe lo que se guarda: alguien apellidado D'Angelo quedaría
     // como D&#039;Angelo en el correo, en la hoja y en todo lo que se lea
     // después.
+    // $valores viene indexado por el id del campo; la etiqueta legible se
+    // busca en la definición, que es donde vive.
     $filas = '';
-    foreach ($valores as $etiqueta => $valor) {
+    foreach ($definicion['campos'] as $id => $campo) {
         $filas .= '<tr>'
             . '<td style="padding:6px 12px;border:1px solid #ddd;background:#f6f6f6;"><strong>'
-            . htmlspecialchars((string) $etiqueta, ENT_QUOTES, 'UTF-8')
+            . htmlspecialchars($campo['etiqueta'], ENT_QUOTES, 'UTF-8')
             . '</strong></td>'
             . '<td style="padding:6px 12px;border:1px solid #ddd;">'
-            . nl2br(htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8'))
+            . nl2br(htmlspecialchars((string) ($valores[$id] ?? ''), ENT_QUOTES, 'UTF-8'))
             . '</td></tr>';
     }
 
@@ -283,7 +285,14 @@ function enviarCorreos(
     }
 }
 
-/** Escribe la fila en el Google Sheet a través del Apps Script. */
+/**
+ * Escribe la fila en el Google Sheet del formulario.
+ *
+ * Cada formulario tiene su propia hoja de cálculo y su propio Apps Script, así
+ * que hay una URL por formulario en vez de una sola repartiendo por dentro.
+ * La clave del formulario viaja en la carga para que el reintento sepa a cuál
+ * de las dos hojas mandar cada pendiente.
+ */
 function escribirEnHoja(array $carga): bool
 {
     if (!function_exists('curl_init')) {
@@ -291,7 +300,17 @@ function escribirEnHoja(array $carga): bool
         return false;
     }
 
-    $ch = curl_init(URL_APPS_SCRIPT);
+    $clave = (string) ($carga['clave_formulario'] ?? '');
+    $url = URLS_APPS_SCRIPT[$clave] ?? '';
+    if ($url === '') {
+        registrar('ERROR Sheet: no hay webhook configurado para "' . $clave . '"');
+        return false;
+    }
+
+    // No se le manda al Apps Script: es de uso interno del backend.
+    unset($carga['clave_formulario']);
+
+    $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => json_encode($carga, JSON_UNESCAPED_UNICODE),
