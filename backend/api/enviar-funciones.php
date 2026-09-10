@@ -1,0 +1,326 @@
+<?php
+// Funciones compartidas entre enviar.php y reintentar.php.
+//
+// Están acá y no dentro de enviar.php porque el cron de reintentos necesita
+// escribirEnHoja() y registrar(), y duplicarlas sería garantizar que un día
+// las dos copias dejen de coincidir.
+
+declare(strict_types=1);
+
+use PHPMailer\PHPMailer\PHPMailer;
+
+/**
+ * Cierra la petición con un JSON. Los mensajes son códigos, no frases: la
+ * traducción vive en el frontend (src/lib/enviarFormulario.js) y así el
+ * servidor no filtra detalles internos ni tiene que saber el idioma del sitio.
+ */
+function responder(int $codigo, array $cuerpo): void
+{
+    http_response_code($codigo);
+    echo json_encode($cuerpo, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function registrar(string $linea): void
+{
+    @file_put_contents(
+        RUTA_ESTADO . '/registro-' . date('Y-m') . '.log',
+        date('c') . ' ' . $linea . PHP_EOL,
+        FILE_APPEND | LOCK_EX
+    );
+}
+
+/**
+ * Emite las cabeceras de CORS solo si el origen está en la lista. Nunca un
+ * comodín: con `*` cualquier sitio podría usar el endpoint desde el navegador
+ * de un visitante.
+ *
+ * En producción el SPA y el endpoint comparten dominio, así que el navegador
+ * no manda Origin en estas peticiones y esto no se activa. Existe para el
+ * proxy de desarrollo y para bloquear el uso desde otro sitio web.
+ *
+ * No es una frontera de seguridad: un cliente que no sea navegador puede
+ * falsear la cabecera. Las defensas reales son la validación, el límite por IP
+ * y el tiempo mínimo.
+ */
+function aplicarCors(): void
+{
+    $origen = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origen === '') {
+        return;
+    }
+
+    if (!in_array($origen, ORIGENES_PERMITIDOS, true)) {
+        responder(403, ['ok' => false, 'error' => 'origen_no_permitido']);
+    }
+
+    header('Access-Control-Allow-Origin: ' . $origen);
+    header('Access-Control-Allow-Methods: POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Max-Age: 86400');
+    header('Vary: Origin');
+}
+
+/**
+ * Consecutivo por formulario y por año. `flock` evita que dos envíos
+ * simultáneos se lleven el mismo número.
+ */
+function siguienteRadicado(string $prefijo): string
+{
+    $archivo = RUTA_ESTADO . '/contadores.json';
+    $manejador = fopen($archivo, 'c+');
+    if ($manejador === false) {
+        registrar('ERROR: no se pudo abrir ' . $archivo);
+        responder(500, ['ok' => false, 'error' => 'contador_no_disponible']);
+    }
+    flock($manejador, LOCK_EX);
+
+    $contenido = stream_get_contents($manejador);
+    $contadores = $contenido !== '' && $contenido !== false
+        ? json_decode($contenido, true)
+        : [];
+    if (!is_array($contadores)) {
+        $contadores = [];
+    }
+
+    $anio = date('Y');
+    $llave = $prefijo . '-' . $anio;
+    $contadores[$llave] = ($contadores[$llave] ?? 0) + 1;
+
+    ftruncate($manejador, 0);
+    rewind($manejador);
+    fwrite($manejador, json_encode($contadores));
+    fflush($manejador);
+    flock($manejador, LOCK_UN);
+    fclose($manejador);
+
+    return sprintf('%s-%s-%04d', $prefijo, $anio, $contadores[$llave]);
+}
+
+/** Cinco envíos por hora y por IP. */
+function limitarPorIp(string $ip): void
+{
+    $archivo = RUTA_ESTADO . '/limite.json';
+    $ahora = time();
+
+    $registro = is_file($archivo)
+        ? json_decode((string) file_get_contents($archivo), true)
+        : [];
+    if (!is_array($registro)) {
+        $registro = [];
+    }
+
+    // Se limpia en cada visita: si no, el archivo crece sin techo.
+    foreach ($registro as $direccion => $marcas) {
+        $vigentes = array_values(array_filter(
+            is_array($marcas) ? $marcas : [],
+            function ($marca) use ($ahora) {
+                return is_int($marca) && $marca > $ahora - 3600;
+            }
+        ));
+        if ($vigentes) {
+            $registro[$direccion] = $vigentes;
+        } else {
+            unset($registro[$direccion]);
+        }
+    }
+
+    $propias = $registro[$ip] ?? [];
+    if (count($propias) >= 5) {
+        registrar('LIMITE alcanzado por ' . $ip);
+        responder(429, ['ok' => false, 'error' => 'limite_alcanzado']);
+    }
+
+    $propias[] = $ahora;
+    $registro[$ip] = $propias;
+    @file_put_contents($archivo, json_encode($registro), LOCK_EX);
+}
+
+/**
+ * Verifica el token de reCAPTCHA v3. Sin RECAPTCHA_SECRETO configurado no hace
+ * nada y devuelve true: queda cableado pero apagado.
+ */
+function verificarRecaptcha(string $token): bool
+{
+    if (RECAPTCHA_SECRETO === '') {
+        return true;
+    }
+    if ($token === '' || !function_exists('curl_init')) {
+        return false;
+    }
+
+    $ch = curl_init('https://www.google.com/recaptcha/api/siteverify');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => http_build_query([
+            'secret'   => RECAPTCHA_SECRETO,
+            'response' => $token,
+            'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+        ]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 10,
+    ]);
+    $respuesta = curl_exec($ch);
+    curl_close($ch);
+
+    if ($respuesta === false) {
+        registrar('ERROR reCAPTCHA: sin respuesta de Google');
+        return false;
+    }
+
+    $json = json_decode((string) $respuesta, true);
+    if (!is_array($json) || empty($json['success'])) {
+        return false;
+    }
+
+    return (float) ($json['score'] ?? 0) >= RECAPTCHA_MINIMO;
+}
+
+/**
+ * Manda el aviso interno y, si el formulario pide correo, el acuse de recibo.
+ * Devuelve true solo si el aviso interno salió.
+ */
+function enviarCorreos(
+    array $definicion,
+    array $valores,
+    string $radicado,
+    string $fecha,
+    string $firma,
+    string $correoRemitente
+): bool {
+    // El escapado va acá, al imprimir, y NO al recibir el dato. Escapar en la
+    // entrada corrompe lo que se guarda: alguien apellidado D'Angelo quedaría
+    // como D&#039;Angelo en el correo, en la hoja y en todo lo que se lea
+    // después.
+    $filas = '';
+    foreach ($valores as $etiqueta => $valor) {
+        $filas .= '<tr>'
+            . '<td style="padding:6px 12px;border:1px solid #ddd;background:#f6f6f6;"><strong>'
+            . htmlspecialchars((string) $etiqueta, ENT_QUOTES, 'UTF-8')
+            . '</strong></td>'
+            . '<td style="padding:6px 12px;border:1px solid #ddd;">'
+            . nl2br(htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8'))
+            . '</td></tr>';
+    }
+
+    $cuerpo = '<p><strong>Radicado ' . htmlspecialchars($radicado, ENT_QUOTES, 'UTF-8') . '</strong><br>'
+        . htmlspecialchars($definicion['nombre'], ENT_QUOTES, 'UTF-8')
+        . '<br>Recibido el ' . htmlspecialchars($fecha, ENT_QUOTES, 'UTF-8') . '</p>'
+        . '<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px;">'
+        . $filas . '</table>';
+
+    // En pruebas nunca se escribe al buzón del cliente.
+    $destinatarios = ENTORNO === 'produccion'
+        ? $definicion['destinatarios']
+        : [CORREO_PRUEBAS];
+
+    try {
+        $correo = new PHPMailer(true);
+        $correo->CharSet = 'UTF-8';
+        $correo->isSMTP();
+        $correo->Host = SMTP_HOST;
+        $correo->Port = SMTP_PUERTO;
+        $correo->SMTPAuth = true;
+        $correo->Username = SMTP_USUARIO;
+        $correo->Password = SMTP_CLAVE;
+        $correo->SMTPSecure = SMTP_PUERTO === 587
+            ? PHPMailer::ENCRYPTION_STARTTLS
+            : PHPMailer::ENCRYPTION_SMTPS;
+
+        $correo->setFrom(SMTP_USUARIO, SMTP_NOMBRE);
+        foreach ($destinatarios as $destino) {
+            $correo->addAddress($destino);
+        }
+
+        // Responder desde Gmail le contesta directo a la persona. El valor ya
+        // pasó por FILTER_VALIDATE_EMAIL, así que no hay inyección de
+        // cabeceras posible.
+        if ($correoRemitente !== '') {
+            $correo->addReplyTo($correoRemitente);
+        }
+
+        $correo->Subject = '[' . $radicado . '] ' . $definicion['nombre'];
+        $correo->isHTML(true);
+        $correo->Body = $cuerpo;
+        $correo->AltBody = trim(strip_tags(str_replace(['</tr>', '</td>'], ["\n", ' '], $cuerpo)));
+
+        if ($firma !== '') {
+            $binario = base64_decode(
+                (string) preg_replace('#^data:image/png;base64,#', '', $firma),
+                true
+            );
+            if ($binario !== false && $binario !== '') {
+                $correo->addStringAttachment($binario, $radicado . '-firma.png', 'base64', 'image/png');
+            }
+        }
+
+        $correo->send();
+
+        // Acuse de recibo. Solo existe si el formulario pide correo: el formato
+        // del Programa 100 no lo hace, así que ahí no hay a dónde mandarlo.
+        if ($correoRemitente !== '') {
+            $correo->clearAddresses();
+            $correo->clearReplyTos();
+            $correo->clearAttachments();
+            $correo->addAddress($correoRemitente);
+            $correo->Subject = 'Recibimos tu mensaje — radicado ' . $radicado;
+            $correo->Body = '<p>Hola,</p>'
+                . '<p>Recibimos tu mensaje el ' . htmlspecialchars($fecha, ENT_QUOTES, 'UTF-8')
+                . '. Tu número de radicado es <strong>'
+                . htmlspecialchars($radicado, ENT_QUOTES, 'UTF-8')
+                . '</strong>. Guardalo para cualquier consulta.</p>'
+                . '<p>Te responderemos al correo o al teléfono que dejaste.</p>'
+                . '<p>FONDEFOS — Fondo de Empleados</p>';
+            $correo->AltBody = trim(strip_tags($correo->Body));
+            $correo->send();
+        }
+
+        return true;
+    } catch (Throwable $error) {
+        // El detalle va al log, nunca a la respuesta.
+        registrar('ERROR SMTP ' . $radicado . ': ' . $error->getMessage());
+        return false;
+    }
+}
+
+/** Escribe la fila en el Google Sheet a través del Apps Script. */
+function escribirEnHoja(array $carga): bool
+{
+    if (!function_exists('curl_init')) {
+        registrar('ERROR: la extensión curl no está activa.');
+        return false;
+    }
+
+    $ch = curl_init(URL_APPS_SCRIPT);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($carga, JSON_UNESCAPED_UNICODE),
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_RETURNTRANSFER => true,
+        // Apps Script responde 302 hacia googleusercontent. Sin esto el cuerpo
+        // de la respuesta nunca llega y no habría forma de saber si escribió.
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_TIMEOUT        => 20,
+    ]);
+
+    $respuesta = curl_exec($ch);
+    $codigo = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $fallo = curl_error($ch);
+    curl_close($ch);
+
+    $radicado = $carga['radicado'] ?? 'sin-radicado';
+
+    if ($respuesta === false || $codigo !== 200) {
+        registrar('ERROR Sheet ' . $radicado . ': HTTP ' . $codigo . ' ' . $fallo);
+        return false;
+    }
+
+    $json = json_decode((string) $respuesta, true);
+    if (!is_array($json) || empty($json['ok'])) {
+        registrar('ERROR Sheet ' . $radicado . ': ' . substr((string) $respuesta, 0, 300));
+        return false;
+    }
+
+    return true;
+}
