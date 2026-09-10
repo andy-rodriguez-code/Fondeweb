@@ -2319,3 +2319,19 @@
     }
   }
 }
+
+/* ---------- 27. Mensaje de fallo de envío ----------
+   Racional (§4.4): no es Tailwind porque los colores salen de tokens y la
+   clase la comparten los dos formularios; una utilidad por página los
+   desincronizaría en cuanto uno de los dos cambie. */
+@layer components {
+  .formulario__fallo {
+    margin: 14px 0 0;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--color-error-strong) 40%, transparent);
+    background: color-mix(in srgb, var(--color-error-strong) 8%, transparent);
+    color: var(--color-error-ink);
+    font-size: 0.9rem;
+  }
+}

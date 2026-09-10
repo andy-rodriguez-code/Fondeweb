@@ -10,6 +10,12 @@ export default defineConfig({
     // Default 4096-byte inline limit would base64-embed the 3.9 KB greek-ext subset.
     assetsInlineLimit: 0,
   },
+  test: {
+    // jsdom solo donde hace falta: las pruebas de src/lib son de lógica pura y
+    // no necesitan DOM. Se elige por archivo con la anotación
+    // `// @vitest-environment jsdom`.
+    environment: 'node',
+  },
   server: {
     // En desarrollo el SPA corre en localhost y el endpoint vive en el hosting.
     // El proxy los pone bajo el mismo origen: sin CORS y sin PHP local.
