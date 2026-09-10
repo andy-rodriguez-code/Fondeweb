@@ -49,9 +49,15 @@ function doPost(e) {
     const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
     asegurarCabeceras(hoja);
 
+    // `data.fecha` llega en ISO 8601 con desfase (2026-09-10T04:08:04-05:00).
+    // Sin el desfase, new Date() la interpretaría en la zona del script y la
+    // hora saldría corrida sin que nadie lo note.
+    const momento = data.fecha ? new Date(data.fecha) : new Date();
     const campos = data.campos || {};
+
     hoja.appendRow([
-      data.fecha || new Date().toISOString(),
+      formatoFecha(momento),
+      formatoHora(momento),
       data.radicado || '',
       ...CAMPOS.map(function (c) { return campos[c.clave] != null ? campos[c.clave] : ''; }),
       formatoSiNo(data.autoriza),
@@ -72,6 +78,16 @@ function doPost(e) {
 // Configuración del proyecto → Propiedades del script → Añadir propiedad.
 // Nombre: TOKEN_HOJA · Valor: el mismo TOKEN_HOJA de config.php.
 // El mismo valor en LOS DOS scripts.
+// Formato colombiano y zona fija: el servidor puede estar en UTC —en cPanel
+// suele estarlo— y la hoja tiene que mostrar la hora de Floridablanca.
+function formatoFecha(fecha) {
+  return Utilities.formatDate(fecha, 'America/Bogota', 'dd/MM/yyyy');
+}
+
+function formatoHora(fecha) {
+  return Utilities.formatDate(fecha, 'America/Bogota', 'hh:mm a').toLowerCase();
+}
+
 function tokenValido(recibido) {
   const esperado = PropertiesService.getScriptProperties().getProperty('TOKEN_HOJA');
   // El `esperado &&` importa: sin la propiedad configurada, un payload sin
@@ -83,11 +99,12 @@ function asegurarCabeceras(hoja) {
   if (hoja.getLastRow() === 0) {
     hoja.appendRow([
       'Fecha',
+      'Hora',
       'Radicado',
       ...CAMPOS.map(function (c) { return c.etiqueta; }),
       'Autorización de datos',
     ]);
-    hoja.getRange(1, 1, 1, CAMPOS.length + 3).setFontWeight('bold');
+    hoja.getRange(1, 1, 1, CAMPOS.length + 4).setFontWeight('bold');
     hoja.setFrozenRows(1);
   }
 }
@@ -105,4 +122,33 @@ function respuesta(exito, mensaje) {
   return ContentService
     .createTextOutput(JSON.stringify({ ok: exito, success: exito, mensaje: mensaje }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---------------------------------------------------------------------------
+// Prueba manual desde el editor de Apps Script: elegir `pruebaEnvio` en el
+// desplegable de funciones y darle a Ejecutar. Escribe una fila real en la
+// hoja; borrarla después.
+//
+// El token se lee de la propiedad, no se pega acá: si te olvidás de crearla,
+// esta prueba falla con token_invalido y te enterás antes de publicar.
+// ---------------------------------------------------------------------------
+function pruebaEnvio() {
+  const falso = {
+    postData: {
+      contents: JSON.stringify({
+        token: PropertiesService.getScriptProperties().getProperty('TOKEN_HOJA'),
+        fecha: new Date().toISOString(),
+        radicado: 'CTC-PRUEBA-0001',
+        autoriza: true,
+        campos: {
+          nombre: 'Juan Pérez',
+          correo: 'juan@ejemplo.com',
+          telefono: '3001234567',
+          asunto: 'Esto es una prueba',
+          mensaje: 'Si ves esto en la hoja, funcionó.',
+        },
+      }),
+    },
+  };
+  Logger.log(doPost(falso).getContent());
 }

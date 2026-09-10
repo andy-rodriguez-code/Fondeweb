@@ -64,11 +64,16 @@ function doPost(e) {
     const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
     asegurarCabeceras(hoja);
 
+    // `data.fecha` llega en ISO 8601 con desfase (2026-09-10T04:08:04-05:00).
+    // Sin el desfase, new Date() la interpretaría en la zona del script y la
+    // hora saldría corrida sin que nadie lo note.
+    const momento = data.fecha ? new Date(data.fecha) : new Date();
     const campos = data.campos || {};
     const cuota = Number(campos['cuota']) || 0;
 
     hoja.appendRow([
-      data.fecha || new Date().toISOString(),
+      formatoFecha(momento),
+      formatoHora(momento),
       data.radicado || '',
       ...CAMPOS.map(function (c) { return campos[c.clave] != null ? campos[c.clave] : ''; }),
       // Derivada, no un campo del formulario. Si no la querés, borrá esta
@@ -93,6 +98,16 @@ function doPost(e) {
 // Configuración del proyecto → Propiedades del script → Añadir propiedad.
 // Nombre: TOKEN_HOJA · Valor: el mismo TOKEN_HOJA de config.php.
 // El mismo valor en LOS DOS scripts.
+// Formato colombiano y zona fija: el servidor puede estar en UTC —en cPanel
+// suele estarlo— y la hoja tiene que mostrar la hora de Floridablanca.
+function formatoFecha(fecha) {
+  return Utilities.formatDate(fecha, 'America/Bogota', 'dd/MM/yyyy');
+}
+
+function formatoHora(fecha) {
+  return Utilities.formatDate(fecha, 'America/Bogota', 'hh:mm a').toLowerCase();
+}
+
 function tokenValido(recibido) {
   const esperado = PropertiesService.getScriptProperties().getProperty('TOKEN_HOJA');
   // El `esperado &&` importa: sin la propiedad configurada, un payload sin
@@ -104,13 +119,14 @@ function asegurarCabeceras(hoja) {
   if (hoja.getLastRow() === 0) {
     hoja.appendRow([
       'Fecha',
+      'Hora',
       'Radicado',
       ...CAMPOS.map(function (c) { return c.etiqueta; }),
       'Total proyectado',
       'Autorización de datos',
       'Firma capturada',
     ]);
-    hoja.getRange(1, 1, 1, CAMPOS.length + 5).setFontWeight('bold');
+    hoja.getRange(1, 1, 1, CAMPOS.length + 6).setFontWeight('bold');
     hoja.setFrozenRows(1);
   }
 }
@@ -133,4 +149,45 @@ function respuesta(exito, mensaje) {
   return ContentService
     .createTextOutput(JSON.stringify({ ok: exito, success: exito, mensaje: mensaje }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---------------------------------------------------------------------------
+// Prueba manual desde el editor de Apps Script: elegir `pruebaEnvio` en el
+// desplegable de funciones y darle a Ejecutar. Escribe una fila real en la
+// hoja; borrarla después.
+//
+// El token se lee de la propiedad, no se pega acá: si te olvidás de crearla,
+// esta prueba falla con token_invalido y te enterás antes de publicar.
+// ---------------------------------------------------------------------------
+function pruebaEnvio() {
+  const falso = {
+    postData: {
+      contents: JSON.stringify({
+        token: PropertiesService.getScriptProperties().getProperty('TOKEN_HOJA'),
+        fecha: new Date().toISOString(),
+        radicado: 'P100-PRUEBA-0001',
+        autoriza: true,
+        firma: true,
+        campos: {
+          expedicion: '2026-09-09',
+          grupo: 'A1',
+          nombre: 'Juan Pérez',
+          'tipo-documento': 'CC',
+          documento: '1098765432',
+          direccion: 'Calle 155 A #23-09',
+          telefono: '3001234567',
+          ciudad: 'Floridablanca',
+          cuota: '30000',
+          'ben-nombre': 'María Pérez',
+          'ben-tipo-documento': 'TI',
+          'ben-documento': '1102334455',
+          'ben-direccion': 'Calle 155 A #23-09',
+          'ben-telefono': '3181112222',
+          'ben-ciudad': 'Floridablanca',
+          'acepta-terminos': 'Sí',
+        },
+      }),
+    },
+  };
+  Logger.log(doPost(falso).getContent());
 }

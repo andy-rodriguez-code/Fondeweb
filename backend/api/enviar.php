@@ -22,6 +22,12 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
+// El servidor puede estar en UTC —en cPanel suele estarlo— y entonces la base
+// guardaría una hora y la hoja mostraría otra. Se fija acá para que el
+// radicado, el correo, MySQL y el Google Sheet hablen todos de la misma hora:
+// la de Floridablanca.
+date_default_timezone_set('America/Bogota');
+
 // Ajustar si public_html no cuelga directo de /home/USUARIO.
 require __DIR__ . '/../../fondefos-config/config.php';
 require __DIR__ . '/phpmailer/Exception.php';
@@ -183,7 +189,11 @@ $escrita = escribirEnHoja([
     'token'            => TOKEN_HOJA,
     'formulario'       => $definicion['nombre'],
     'radicado'         => $radicado,
-    'fecha'            => $fecha,
+    // ISO 8601 con desfase (2026-09-10T04:08:04-05:00), no el formato de
+    // MySQL. Sin el desfase, el `new Date()` del Apps Script interpretaría la
+    // cadena en la zona horaria del script y la hora saldría corrida sin que
+    // nadie lo note. Es el mismo instante que `recibido_en`, escrito distinto.
+    'fecha'            => date('c', strtotime($fecha)),
     'campos'           => $valores,
     // Booleano, no la imagen: la hoja solo registra si hubo firma. Mandar los
     // 60 KB de base64 en cada envío es tráfico que nadie usa y arriesga el

@@ -130,8 +130,12 @@ ON DUPLICATE KEY UPDATE ultimo = ultimo;
 DROP VIEW IF EXISTS vista_contacto;
 CREATE VIEW vista_contacto AS
 SELECT
+    -- Mismo formato que el Google Sheet: dd/MM/yyyy y hh:mm am/pm. La base y
+    -- la hoja tienen que leerse igual, o alguien va a comparar dos formatos
+    -- distintos del mismo instante y creer que son cosas diferentes.
+    DATE_FORMAT(e.recibido_en, '%d/%m/%Y')             AS fecha,
+    LOWER(DATE_FORMAT(e.recibido_en, '%h:%i %p'))      AS hora,
     e.radicado,
-    e.recibido_en,
     MAX(CASE WHEN c.clave = 'nombre'   THEN c.valor END) AS nombre,
     MAX(CASE WHEN c.clave = 'correo'   THEN c.valor END) AS correo,
     MAX(CASE WHEN c.clave = 'telefono' THEN c.valor END) AS telefono,
@@ -152,8 +156,10 @@ ORDER BY e.id DESC;
 DROP VIEW IF EXISTS vista_programa_100;
 CREATE VIEW vista_programa_100 AS
 SELECT
+    -- Mismo formato que el Google Sheet: dd/MM/yyyy y hh:mm am/pm.
+    DATE_FORMAT(e.recibido_en, '%d/%m/%Y')        AS fecha,
+    LOWER(DATE_FORMAT(e.recibido_en, '%h:%i %p')) AS hora,
     e.radicado,
-    e.recibido_en,
     MAX(CASE WHEN c.clave = 'expedicion'         THEN c.valor END) AS expedicion,
     MAX(CASE WHEN c.clave = 'grupo'              THEN c.valor END) AS grupo,
     MAX(CASE WHEN c.clave = 'nombre'             THEN c.valor END) AS ahorrador,

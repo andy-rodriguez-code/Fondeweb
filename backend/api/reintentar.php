@@ -14,6 +14,10 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
+// Misma zona que enviar.php: si el cron corriera en UTC, los reenvios
+// llegarian a la hoja con otra hora que los envios originales.
+date_default_timezone_set('America/Bogota');
+
 // Solo por CLI. Si alguien lo pide por URL, no hace nada.
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);

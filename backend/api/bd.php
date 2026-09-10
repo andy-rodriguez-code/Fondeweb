@@ -192,7 +192,9 @@ function enviosPendientesDeHoja(int $limite = 50): array
             'token'            => TOKEN_HOJA,
             'formulario'       => $envio['nombre_formulario'],
             'radicado'         => $envio['radicado'],
-            'fecha'            => $envio['recibido_en'],
+            // Mismo formato que manda enviar.php: ISO 8601 con desfase, para
+            // que un reenvio no escriba una hora distinta a la del original.
+            'fecha'            => date('c', strtotime((string) $envio['recibido_en'])),
             'campos'           => $valores,
             // Booleano y no la imagen: la hoja solo registra si hubo firma.
             // El PNG vive en el servidor y va adjunto en el correo.
