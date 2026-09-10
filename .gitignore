@@ -2,6 +2,8 @@ node_modules/
 dist/
 .env
 .env.*
+# La plantilla sí se versiona: no tiene valores, solo los nombres.
+!.env.example
 RECON/
 *.artifact.json
 .od-skills/
