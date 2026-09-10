@@ -4,6 +4,18 @@ dist/
 .env.*
 # La plantilla sí se versiona: no tiene valores, solo los nombres.
 !.env.example
+
+# Credenciales del backend. Van acá desde antes de que exista la carpeta
+# backend/: una contraseña que entra al historial de Git no se saca borrando el
+# archivo, hay que reescribir el historial. Más barato prevenirlo.
+config.php
+**/config.php
+!**/config.example.php
+*credentials*.json
+*service-account*.json
+google-credentials.json
+*.pem
+*.key
 RECON/
 *.artifact.json
 .od-skills/
