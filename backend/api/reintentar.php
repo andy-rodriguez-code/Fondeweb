@@ -1,11 +1,12 @@
 <?php
-// Vacía la cola de envíos que no llegaron al Google Sheet.
+// Reenvía al Google Sheet los envíos que quedaron marcados como pendientes.
+//
+// La cola vive en la base —`envios.hoja_escrita = 0`— y ya no en una carpeta
+// de archivos .json: un solo lugar donde mirar cuando algo falta, y sin riesgo
+// de que la carpeta y la base cuenten historias distintas.
 //
 // Lo corre el cron de cPanel cada 15 minutos:
 //   /usr/local/bin/php /home/USUARIO/public_html/api/reintentar.php
-//
-// No recibe peticiones del navegador: el .htaccess de esta carpeta lo bloquea
-// por HTTP y solo se ejecuta desde la línea de comandos.
 
 declare(strict_types=1);
 
@@ -24,34 +25,24 @@ require __DIR__ . '/phpmailer/Exception.php';
 require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 require __DIR__ . '/enviar-funciones.php';
+require __DIR__ . '/bd.php';
 
-$archivos = glob(RUTA_ESTADO . '/pendientes/*.json') ?: [];
-if (!$archivos) {
+$pendientes = enviosPendientesDeHoja();
+if (!$pendientes) {
     exit(0);
 }
 
 $recuperados = 0;
 
-foreach ($archivos as $archivo) {
-    $carga = json_decode((string) file_get_contents($archivo), true);
-    if (!is_array($carga)) {
-        // Un archivo ilegible no se reintenta para siempre: se aparta.
-        @rename($archivo, $archivo . '.roto');
-        registrar('REINTENTO ilegible: ' . basename($archivo));
-        continue;
-    }
-
-    // El token puede haber rotado desde que se encoló.
-    $carga['token'] = TOKEN_HOJA;
-
+foreach ($pendientes as $carga) {
     if (escribirEnHoja($carga)) {
-        unlink($archivo);
+        marcarEnvio($carga['radicado'], 'hoja_escrita', true);
         $recuperados++;
     }
 }
 
 if ($recuperados > 0) {
-    registrar('REINTENTO recuperó ' . $recuperados . ' de ' . count($archivos));
+    registrar('REINTENTO recuperó ' . $recuperados . ' de ' . count($pendientes));
 }
 
 exit(0);

@@ -1,10 +1,13 @@
 <?php
 // Único punto de entrada de los formularios del sitio.
 //
-// Recibe JSON, valida contra la lista blanca del formulario, asigna el
-// radicado, manda el correo y escribe la fila en el Google Sheet. Si Google
-// falla, el envío queda en cola y el cron de reintentar.php lo recupera: el
-// radicado ya existe y el correo ya salió, así que nada se pierde.
+// Recibe JSON, valida contra la lista blanca del formulario y guarda en MySQL.
+//
+// El orden importa: **la base primero**. Es la fuente de verdad, así que si
+// ahí no se pudo escribir el envío no existió y se le avisa a la persona. El
+// correo y el Google Sheet son derivados: que fallen no borra el registro, se
+// marcan como pendientes y el cron de reintentar.php los recupera leyendo de
+// la propia base.
 //
 // Se despliega en public_html/api/. La configuración vive fuera de
 // public_html: ver ../config.example.php.
@@ -25,6 +28,7 @@ require __DIR__ . '/phpmailer/Exception.php';
 require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 require __DIR__ . '/enviar-funciones.php';
+require __DIR__ . '/bd.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -128,18 +132,49 @@ if ($definicion['firma']) {
     }
 }
 
-// ── Radicado ──────────────────────────────────────────────────────────────
+// ── Base de datos: la fuente de verdad ────────────────────────────────────
+// El radicado se asigna acá dentro, en la misma transacción que las filas del
+// envío. Si esto falla, no hay envío y no se manda nada.
 
-$radicado = siguienteRadicado($definicion['prefijo']);
 $fecha = date('Y-m-d H:i:s');
 
-// ── Correo ────────────────────────────────────────────────────────────────
+// La firma se escribe antes de la transacción porque su ruta es una columna
+// del envío. Si la escritura falla, el envío se guarda igual sin ella: perder
+// una firma es malo, perder la inscripción entera es peor.
+$rutaFirma = '';
+if ($firma !== '') {
+    // Nombre provisional: todavía no hay radicado. Se renombra al tenerlo.
+    $rutaFirma = guardarFirma('tmp-' . bin2hex(random_bytes(8)), $firma);
+}
+
+$radicado = guardarEnvio(
+    $clave,
+    $definicion,
+    $valores,
+    $fecha,
+    $ip,
+    $autoriza,
+    $correoRemitente,
+    $rutaFirma
+);
+
+// Ya con el radicado, la firma toma su nombre definitivo.
+if ($rutaFirma !== '') {
+    $definitiva = RUTA_ESTADO . '/firmas/' . $radicado . '.png';
+    if (@rename($rutaFirma, $definitiva)) {
+        bd()->prepare('UPDATE envios SET firma_archivo = :ruta WHERE radicado = :radicado')
+            ->execute([':ruta' => $definitiva, ':radicado' => $radicado]);
+    }
+}
+
+// ── Derivados: correo y Google Sheet ──────────────────────────────────────
+// A partir de acá nada puede hacer desaparecer el envío. Lo que falle queda
+// marcado en la base y lo recupera el cron.
 
 $enviado = enviarCorreos($definicion, $valores, $radicado, $fecha, $firma, $correoRemitente);
+marcarEnvio($radicado, 'correo_enviado', $enviado);
 
-// ── Google Sheet ──────────────────────────────────────────────────────────
-
-$carga = [
+$escrita = escribirEnHoja([
     'token'      => TOKEN_HOJA,
     'formulario' => $definicion['nombre'],
     'radicado'   => $radicado,
@@ -148,21 +183,21 @@ $carga = [
     'firma'      => $firma,
     'ip'         => $ip,
     'autoriza'   => $autoriza,
-];
+]);
+marcarEnvio($radicado, 'hoja_escrita', $escrita);
 
-if (!escribirEnHoja($carga)) {
-    // Nada se pierde: queda en cola y reintentar.php la vacía.
-    @file_put_contents(
-        RUTA_ESTADO . '/pendientes/' . $radicado . '.json',
-        json_encode($carga, JSON_UNESCAPED_UNICODE)
-    );
-}
+registrar(sprintf(
+    '%s | %s | correo=%s | hoja=%s',
+    $radicado,
+    $definicion['nombre'],
+    $enviado ? 'ok' : 'fallo',
+    $escrita ? 'ok' : 'pendiente'
+));
 
-registrar($radicado . ' | ' . $definicion['nombre'] . ' | correo=' . ($enviado ? 'ok' : 'fallo'));
-
+// El envío está guardado y el radicado es válido pase lo que pase. Si el
+// correo no salió se avisa, pero el radicado va en la respuesta para que la
+// persona conserve su constancia.
 if (!$enviado) {
-    // Los datos quedaron guardados y el radicado es válido: se devuelve para
-    // que la persona tenga su constancia aunque el correo no haya salido.
     responder(502, ['ok' => false, 'error' => 'correo_no_enviado', 'radicado' => $radicado]);
 }
 

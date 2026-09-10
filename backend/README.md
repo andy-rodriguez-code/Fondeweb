@@ -1,7 +1,23 @@
 # Backend de formularios
 
-Endpoint PHP que atiende todos los formularios del sitio: valida, asigna un
-radicado, manda el correo y escribe la fila en el Google Sheet.
+Endpoint PHP que atiende todos los formularios del sitio: valida, guarda en
+MySQL, manda el correo y escribe la fila en el Google Sheet.
+
+## El orden importa
+
+```
+validar → MySQL → correo → Google Sheet
+          ↑                  ↑
+    fuente de verdad     derivados
+```
+
+**MySQL es la fuente de verdad.** Si ahí no se pudo escribir, el envío no
+existió y se rechaza la petición: es preferible que la persona vuelva a
+intentar a decirle que quedó registrada cuando no quedó en ninguna parte.
+
+El correo y la hoja son derivados. Que fallen no borra el registro: se marcan
+en las columnas `correo_enviado` y `hoja_escrita`, y el cron los recupera
+leyendo de la propia base.
 
 ## Qué hay acá
 
@@ -9,14 +25,33 @@ radicado, manda el correo y escribe la fila en el Google Sheet.
 backend/
 ├── api/
 │   ├── enviar.php             ← único punto de entrada
+│   ├── bd.php                 ← acceso a MySQL con PDO
 │   ├── enviar-funciones.php   ← compartido con el cron
-│   ├── reintentar.php         ← vacía la cola de pendientes (solo CLI)
+│   ├── reintentar.php         ← reenvía lo pendiente a la hoja (solo CLI)
 │   └── .htaccess              ← solo enviar.php se sirve por HTTP
 ├── apps-script/
 │   └── Codigo.gs              ← se pega en el Apps Script de la hoja
+├── sql/
+│   └── esquema.sql            ← se ejecuta una vez en phpMyAdmin
 ├── config.example.php         ← plantilla; el real NO se versiona
 └── README.md
 ```
+
+## Las tablas
+
+| Tabla | Para qué |
+|---|---|
+| `envios` | un renglón por envío: radicado, formulario, fecha, IP, autorización, y si el correo y la hoja salieron |
+| `envio_campos` | los campos de cada envío, uno por fila |
+| `consecutivos` | el número del radicado, por formulario y por año |
+
+`envio_campos` es clave-valor y no una columna por campo. Van a ser varios
+formularios con campos distintos: una tabla por formulario obligaría a un
+`ALTER TABLE` cada vez que el cliente pida un campo nuevo.
+
+Las firmas van como PNG en `estado/firmas/` con la ruta en la base, no como
+BLOB: son decenas de KB por envío que nunca se consultan, solo se abren. El
+respaldo de cPanel cubre archivos y base por igual.
 
 ## Dónde va cada cosa en el servidor
 
@@ -41,32 +76,45 @@ que no está bajo el directorio público no se sirve nunca.
    de su carpeta `src/` a `public_html/api/phpmailer/`: `PHPMailer.php`,
    `SMTP.php` y `Exception.php`.
 
-2. **Carpetas de estado.** Crear y dejar escribibles:
+2. **Base de datos.** En cPanel → Bases de datos → *MySQL® Databases*:
+
+   1. Crear la base.
+   2. Crear el usuario.
+   3. **Asignar el usuario a la base con todos los privilegios.** Este tercer
+      paso es el que se olvida: las credenciales parecen correctas y la
+      conexión falla igual.
+
+   cPanel antepone el prefijo de la cuenta, así que los nombres reales quedan
+   como `usuario_fondefos`. Después, en *phpMyAdmin*, pestaña **SQL**, pegar y
+   ejecutar `sql/esquema.sql`.
+
+3. **Carpetas de estado.** Crear y dejar escribibles:
 
    ```
    /home/USUARIO/fondefos-config/estado/
-   /home/USUARIO/fondefos-config/estado/pendientes/
+   /home/USUARIO/fondefos-config/estado/firmas/
    ```
 
-   Permisos `755`. Si el envío falla con `contador_no_disponible`, subir a `775`.
+   Permisos `755`; si algo falla al escribir, subir a `775`. Acá ya no hay
+   contador ni cola de pendientes: los dos se movieron a MySQL.
 
-3. **Configuración.** Copiar `config.example.php` como
+4. **Configuración.** Copiar `config.example.php` como
    `/home/USUARIO/fondefos-config/config.php` y rellenarlo. Dejarlo con
    `ENTORNO = 'pruebas'` hasta terminar de probar: en ese modo todo el correo va
    a `CORREO_PRUEBAS` y no al buzón del cliente.
 
-4. **Apps Script.** Pegar `apps-script/Codigo.gs`, crear las propiedades del
+5. **Apps Script.** Pegar `apps-script/Codigo.gs`, crear las propiedades del
    script `TOKEN` y `CARPETA_FIRMAS_ID`, implementar como aplicación web
    (ejecutar como «Yo», acceso «Cualquier usuario») y copiar la URL `/exec` a
    `URL_APPS_SCRIPT`.
 
-5. **Cron de reintentos**, cada 15 minutos:
+6. **Cron de reintentos**, cada 15 minutos:
 
    ```
    /usr/local/bin/php /home/USUARIO/public_html/api/reintentar.php
    ```
 
-6. **Pasar a producción:** cambiar `ENTORNO` a `'produccion'`.
+7. **Pasar a producción:** cambiar `ENTORNO` a `'produccion'`.
 
 Los pasos con capturas y la configuración de SPF/DKIM están en
 `BACKEND-FORMULARIOS.md`, en la raíz del proyecto.
@@ -84,6 +132,8 @@ internos y no tiene que saber en qué idioma está el sitio.
 
 | Código | HTTP | Significa |
 |---|---|---|
+| `base_no_disponible` | 503 | no se pudo conectar a MySQL |
+| `no_se_pudo_guardar` | 503 | la transacción falló; **no quedó nada guardado** |
 | `metodo_no_permitido` | 405 | no fue POST |
 | `origen_no_permitido` | 403 | el `Origin` no está en `ORIGENES_PERMITIDOS` |
 | `json_invalido` | 400 | el cuerpo no era JSON |
@@ -118,8 +168,14 @@ la de `config.php`.
   `smtp.gmail.com`. Gmail exigiría App Password con 2FA, reescribiría el `From`
   a `@gmail.com` y sumaría el riesgo de un 587 bloqueado por el hosting. El
   buzón de Gmail sigue siendo el que recibe.
-- **El radicado lo asigna PHP**, no el Apps Script, con contador local y
-  `flock`. Si Google falla, el número ya existe y el correo sale igual.
+- **El radicado lo asigna MySQL**, dentro de la misma transacción que las
+  filas del envío, con `INSERT ... ON DUPLICATE KEY UPDATE` sobre
+  `consecutivos`. Antes vivía en un archivo con `flock`; se movió porque dos
+  contadores son dos fuentes de verdad, y al restaurar un respaldo de la base
+  el archivo habría quedado desfasado repitiendo números ya usados.
+- **El límite por IP sí se queda en archivo.** Es dato efímero que se descarta
+  a la hora; meterlo en MySQL sumaría dos escrituras a cada petición, incluidas
+  las que se van a rechazar, sin ganar nada.
 - **`CURLOPT_FOLLOWLOCATION` es obligatorio**: Apps Script responde 302 hacia
   googleusercontent y sin eso el cuerpo de la respuesta nunca llega.
 - **El escapado va al imprimir, no al recibir.** Aplicar `htmlspecialchars` a

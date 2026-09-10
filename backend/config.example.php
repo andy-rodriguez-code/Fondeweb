@@ -31,13 +31,31 @@ const SMTP_USUARIO = 'web@ejemplo.com';
 const SMTP_CLAVE   = 'REEMPLAZAR';
 const SMTP_NOMBRE  = 'Sitio web FONDEFOS';
 
+// ── Base de datos MySQL ───────────────────────────────────────────────────
+// Se crea en cPanel → Bases de datos → MySQL® Databases: primero la base,
+// después el usuario, y por último hay que ASIGNAR el usuario a la base con
+// todos los privilegios. Saltarse ese tercer paso es el error habitual: las
+// credenciales parecen correctas y la conexión falla igual.
+//
+// cPanel antepone el prefijo de la cuenta, así que los nombres reales quedan
+// como `usuario_fondefos` y no como los escribiste.
+//
+// Es la fuente de verdad del sistema: si acá no se guarda, el envío se
+// rechaza. El correo y el Sheet son derivados.
+const BD_HOST    = 'localhost';
+const BD_PUERTO  = 3306;
+const BD_NOMBRE  = 'usuario_fondefos';
+const BD_USUARIO = 'usuario_fondeweb';
+const BD_CLAVE   = 'REEMPLAZAR';
+
 // ── Google Sheets ─────────────────────────────────────────────────────────
 const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/REEMPLAZAR/exec';
 const TOKEN_HOJA      = 'REEMPLAZAR';
 
 // ── Estado en disco ───────────────────────────────────────────────────────
-// Contadores del radicado, límite por IP, cola de reintentos y registro.
-// Debe existir y ser escribible por el usuario del hosting.
+// Registro, límite por IP y las firmas en PNG. El consecutivo del radicado y
+// la cola de pendientes ya NO viven acá: se movieron a MySQL para no tener dos
+// fuentes de verdad. Debe existir y ser escribible, con una subcarpeta firmas/.
 const RUTA_ESTADO = '/home/USUARIO/fondefos-config/estado';
 
 // ── Origen permitido ──────────────────────────────────────────────────────

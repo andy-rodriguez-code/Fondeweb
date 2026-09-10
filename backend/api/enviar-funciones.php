@@ -62,42 +62,42 @@ function aplicarCors(): void
 }
 
 /**
- * Consecutivo por formulario y por año. `flock` evita que dos envíos
- * simultáneos se lleven el mismo número.
+ * Guarda el PNG de la firma fuera de public_html y devuelve su ruta.
+ *
+ * Va como archivo y no como BLOB en la base: son decenas de KB por envío que
+ * no se consultan nunca, solo se abren. El respaldo de cPanel cubre archivos y
+ * base por igual, así que no se pierde nada por separarlos.
  */
-function siguienteRadicado(string $prefijo): string
+function guardarFirma(string $radicado, string $firma): string
 {
-    $archivo = RUTA_ESTADO . '/contadores.json';
-    $manejador = fopen($archivo, 'c+');
-    if ($manejador === false) {
-        registrar('ERROR: no se pudo abrir ' . $archivo);
-        responder(500, ['ok' => false, 'error' => 'contador_no_disponible']);
-    }
-    flock($manejador, LOCK_EX);
-
-    $contenido = stream_get_contents($manejador);
-    $contadores = $contenido !== '' && $contenido !== false
-        ? json_decode($contenido, true)
-        : [];
-    if (!is_array($contadores)) {
-        $contadores = [];
+    if ($firma === '') {
+        return '';
     }
 
-    $anio = date('Y');
-    $llave = $prefijo . '-' . $anio;
-    $contadores[$llave] = ($contadores[$llave] ?? 0) + 1;
+    $binario = base64_decode(
+        (string) preg_replace('#^data:image/png;base64,#', '', $firma),
+        true
+    );
+    if ($binario === false || $binario === '') {
+        return '';
+    }
 
-    ftruncate($manejador, 0);
-    rewind($manejador);
-    fwrite($manejador, json_encode($contadores));
-    fflush($manejador);
-    flock($manejador, LOCK_UN);
-    fclose($manejador);
+    $ruta = RUTA_ESTADO . '/firmas/' . $radicado . '.png';
+    if (@file_put_contents($ruta, $binario) === false) {
+        registrar('ERROR: no se pudo escribir la firma de ' . $radicado);
+        return '';
+    }
 
-    return sprintf('%s-%s-%04d', $prefijo, $anio, $contadores[$llave]);
+    return $ruta;
 }
 
-/** Cinco envíos por hora y por IP. */
+/**
+ * Cinco envíos por hora y por IP.
+ *
+ * Se queda en archivo y no en la base a propósito: es dato efímero que se
+ * descarta a la hora, y meterlo en MySQL sumaría dos escrituras a cada
+ * petición —incluidas las que se van a rechazar— sin ganar nada.
+ */
 function limitarPorIp(string $ip): void
 {
     $archivo = RUTA_ESTADO . '/limite.json';
