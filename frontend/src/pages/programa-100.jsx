@@ -6,6 +6,7 @@ import Icono from '../components/ui/Icono.jsx'
 import Button from '../components/ui/Button.jsx'
 import useFirma from '../hooks/useFirma.js'
 import { grupos, terminos, firmasFondo, programa100, MESES } from '../data/programa100.js'
+import { enviarFormulario } from '../lib/enviarFormulario.js'
 import logotipo from '../assets/images/banner/Logo-Fondefos-sin-fondo.png'
 
 // programa-100 — formulario de inscripción al Programa 100 de ahorro
@@ -20,8 +21,10 @@ import logotipo from '../assets/images/banner/Logo-Fondefos-sin-fondo.png'
 //   - la fecha de terminación es la de expedición más esos 12 meses
 //   - la fecha de expedición es la de hoy, en horario local
 //
-// Como el resto del prototipo, el envío es inerte: valida, avisa y no manda
-// nada a ningún servidor (mismo criterio que el formulario de Contáctenos).
+// El envío va contra api/enviar.php: el servidor asigna el consecutivo, manda
+// el aviso con la firma adjunta y devuelve el radicado, que se muestra en el
+// encabezado del formato. Los dos consentimientos —términos del programa y
+// autorización de datos— van separados y ambos bloquean el envío.
 
 const PESOS = new Intl.NumberFormat('es-CO', {
   style: 'currency',
@@ -101,12 +104,19 @@ export default function Programa100Page() {
     grupo: '',
     cuota: '',
     acepta: false,
+    autoriza: false,
     ...Object.fromEntries(
       grupos.flatMap((g) => g.campos.map((c) => [c.id, c.tipo === 'select' ? c.opciones[0] : ''])),
     ),
   }))
   const [errores, setErrores] = useState({})
-  const [enviado, setEnviado] = useState(false)
+  const [radicado, setRadicado] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [fallo, setFallo] = useState('')
+  // Momento en que se abrió la página, para la comprobación antirrobot del
+  // servidor. Inicializador diferido: llamar Date.now() durante el render es
+  // impuro.
+  const [abierto] = useState(Date.now)
   const avisoRef = useRef(null)
   const { lienzoRef, hayFirma, limpiar, manejadores } = useFirma()
 
@@ -118,8 +128,8 @@ export default function Programa100Page() {
   // aviso todavía está en display:none, y focus() sobre un nodo oculto no hace
   // nada. Después del render ya es visible y sí recibe el foco.
   useEffect(() => {
-    if (enviado) avisoRef.current?.focus()
-  }, [enviado])
+    if (radicado) avisoRef.current?.focus()
+  }, [radicado])
 
   const cambiar = (campo) => (evento) => {
     const valor = evento.target.type === 'checkbox' ? evento.target.checked : evento.target.value
@@ -129,8 +139,11 @@ export default function Programa100Page() {
     setErrores((previos) => (previos[campo] ? { ...previos, [campo]: false } : previos))
   }
 
-  const enviar = (evento) => {
+  const enviar = async (evento) => {
     evento.preventDefault()
+    setFallo('')
+    setRadicado('')
+
     const nuevos = {}
     for (const grupo of grupos) {
       for (const campo of grupo.campos) {
@@ -140,17 +153,44 @@ export default function Programa100Page() {
     if (cuota <= 0) nuevos.cuota = true
     if (!hayFirma) nuevos.firma = true
     if (!valores.acepta) nuevos.acepta = true
+    // Consentimiento separado del de los términos: son dos cosas distintas y
+    // la Ley 1581 pide que la autorización de datos sea explícita. Bundleados,
+    // ninguno de los dos es demostrable por separado.
+    if (!valores.autoriza) nuevos.autoriza = true
 
     setErrores(nuevos)
     if (Object.keys(nuevos).length) {
-      setEnviado(false)
       // Lleva el foco al primer campo con error, que en teléfono puede estar
-      // muy por encima del botón.
+      // muy por encima del botón. El orden de las claves es el de inserción,
+      // así que el primero es el de más arriba en el documento.
       const primero = Object.keys(nuevos)[0]
       document.getElementById(`p100-${primero}`)?.focus()
       return
     }
-    setEnviado(true)
+
+    setEnviando(true)
+    try {
+      // El lienzo se exporta recién acá: durante el llenado la firma vive como
+      // puntos en el canvas y convertirla en cada trazo sería tirar trabajo.
+      const firma = lienzoRef.current.toDataURL('image/png')
+      // Los dos consentimientos salen de `campos`: no son datos del formato, y
+      // el servidor los registra en columnas propias.
+      const { acepta, autoriza, ...campos } = valores
+
+      const numero = await enviarFormulario({
+        formulario: 'programa-100',
+        campos: { ...campos, 'acepta-terminos': acepta ? 'Sí' : 'No' },
+        firma,
+        autoriza,
+        abierto,
+      })
+      setRadicado(numero)
+    } catch (error) {
+      setFallo(error.message)
+      if (error.campo) setErrores({ [error.campo]: true })
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
@@ -175,17 +215,17 @@ export default function Programa100Page() {
                 <h2>Programa 100</h2>
                 <p>De ahorro voluntario</p>
               </div>
-              {/* El consecutivo lo asigna FONDEFOS al radicar: el prototipo no
-                  tiene servidor que lo entregue, así que no se inventa. */}
+              {/* El consecutivo lo asigna el servidor al radicar: hasta que
+                  responde no se inventa un número. */}
               <p className="registro__consecutivo">
                 <span>N.º</span>
-                <strong>Al radicar</strong>
+                <strong>{radicado || 'Al radicar'}</strong>
               </p>
             </header>
 
             <div
               className="aviso-envio"
-              data-visible={enviado ? 'si' : 'no'}
+              data-visible={radicado ? 'si' : 'no'}
               tabIndex="-1"
               role="status"
               ref={avisoRef}
@@ -193,9 +233,7 @@ export default function Programa100Page() {
               <Icono nombre="check" size={18} />
               <span>
                 {programa100.formulario.aviso.antes}
-                <a href={programa100.formulario.aviso.enlace.href}>
-                  {programa100.formulario.aviso.enlace.etiqueta}
-                </a>
+                <strong>{radicado}</strong>
                 {programa100.formulario.aviso.despues}
               </span>
             </div>
@@ -276,6 +314,10 @@ export default function Programa100Page() {
                   <li key={termino.slice(0, 40)}>{termino}</li>
                 ))}
               </ul>
+              {/* Dos consentimientos, no uno. El de los términos es
+                  contractual; el de datos es la autorización que exige la Ley
+                  1581 de 2012. Cada uno con su data-error y los dos bloquean
+                  el envío. */}
               <div className="campo campo--check" data-error={errores.acepta ? 'si' : 'no'}>
                 <label htmlFor="p100-acepta">
                   <input
@@ -285,15 +327,28 @@ export default function Programa100Page() {
                     onChange={cambiar('acepta')}
                     aria-required="true"
                   />
+                  <span>Acepto los términos del Programa 100.</span>
+                </label>
+                <span className="campo__error">{programa100.formulario.aceptaError}</span>
+              </div>
+              <div className="campo campo--check" data-error={errores.autoriza ? 'si' : 'no'}>
+                <label htmlFor="p100-autoriza">
+                  <input
+                    id="p100-autoriza"
+                    type="checkbox"
+                    checked={valores.autoriza}
+                    onChange={cambiar('autoriza')}
+                    aria-required="true"
+                  />
                   <span>
-                    Acepto los términos del Programa 100 y la{' '}
+                    Autorizo la política de{' '}
                     <Link to="/politica-de-datos" discover="none">
-                      política de tratamiento de datos
+                      tratamiento de datos
                     </Link>
                     .
                   </span>
                 </label>
-                <span className="campo__error">{programa100.formulario.aceptaError}</span>
+                <span className="campo__error">{programa100.formulario.autorizaError}</span>
               </div>
             </section>
 
@@ -301,7 +356,12 @@ export default function Programa100Page() {
               <div className="registro__firmas">
                 <div className="campo firma" data-error={errores.firma ? 'si' : 'no'}>
                   <div className="firma__lienzo" data-firmado={hayFirma ? 'si' : 'no'}>
+                    {/* El id sigue el patrón `p100-<clave de error>` para que
+                        el foco del primer error también alcance a la firma; un
+                        canvas no es enfocable sin tabIndex. */}
                     <canvas
+                      id="p100-firma"
+                      tabIndex="-1"
                       ref={lienzoRef}
                       {...manejadores}
                       aria-label="Área para firmar del ahorrador"
@@ -332,9 +392,14 @@ export default function Programa100Page() {
               </div>
             </Grupo>
 
+            {fallo ? (
+              <p className="formulario__fallo" role="alert">
+                {fallo}
+              </p>
+            ) : null}
             <div className="registro__acciones">
-              <Button as="button" type="submit">
-                {programa100.formulario.enviar}
+              <Button as="button" type="submit" disabled={enviando}>
+                {enviando ? programa100.formulario.enviando : programa100.formulario.enviar}
               </Button>
             </div>
           </form>
