@@ -16,6 +16,12 @@ config.php
 google-credentials.json
 *.pem
 *.key
+
+# Estado en tiempo de ejecución del backend: registro con IPs, contador del
+# límite por IP y las firmas en PNG de quien se inscribe. Son datos personales
+# y datos de operación, no código. Nunca al repositorio.
+backend/estado/
+estado/
 RECON/
 *.artifact.json
 .od-skills/
