@@ -335,8 +335,13 @@ function escribirEnHoja(array $carga): bool
         return false;
     }
 
+    // Se aceptan las dos claves. Si el script devolviera solo la que acá no se
+    // mira, toda escritura exitosa se leería como fallida, el envío quedaría
+    // marcado pendiente y el cron reenviaría la misma fila cada 15 minutos
+    // para siempre, duplicándola en la hoja.
     $json = json_decode((string) $respuesta, true);
-    if (!is_array($json) || empty($json['ok'])) {
+    $acepto = is_array($json) && (!empty($json['ok']) || !empty($json['success']));
+    if (!$acepto) {
         registrar('ERROR Sheet ' . $radicado . ': ' . substr((string) $respuesta, 0, 300));
         return false;
     }

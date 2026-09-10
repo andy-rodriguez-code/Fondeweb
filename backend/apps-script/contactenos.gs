@@ -5,8 +5,9 @@
 //
 // INSTALACIÓN
 //   1. En la hoja: Extensiones → Apps Script. Borrar Código.gs y pegar esto.
-//   2. Configuración del proyecto → Propiedades del script → agregar TOKEN,
-//      con el mismo valor que TOKEN_HOJA en config.php.
+//   2. Configuración del proyecto → Propiedades del script → agregar
+//      TOKEN_HOJA, con el mismo valor que la constante del mismo nombre en
+//      config.php.
 //   3. Implementar → Nueva implementación → Aplicación web
 //        · Ejecutar como: Yo
 //        · Quién tiene acceso: Cualquier usuario
@@ -38,7 +39,7 @@ function doPost(e) {
 
     // Una URL larga no es una contraseña: sin token, cualquiera que la
     // averigüe puede inyectar filas en la hoja del fondo.
-    if (data.token !== PropertiesService.getScriptProperties().getProperty('TOKEN')) {
+    if (!tokenValido(data.token)) {
       return respuesta(false, 'token_invalido');
     }
 
@@ -64,6 +65,20 @@ function doPost(e) {
   }
 }
 
+// El nombre de la propiedad es TOKEN_HOJA, igual que la constante de
+// config.php: dos nombres para lo mismo es una invitación a que se
+// desincronicen.
+//
+// Configuración del proyecto → Propiedades del script → Añadir propiedad.
+// Nombre: TOKEN_HOJA · Valor: el mismo TOKEN_HOJA de config.php.
+// El mismo valor en LOS DOS scripts.
+function tokenValido(recibido) {
+  const esperado = PropertiesService.getScriptProperties().getProperty('TOKEN_HOJA');
+  // El `esperado &&` importa: sin la propiedad configurada, un payload sin
+  // token cumpliría `undefined === undefined` y entraría cualquiera.
+  return Boolean(esperado) && recibido === esperado;
+}
+
 function asegurarCabeceras(hoja) {
   if (hoja.getLastRow() === 0) {
     hoja.appendRow([
@@ -81,10 +96,13 @@ function formatoSiNo(valor) {
   return (valor === true || valor === 'true' || valor === 1) ? 'Sí' : 'No';
 }
 
-// `ok` en vez de `success`: es lo que enviar.php verifica para decidir si el
-// envío quedó pendiente de reintento.
+// Se devuelven las DOS claves, `ok` y `success`, a propósito. El backend
+// verifica una de ellas para decidir si el envío quedó pendiente de reintento;
+// si el script devolviera solo la que el backend no mira, toda escritura
+// exitosa se leería como fallida y el cron reenviaría la misma fila cada 15
+// minutos, para siempre.
 function respuesta(exito, mensaje) {
   return ContentService
-    .createTextOutput(JSON.stringify({ ok: exito, mensaje: mensaje }))
+    .createTextOutput(JSON.stringify({ ok: exito, success: exito, mensaje: mensaje }))
     .setMimeType(ContentService.MimeType.JSON);
 }

@@ -27,7 +27,7 @@ const CORREO_PRUEBAS = 'tu-casilla@ejemplo.com';
 // No es el SMTP de Gmail: ver la decisión en BACKEND-FORMULARIOS.md.
 const SMTP_HOST    = 'mail.ejemplo.com';
 const SMTP_PUERTO  = 465;            // 465 con SSL/TLS, 587 con STARTTLS
-const SMTP_USUARIO = 'web@ejemplo.com';
+const SMTP_USUARIO = 'REEMPLAZAR';
 const SMTP_CLAVE   = 'REEMPLAZAR';
 const SMTP_NOMBRE  = 'Sitio web FONDEFOS';
 
