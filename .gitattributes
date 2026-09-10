@@ -1,0 +1,4 @@
+# El .htaccess se sube a un Apache en Linux. Con finales de línea CRLF, algunas
+# directivas fallan con un 500 que no dice por qué. Se fuerza LF pase lo que
+# pase en el equipo donde se compile.
+.htaccess text eol=lf

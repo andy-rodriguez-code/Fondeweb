@@ -1,0 +1,32 @@
+# Reglas de servidor para el SPA. Vite copia este archivo a la raíz de dist/
+# en cada build, así que viaja con el sitio y no se sube a mano.
+
+RewriteEngine On
+
+# HTTPS obligatorio.
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# El backend se sirve tal cual. Esta regla va PRIMERO: si no, la reescritura
+# del SPA se traga /api/enviar.php y devuelve el index.html.
+RewriteRule ^api/ - [L]
+
+# Archivos y carpetas que existen: se sirven directo.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Todo lo demás lo resuelve React Router.
+RewriteRule ^ index.html [L]
+
+# Los bundles llevan hash en el nombre: se pueden cachear para siempre.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  <FilesMatch "\.(js|css|woff2|png|jpg|webp|svg)$">
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+  # El index no: es el que apunta a los bundles nuevos.
+  <FilesMatch "^index\.html$">
+    ExpiresDefault "access plus 0 seconds"
+  </FilesMatch>
+</IfModule>
