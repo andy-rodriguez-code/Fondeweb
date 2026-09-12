@@ -19,6 +19,29 @@ RewriteRule ^ - [L]
 # Todo lo demás lo resuelve React Router.
 RewriteRule ^ index.html [L]
 
+# Cabeceras de seguridad. Van en <IfModule> porque si el hosting no tiene
+# mod_headers cargado, un `Header` suelto tumba el sitio entero con un 500.
+<IfModule mod_headers.c>
+  # HSTS: el navegador no vuelve a intentar por HTTP durante un año. La
+  # redirección de arriba protege a partir de la segunda visita; esta cabecera
+  # cierra la primera, que es donde alguien en la misma red puede interceptar.
+  # Se activa recién cuando el certificado ya está andando: si se pone antes,
+  # el navegador se niega a abrir el sitio y no hay forma de convencerlo.
+  Header always set Strict-Transport-Security "max-age=31536000"
+
+  # Nadie mete el sitio en un iframe: evita que una página ajena lo superponga
+  # con un formulario falso encima.
+  Header always set X-Frame-Options "SAMEORIGIN"
+
+  # El navegador respeta el Content-Type y no adivina. Un .jpg subido que en
+  # realidad trae HTML no se ejecuta como página.
+  Header always set X-Content-Type-Options "nosniff"
+
+  # Al salir del sitio no se filtra la ruta completa que la persona venía
+  # visitando, solo el dominio.
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
 # Los bundles llevan hash en el nombre: se pueden cachear para siempre.
 <IfModule mod_expires.c>
   ExpiresActive On

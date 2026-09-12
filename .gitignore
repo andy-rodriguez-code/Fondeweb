@@ -22,6 +22,15 @@ google-credentials.json
 # y datos de operación, no código. Nunca al repositorio.
 backend/estado/
 estado/
+
+# Material de trabajo que queda suelto en la raíz. Este repositorio es PÚBLICO:
+# un `git add .` distraído publica cualquier cosa que esté acá, y un recibo o un
+# volcado de una página del cliente no se borran del historial borrando el
+# archivo. Se ignoran por tipo, no por nombre, porque el próximo va a llamarse
+# distinto.
+/*.pdf
+/code.html
+/recibo-*.pdf
 RECON/
 *.artifact.json
 .od-skills/

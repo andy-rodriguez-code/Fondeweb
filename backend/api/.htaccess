@@ -20,6 +20,14 @@ Options -Indexes
     Require all denied
 </Files>
 
+# Acceso a la base: mismo caso que el anterior, se incluye y no se pide solo.
+# Hoy pedirlo devuelve una página en blanco porque solo define funciones, pero
+# eso depende de que siga siendo así: el día que alguien agregue una línea de
+# diagnóstico al cuerpo del archivo, esa línea queda expuesta por URL.
+<Files "bd.php">
+    Require all denied
+</Files>
+
 # El cron corre por CLI. El propio archivo ya verifica PHP_SAPI, esto es el
 # segundo cerrojo.
 <Files "reintentar.php">
