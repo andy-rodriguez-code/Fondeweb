@@ -75,5 +75,6 @@ navegador toma los nuevos sin que nadie limpie caché.
 | Cambios que no aparecen | se subió `dist/` como carpeta en vez de su contenido |
 | Error 500 sin explicación | el `.htaccess` llegó con finales de línea CRLF |
 
-El backend de los formularios se configura aparte: ver `BACKEND-FORMULARIOS.md`
-en la raíz del proyecto.
+El backend de los formularios se configura aparte: ver `backend/README.md`, y
+los pasos con capturas en `BACKEND-FORMULARIOS.md`, dentro de
+`archivos-listos/documentacion-cliente/` —carpeta que no se versiona—.

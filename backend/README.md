@@ -132,7 +132,9 @@ que no está bajo el directorio público no se sirve nunca.
 7. **Pasar a producción:** cambiar `ENTORNO` a `'produccion'`.
 
 Los pasos con capturas y la configuración de SPF/DKIM están en
-`BACKEND-FORMULARIOS.md`, en la raíz del proyecto.
+`BACKEND-FORMULARIOS.md`, dentro de `archivos-listos/documentacion-cliente/`.
+Esa carpeta no se versiona: son documentos de trabajo con datos del cliente,
+y este repositorio es público.
 
 ## Cómo responde
 
