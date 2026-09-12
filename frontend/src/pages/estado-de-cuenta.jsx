@@ -36,7 +36,10 @@ const PASOS = [
 const PORTAL = {
   titulo: 'Portal del asociado',
   texto: 'Saldos, aportes y estado de tus créditos, actualizados por el fondo.',
-  accion: { etiqueta: 'Ir a mi extracto', href: 'https://fondefos.misaldoweb.co' },
+  accion: {
+    etiqueta: 'Ir a mi extracto',
+    href: 'https://fondefos.sflfintech.com/administrador/componentes/index.php',
+  },
   olvido: {
     titulo: '¿Olvidaste tu contraseña?',
     antes: 'Escribí a ',
