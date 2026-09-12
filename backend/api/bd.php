@@ -162,8 +162,13 @@ function marcarEnvio(string $radicado, string $columna, bool $valor): void
  */
 function enviosPendientesDeHoja(int $limite = 50): array
 {
+    // `formulario` es la clave del formulario, y hay que traerla sí o sí: desde
+    // que cada formulario tiene su propia hoja, es lo único que dice a cuál de
+    // los webhooks de URLS_APPS_SCRIPT hay que reenviar el pendiente. Sin ella
+    // el reenvío queda sin destino y la fila no sale nunca de la cola.
     $consulta = bd()->prepare(
-        'SELECT id, radicado, nombre_formulario, recibido_en, ip, autoriza_datos, firma_archivo
+        'SELECT id, radicado, formulario, nombre_formulario, recibido_en, ip,
+                autoriza_datos, firma_archivo
          FROM envios
          WHERE hoja_escrita = 0
          ORDER BY id

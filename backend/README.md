@@ -30,7 +30,8 @@ backend/
 │   ├── reintentar.php         ← reenvía lo pendiente a la hoja (solo CLI)
 │   └── .htaccess              ← solo enviar.php se sirve por HTTP
 ├── apps-script/
-│   └── Codigo.gs              ← se pega en el Apps Script de la hoja
+│   ├── contactenos.gs         ← se pega en el Apps Script de SU hoja
+│   └── programa-100.gs        ← otra hoja, otro script, otra URL /exec
 ├── sql/
 │   └── esquema.sql            ← se ejecuta una vez en phpMyAdmin
 ├── config.example.php         ← plantilla; el real NO se versiona
@@ -59,7 +60,8 @@ respaldo de cPanel cubre archivos y base por igual.
 |---|---|
 | `backend/api/*` | `public_html/api/` |
 | `backend/config.example.php` | `/home/USUARIO/fondefos-config/config.php`, rellenado |
-| `backend/apps-script/Codigo.gs` | pegado en Extensiones → Apps Script de la hoja |
+| `backend/apps-script/contactenos.gs` | pegado en Extensiones → Apps Script de la hoja «Contáctenos» |
+| `backend/apps-script/programa-100.gs` | pegado en el Apps Script de la hoja del Programa 100 |
 | — | `public_html/api/phpmailer/` con `PHPMailer.php`, `SMTP.php` y `Exception.php` |
 
 El `config.php` va **fuera** de `public_html` a propósito. La receta habitual
@@ -103,10 +105,23 @@ que no está bajo el directorio público no se sirve nunca.
    `ENTORNO = 'pruebas'` hasta terminar de probar: en ese modo todo el correo va
    a `CORREO_PRUEBAS` y no al buzón del cliente.
 
-5. **Apps Script.** Pegar `apps-script/Codigo.gs`, crear las propiedades del
-   script `TOKEN` y `CARPETA_FIRMAS_ID`, implementar como aplicación web
-   (ejecutar como «Yo», acceso «Cualquier usuario») y copiar la URL `/exec` a
-   `URL_APPS_SCRIPT`.
+5. **Apps Script, una vez por formulario.** Cada formulario tiene su propia
+   hoja de cálculo, con su propio script y su propia URL. Para cada uno:
+
+   1. Crear la hoja y abrir Extensiones → *Apps Script*.
+   2. Borrar el `Código.gs` que viene y pegar el archivo que corresponde:
+      `apps-script/contactenos.gs` o `apps-script/programa-100.gs`.
+   3. Configuración del proyecto → *Propiedades del script* → agregar
+      **`TOKEN_HOJA`** con el mismo valor que la constante del mismo nombre en
+      `config.php`. El nombre tiene que ser exacto: el script compara contra esa
+      propiedad y si no existe rechaza todos los envíos.
+   4. Implementar → *Nueva implementación* → Aplicación web, ejecutar como
+      «Yo», acceso «Cualquier usuario».
+   5. Copiar la URL `/exec` al arreglo `URLS_APPS_SCRIPT` de `config.php`, en la
+      clave del formulario: `'contacto'` o `'programa-100'`.
+
+   Al editar un script después hay que crear una implementación **nueva**, o la
+   URL sigue sirviendo el código viejo.
 
 6. **Cron de reintentos**, cada 15 minutos:
 
@@ -139,7 +154,7 @@ internos y no tiene que saber en qué idioma está el sitio.
 | `json_invalido` | 400 | el cuerpo no era JSON |
 | `formulario_desconocido` | 400 | la clave no está en `FORMULARIOS` |
 | `demasiado_rapido` | 429 | llegó en menos de 3 segundos |
-| `limite_alcanzado` | 429 | seis envíos en una hora desde la misma IP |
+| `limite_alcanzado` | 429 | cinco envíos en una hora desde la misma IP |
 | `verificacion_fallida` | 400 | reCAPTCHA, si está activado |
 | `campo_requerido` | 422 | falta un obligatorio; viene con `campo` |
 | `correo_invalido` | 422 | no pasó `FILTER_VALIDATE_EMAIL` |
@@ -150,13 +165,19 @@ internos y no tiene que saber en qué idioma está el sitio.
 
 ## Agregar un formulario
 
-Cuatro pasos, sin tocar `enviar.php`:
+Sin tocar `enviar.php`:
 
 1. Agregar el bloque en `FORMULARIOS` dentro de `config.php`: prefijo del
    radicado, destinatarios, si lleva firma y la lista blanca de campos.
-2. En la página React, llamar a `enviarFormulario` con la clave nueva.
-3. Enviar una prueba. La pestaña de la hoja se crea sola con sus encabezados.
-4. Verificar que llegó el correo y la fila.
+2. Crear la hoja de cálculo del formulario nuevo y montarle su Apps Script
+   siguiendo el paso 5 de *Instalación*. Partir de uno de los `.gs` existentes y
+   ajustar su arreglo `CAMPOS`, que es el que fija las columnas y su orden.
+3. Pegar la URL `/exec` en `URLS_APPS_SCRIPT`, bajo la clave nueva. Sin esa
+   entrada el envío se guarda en MySQL pero nunca llega a ninguna hoja, ni
+   siquiera por el cron.
+4. En la página React, llamar a `enviarFormulario` con la clave nueva.
+5. Enviar una prueba. Los encabezados se escriben solos en la primera fila.
+6. Verificar que llegó el correo y la fila.
 
 Lo que no esté en la lista blanca se descarta **en silencio**. Si un campo
 llega vacío al correo, casi siempre es que la clave del payload no coincide con
