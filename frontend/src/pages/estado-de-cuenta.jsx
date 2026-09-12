@@ -20,11 +20,19 @@ const ENCABEZADO = {
   entrada: 'Accede fácilmente a la información de tus productos y movimientos. Consulta tu estado de cuenta en línea y mantén siempre el control de tus finanzas desde cualquier lugar.',
 }
 
+// El portal del asociado, en un solo lugar: la misma dirección la usan el paso
+// 1 de las instrucciones y el botón del extracto, y dos copias de una URL se
+// desincronizan en la primera mudanza.
+const PORTAL_URL = 'https://fondefos.sflfintech.com/administrador/componentes/index.php'
+
 const PASOS = [
   <>
     Ingresá a la página web:{' '}
-    <a href="https://fondefos.misaldoweb.co" target="_blank" rel="noopener">
-      fondefos.misaldoweb.co
+    {/* Se muestra solo el dominio y no la ruta completa: el texto va en medio
+        de una frase y la dirección entera la parte en dos en teléfono. El
+        enlace sí lleva a la URL completa. */}
+    <a href={PORTAL_URL} target="_blank" rel="noopener">
+      fondefos.sflfintech.com
     </a>
   </>,
   'Digitá tu usuario: número de cédula.',
@@ -36,10 +44,7 @@ const PASOS = [
 const PORTAL = {
   titulo: 'Portal del asociado',
   texto: 'Saldos, aportes y estado de tus créditos, actualizados por el fondo.',
-  accion: {
-    etiqueta: 'Ir a mi extracto',
-    href: 'https://fondefos.sflfintech.com/administrador/componentes/index.php',
-  },
+  accion: { etiqueta: 'Ir a mi extracto', href: PORTAL_URL },
   olvido: {
     titulo: '¿Olvidaste tu contraseña?',
     antes: 'Escribí a ',
