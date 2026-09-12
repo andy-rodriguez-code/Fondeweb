@@ -4,8 +4,19 @@
 RewriteEngine On
 
 # HTTPS obligatorio.
+#
+# Las tres condiciones tienen que fallar a la vez para que redirija. `%{HTTPS}`
+# solo no alcanza: cuando el certificado lo termina un proxy —LiteSpeed en
+# cPanel, o un CDN adelante—, Apache recibe la petición por HTTP interno y
+# `%{HTTPS}` vale off aunque la persona esté navegando en https. Sin las otras
+# dos, cada petición se redirige a una URL que ya es la actual: bucle infinito,
+# 502, y los POST llegan convertidos en GET porque un 301 cambia el método.
 RewriteCond %{HTTPS} !=on
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteCond %{HTTP:X-Forwarded-SSL} !=on
+# 307 y no 301: preserva el método. Un POST redirigido con 301 llega como GET y
+# el endpoint responde `metodo_no_permitido` sin que se vea por qué.
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=307]
 
 # El backend se sirve tal cual. Esta regla va PRIMERO: si no, la reescritura
 # del SPA se traga /api/enviar.php y devuelve el index.html.
