@@ -177,9 +177,21 @@ if ($rutaFirma !== '') {
     }
 }
 
+// ── Se contesta acá, no al final ──────────────────────────────────────────
+// La base ya confirmó, así que el envío existe y el radicado es válido. Todo
+// lo que sigue son derivados que tardan segundos —SMTP, y el Apps Script que
+// contesta con un 302 que hay que seguir—, y hacer esperar a la persona por
+// eso es lo que provocaba el "no se pudo enviar" en redes móviles lentas: el
+// navegador cortaba antes de recibir la respuesta, con el envío ya guardado.
+//
+// Lo que falle de acá en adelante queda marcado en la base y lo recupera el
+// cron de reintentar.php.
+
+responderYSeguir(200, ['ok' => true, 'radicado' => $radicado]);
+
 // ── Derivados: correo y Google Sheet ──────────────────────────────────────
-// A partir de acá nada puede hacer desaparecer el envío. Lo que falle queda
-// marcado en la base y lo recupera el cron.
+// A partir de acá nada puede hacer desaparecer el envío, y nadie está
+// esperando: la conexión con el navegador ya se cerró.
 
 $enviado = enviarCorreos($definicion, $valores, $radicado, $fecha, $firma, $correoRemitente);
 marcarEnvio($radicado, 'correo_enviado', $enviado);
@@ -212,11 +224,7 @@ registrar(sprintf(
     $escrita ? 'ok' : 'pendiente'
 ));
 
-// El envío está guardado y el radicado es válido pase lo que pase. Si el
-// correo no salió se avisa, pero el radicado va en la respuesta para que la
-// persona conserve su constancia.
-if (!$enviado) {
-    responder(502, ['ok' => false, 'error' => 'correo_no_enviado', 'radicado' => $radicado]);
-}
-
-responder(200, ['ok' => true, 'radicado' => $radicado]);
+// La respuesta ya salió. Un correo que no sale no es motivo para decirle a la
+// persona que su envío falló —sí entró, y tiene su radicado—: queda en
+// `correo_enviado = 0` y el cron lo reintenta.
+exit(0);

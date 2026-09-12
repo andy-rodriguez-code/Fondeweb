@@ -31,11 +31,9 @@ require __DIR__ . '/phpmailer/SMTP.php';
 require __DIR__ . '/enviar-funciones.php';
 require __DIR__ . '/bd.php';
 
-$pendientes = enviosPendientesDeHoja();
-if (!$pendientes) {
-    exit(0);
-}
+// ── La hoja ───────────────────────────────────────────────────────────────
 
+$pendientes = enviosPendientesDeHoja();
 $recuperados = 0;
 
 foreach ($pendientes as $carga) {
@@ -46,7 +44,34 @@ foreach ($pendientes as $carga) {
 }
 
 if ($recuperados > 0) {
-    registrar('REINTENTO recuperó ' . $recuperados . ' de ' . count($pendientes));
+    registrar('REINTENTO hoja: recuperó ' . $recuperados . ' de ' . count($pendientes));
+}
+
+// ── El correo ─────────────────────────────────────────────────────────────
+// Desde que enviar.php contesta antes de mandar el correo, un fallo de SMTP ya
+// no se le puede avisar a nadie en el momento: esta es la única red que queda.
+
+$sinCorreo = enviosPendientesDeCorreo();
+$reenviados = 0;
+
+foreach ($sinCorreo as $envio) {
+    $salio = enviarCorreos(
+        $envio['definicion'],
+        $envio['valores'],
+        $envio['radicado'],
+        $envio['fecha'],
+        $envio['firma'],
+        $envio['remitente']
+    );
+
+    if ($salio) {
+        marcarEnvio($envio['radicado'], 'correo_enviado', true);
+        $reenviados++;
+    }
+}
+
+if ($reenviados > 0) {
+    registrar('REINTENTO correo: recuperó ' . $reenviados . ' de ' . count($sinCorreo));
 }
 
 exit(0);

@@ -155,6 +155,64 @@ function marcarEnvio(string $radicado, string $columna, bool $valor): void
 }
 
 /**
+ * Envíos cuyo correo no salió. Los usa reintentar.php.
+ *
+ * Existe desde que enviar.php contesta antes de mandar el correo: si el SMTP
+ * falla, ya no hay a quién avisarle en el momento, así que el reintento es la
+ * única red. Devuelve lo que hace falta para rearmar el correo entero.
+ */
+function enviosPendientesDeCorreo(int $limite = 25): array
+{
+    $consulta = bd()->prepare(
+        'SELECT id, radicado, formulario, recibido_en, correo_respuesta, firma_archivo
+         FROM envios
+         WHERE correo_enviado = 0
+         ORDER BY id
+         LIMIT ' . (int) $limite
+    );
+    $consulta->execute();
+
+    $pendientes = [];
+    foreach ($consulta->fetchAll() as $envio) {
+        // Un formulario que ya no está en config.php no se puede rearmar: sus
+        // etiquetas y destinatarios viven ahí. Se salta en vez de reventar.
+        if (!isset(FORMULARIOS[$envio['formulario']])) {
+            registrar('REINTENTO correo: formulario desconocido en ' . $envio['radicado']);
+            continue;
+        }
+
+        $campos = bd()->prepare(
+            'SELECT clave, valor FROM envio_campos WHERE envio_id = :envio ORDER BY orden'
+        );
+        $campos->execute([':envio' => $envio['id']]);
+
+        $valores = [];
+        foreach ($campos->fetchAll() as $campo) {
+            $valores[$campo['clave']] = $campo['valor'];
+        }
+
+        // La firma vive en disco; enviarCorreos() la espera como data URI,
+        // igual que cuando llegó del navegador.
+        $firma = '';
+        if ($envio['firma_archivo'] !== null && is_file($envio['firma_archivo'])) {
+            $firma = 'data:image/png;base64,'
+                . base64_encode((string) file_get_contents($envio['firma_archivo']));
+        }
+
+        $pendientes[] = [
+            'definicion' => FORMULARIOS[$envio['formulario']],
+            'valores'    => $valores,
+            'radicado'   => $envio['radicado'],
+            'fecha'      => (string) $envio['recibido_en'],
+            'firma'      => $firma,
+            'remitente'  => (string) ($envio['correo_respuesta'] ?? ''),
+        ];
+    }
+
+    return $pendientes;
+}
+
+/**
  * Envíos que todavía no llegaron al Google Sheet. Los usa reintentar.php.
  *
  * La cola vive en la base y ya no en una carpeta de archivos .json: un solo

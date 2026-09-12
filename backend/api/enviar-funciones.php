@@ -21,6 +21,51 @@ function responder(int $codigo, array $cuerpo): void
     exit;
 }
 
+/**
+ * Contesta al navegador y sigue trabajando con la conexión ya cerrada.
+ *
+ * El envío se guarda en MySQL en menos de un parpadeo, pero después hay que
+ * mandar el correo por SMTP y escribir en el Google Sheet, y eso son segundos:
+ * el Apps Script responde con un 302 que hay que seguir, y a veces tarda. La
+ * persona quedaba mirando el botón mientras tanto, y en una red móvil lenta el
+ * navegador cortaba la espera antes de recibir nada: el formulario mostraba
+ * "no se pudo enviar" cuando en realidad había entrado perfecto.
+ *
+ * Acá se le contesta apenas la base confirma, que es lo único que decide si el
+ * envío existe. El correo y la hoja son derivados: se hacen después, y si
+ * fallan quedan marcados y el cron los recupera.
+ *
+ * `ignore_user_abort` es la pieza que hace que esto funcione: sin eso, PHP mata
+ * el proceso cuando la conexión se cierra y no se mandaría ningún correo.
+ */
+function responderYSeguir(int $codigo, array $cuerpo): void
+{
+    $json = json_encode($cuerpo, JSON_UNESCAPED_UNICODE);
+
+    ignore_user_abort(true);
+    set_time_limit(120);
+
+    http_response_code($codigo);
+    header('Content-Length: ' . strlen($json));
+    header('Connection: close');
+    echo $json;
+
+    // Con PHP-FPM y con el LiteSpeed de cPanel esta función cierra la conexión
+    // de verdad y deja el proceso corriendo. Es el camino bueno.
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+        return;
+    }
+
+    // Sin FastCGI se vacían los búferes a mano. No garantiza que el navegador
+    // corte la espera —depende del servidor de adelante—, pero no rompe nada:
+    // en el peor caso la petición dura lo que duraba antes.
+    while (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+    flush();
+}
+
 function registrar(string $linea): void
 {
     @file_put_contents(
@@ -247,7 +292,25 @@ function plantillaCorreo(
 
     return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
         . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        . '<title>' . $e($titulo) . '</title></head>'
+        . '<title>' . $e($titulo) . '</title>'
+
+        // Única hoja de estilos del correo, y solo para el teléfono. Gmail
+        // descarta los <style> en escritorio pero respeta las media queries en
+        // su aplicación móvil, que es donde el problema se ve: la etiqueta y el
+        // valor peleando por el ancho en dos columnas de pantalla angosta.
+        //
+        // Apiladas, cada una se lee entera. Si un cliente ignora el bloque, se
+        // queda con la tabla de dos columnas de siempre: se ve apretado, no
+        // roto.
+        . '<style>'
+        . '@media only screen and (max-width:600px){'
+        . '.campo-etiqueta,.campo-valor{display:block!important;width:100%!important;'
+        . 'box-sizing:border-box!important;}'
+        . '.campo-etiqueta{padding:8px 14px 2px!important;border-bottom:0!important;}'
+        . '.campo-valor{padding:0 14px 10px!important;}'
+        . '.marco{padding:20px!important;}'
+        . '}'
+        . '</style></head>'
         . '<body style="margin:0;padding:0;background:' . CORREO_FONDO . ';">'
 
         // Texto de vista previa: lo que se lee en la bandeja debajo del asunto,
@@ -274,7 +337,7 @@ function plantillaCorreo(
         . '<div style="color:#cfe0f2;font-size:12px;padding-top:10px;'
         . 'letter-spacing:0.5px;text-align:center;">Fondo de Empleados</div>'
         . ($encabezado !== ''
-            ? '<div style="color:#ffffff;font-size:15px;font-weight:bold;'
+            ? '<div style="color:#ffffff;font-size:14px;font-weight:bold;'
                 . 'padding-top:14px;text-align:center;">Formulario de '
                 . $e($encabezado) . '</div>'
             : '')
@@ -284,7 +347,7 @@ function plantillaCorreo(
         . '<tr><td style="background:' . CORREO_NARANJA . ';height:4px;'
         . 'line-height:4px;font-size:0;">&nbsp;</td></tr>'
 
-        . '<tr><td style="padding:28px;">' . $contenido . '</td></tr>'
+        . '<tr><td class="marco" style="padding:28px;">' . $contenido . '</td></tr>'
 
         // Pie
         . '<tr><td align="center" style="background:' . CORREO_FONDO . ';'
@@ -384,13 +447,13 @@ function cuerpoAviso(
         }
 
         $filas .= '<tr>'
-            . '<td style="padding:10px 14px;background:' . CORREO_CELDA . ';'
+            . '<td class="campo-etiqueta" style="padding:10px 14px;background:' . CORREO_CELDA . ';'
             . 'border-bottom:1px solid #ffffff;color:' . CORREO_AZUL_OSC . ';'
-            . 'font-size:13px;font-weight:bold;width:38%;vertical-align:top;">'
+            . 'font-size:12px;font-weight:bold;width:38%;vertical-align:top;">'
             . $e($campo['etiqueta'])
             . '</td>'
-            . '<td style="padding:10px 14px;border-bottom:1px solid ' . CORREO_BORDE . ';'
-            . 'color:' . CORREO_TEXTO . ';font-size:14px;line-height:21px;vertical-align:top;">'
+            . '<td class="campo-valor" style="padding:10px 14px;border-bottom:1px solid ' . CORREO_BORDE . ';'
+            . 'color:' . CORREO_TEXTO . ';font-size:12px;line-height:19px;vertical-align:top;">'
             . nl2br($e($valor))
             . '</td></tr>';
 
@@ -402,11 +465,11 @@ function cuerpoAviso(
         // primero y en grande.
         '<div style="color:' . CORREO_SUAVE . ';font-size:11px;'
         . 'letter-spacing:1px;text-transform:uppercase;">Radicado</div>'
-        . '<div style="color:' . CORREO_AZUL . ';font-size:26px;font-weight:bold;'
+        . '<div style="color:' . CORREO_AZUL . ';font-size:22px;font-weight:bold;'
         . 'padding:2px 0 14px;">' . $e($radicado) . '</div>'
 
         // El nombre del formulario ya va en el encabezado: acá solo la fecha.
-        . '<div style="color:' . CORREO_SUAVE . ';font-size:13px;padding:0 0 20px;">'
+        . '<div style="color:' . CORREO_SUAVE . ';font-size:12px;padding:0 0 18px;">'
         . 'Recibido el ' . $e($cuando) . '</div>'
 
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"'
@@ -415,12 +478,12 @@ function cuerpoAviso(
 
     if ($firma !== '') {
         $contenido .= '<div style="padding-top:18px;color:' . CORREO_SUAVE . ';'
-            . 'font-size:13px;">La firma va adjunta a este correo, en PNG.</div>';
+            . 'font-size:12px;">La firma va adjunta a este correo, en PNG.</div>';
     }
 
     if ($correoRemitente !== '') {
         $contenido .= '<div style="padding-top:18px;color:' . CORREO_SUAVE . ';'
-            . 'font-size:13px;">Respondiendo este correo le llega directo a '
+            . 'font-size:12px;">Respondiendo este correo le llega directo a '
             . $e($correoRemitente) . '.</div>';
     }
 
@@ -538,11 +601,11 @@ function despacharCorreos(
             $correo->Body = plantillaCorreo(
                 'Recibimos tu mensaje',
                 'Tu radicado es ' . $radicado,
-                '<div style="color:' . CORREO_TINTA . ';font-size:17px;'
+                '<div style="color:' . CORREO_TINTA . ';font-size:16px;'
                 . 'font-weight:bold;padding-bottom:10px;">Recibimos tu mensaje</div>'
 
-                . '<div style="color:' . CORREO_TEXTO . ';font-size:14px;'
-                . 'line-height:22px;">Gracias por escribirnos. Registramos tu '
+                . '<div style="color:' . CORREO_TEXTO . ';font-size:12px;'
+                . 'line-height:20px;">Gracias por escribirnos. Registramos tu '
                 . 'mensaje el ' . $e($cuando) . '.</div>'
 
                 // El radicado enmarcado: es lo único que la persona tiene que
@@ -553,12 +616,12 @@ function despacharCorreos(
                 . CORREO_NARANJA . ';padding:14px 18px;">'
                 . '<div style="color:' . CORREO_SUAVE . ';font-size:11px;'
                 . 'letter-spacing:1px;text-transform:uppercase;">Tu radicado</div>'
-                . '<div style="color:' . CORREO_AZUL . ';font-size:22px;'
+                . '<div style="color:' . CORREO_AZUL . ';font-size:20px;'
                 . 'font-weight:bold;padding-top:2px;">' . $e($radicado) . '</div>'
                 . '</td></tr></table>'
 
-                . '<div style="color:' . CORREO_TEXTO . ';font-size:14px;'
-                . 'line-height:22px;">Guardalo: con ese número ubicamos tu '
+                . '<div style="color:' . CORREO_TEXTO . ';font-size:12px;'
+                . 'line-height:20px;">Guardalo: con ese número ubicamos tu '
                 . 'mensaje si necesitás consultarlo. Te respondemos al correo o '
                 . 'al teléfono que dejaste.</div>',
                 $definicion['nombre']
