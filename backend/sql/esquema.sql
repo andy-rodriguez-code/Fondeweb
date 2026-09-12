@@ -121,6 +121,12 @@ ON DUPLICATE KEY UPDATE ultimo = ultimo;
 -- dato. Si algún día se agrega un campo al formulario, hay que agregar acá su
 -- línea o simplemente no aparecerá en la vista.
 --
+-- SQL SECURITY INVOKER y no el DEFINER que MySQL usa por omisión: una vista
+-- DEFINER corre con los permisos de quien la creó, y en un hosting compartido
+-- ese usuario puede no tener todo lo que hace falta o dejar de existir cuando
+-- se rehace la base. Con INVOKER corre con los permisos de quien la consulta,
+-- que siempre es el mismo usuario de la aplicación.
+--
 -- Se listan todas las columnas en el GROUP BY en vez de agrupar solo por e.id:
 -- con ONLY_FULL_GROUP_BY activo, apoyarse en la dependencia funcional de la
 -- clave primaria funciona en MySQL 5.7+ pero no en todas las versiones de
@@ -128,7 +134,7 @@ ON DUPLICATE KEY UPDATE ultimo = ultimo;
 -- =========================================================================
 
 DROP VIEW IF EXISTS vista_contacto;
-CREATE VIEW vista_contacto AS
+CREATE SQL SECURITY INVOKER VIEW vista_contacto AS
 SELECT
     -- Mismo formato que el Google Sheet: dd/MM/yyyy y hh:mm am/pm. La base y
     -- la hoja tienen que leerse igual, o alguien va a comparar dos formatos
@@ -154,7 +160,7 @@ ORDER BY e.id DESC;
 
 
 DROP VIEW IF EXISTS vista_programa_100;
-CREATE VIEW vista_programa_100 AS
+CREATE SQL SECURITY INVOKER VIEW vista_programa_100 AS
 SELECT
     -- Mismo formato que el Google Sheet: dd/MM/yyyy y hh:mm am/pm.
     DATE_FORMAT(e.recibido_en, '%d/%m/%Y')        AS fecha,
