@@ -176,6 +176,129 @@ function verificarRecaptcha(string $token): bool
     return (float) ($json['score'] ?? 0) >= RECAPTCHA_MINIMO;
 }
 
+// Paleta de la marca, la misma de frontend/src/styles/index.css. Va acá
+// duplicada a propósito: el correo se arma en el servidor y no tiene forma de
+// leer el CSS del sitio. Si cambian los colores de la marca, se cambian en los
+// dos lados.
+const CORREO_AZUL     = '#01509C';
+const CORREO_AZUL_OSC = '#10305f';
+const CORREO_NARANJA  = '#F36F21';
+const CORREO_TINTA    = '#152238';
+const CORREO_TEXTO    = '#3d4a5c';
+const CORREO_SUAVE    = '#667487';
+const CORREO_FONDO    = '#f4f8fd';
+const CORREO_CELDA    = '#e7eff8';
+const CORREO_BORDE    = '#d3e0ee';
+
+/**
+ * Pasa el `Y-m-d H:i:s` que se guarda en MySQL al formato que lee una persona:
+ * "11/09/2026 · 7:48 pm".
+ *
+ * No convierte zonas horarias y no tiene por qué: enviar.php fija
+ * America/Bogota antes de generar la fecha, así que el valor que entra ya es
+ * hora de Floridablanca. Esto es presentación, nada más.
+ *
+ * Mismo formato que usan los Apps Script en la hoja —dd/MM/yyyy y hh:mm a en
+ * minúscula— para que el correo, la hoja y la base se lean igual.
+ */
+function fechaLegible(string $fecha): string
+{
+    $momento = date_create($fecha);
+    if ($momento === false) {
+        return $fecha;
+    }
+
+    return $momento->format('d/m/Y') . ' · ' . strtolower($momento->format('g:i a'));
+}
+
+// El logotipo blanco del pie del sitio, copiado acá para que viaje con la
+// carpeta api/ y tenga una ruta estable. El del sitio no sirve: Vite le pone un
+// hash al nombre en cada build y la URL cambiaría sola.
+const RUTA_LOGO = __DIR__ . '/marca/logo-fondefos-blanco.png';
+
+// Identificador del logotipo adjunto. Va embebido en el propio correo y no
+// enlazado a fondefos.com.co: casi todos los clientes bloquean las imágenes
+// remotas hasta que la persona da "mostrar imágenes", y ahí el encabezado se ve
+// roto justo en el primer correo, que es el que cuenta.
+const LOGO_CID = 'logo-fondefos';
+
+/**
+ * Envuelve el contenido en la plantilla de la marca.
+ *
+ * Todo va con estilos en línea y maquetado con tablas. No es descuido: Gmail
+ * descarta las hojas de estilo embebidas, y Outlook usa el motor de Word, que
+ * no entiende flexbox ni grid. Lo aburrido es lo que se ve igual en todos
+ * lados.
+ *
+ * El ancho de 600px es el de siempre para correo: entra en la vista previa de
+ * escritorio sin barras y se adapta solo en el teléfono.
+ *
+ * $encabezado es la línea bajo la marca: de qué formulario se trata.
+ */
+function plantillaCorreo(
+    string $titulo,
+    string $bajada,
+    string $contenido,
+    string $encabezado = ''
+): string {
+    $e = function (string $texto): string {
+        return htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
+    };
+
+    return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>' . $e($titulo) . '</title></head>'
+        . '<body style="margin:0;padding:0;background:' . CORREO_FONDO . ';">'
+
+        // Texto de vista previa: lo que se lee en la bandeja debajo del asunto,
+        // sin abrir el correo. Oculto en el cuerpo.
+        . '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">'
+        . $e($bajada) . '</div>'
+
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"'
+        . ' style="background:' . CORREO_FONDO . ';padding:24px 12px;">'
+        . '<tr><td align="center">'
+
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0"'
+        . ' style="width:100%;max-width:600px;background:#ffffff;border-radius:8px;'
+        . 'overflow:hidden;border:1px solid ' . CORREO_BORDE . ';'
+        . 'font-family:Arial,Helvetica,sans-serif;">'
+
+        // Encabezado, centrado. El `alt` importa más que de costumbre: si el
+        // cliente de correo no muestra la imagen, ahí queda la marca escrita.
+        . '<tr><td align="center" style="background:' . CORREO_AZUL . ';'
+        . 'padding:26px 28px 22px;text-align:center;">'
+        . '<img src="cid:' . LOGO_CID . '" alt="FONDEFOS" width="205" height="42"'
+        . ' style="display:block;margin:0 auto;border:0;outline:none;'
+        . 'width:205px;height:auto;max-width:60%;">'
+        . '<div style="color:#cfe0f2;font-size:12px;padding-top:10px;'
+        . 'letter-spacing:0.5px;text-align:center;">Fondo de Empleados</div>'
+        . ($encabezado !== ''
+            ? '<div style="color:#ffffff;font-size:15px;font-weight:bold;'
+                . 'padding-top:14px;text-align:center;">Formulario de '
+                . $e($encabezado) . '</div>'
+            : '')
+        . '</td></tr>'
+
+        // Franja naranja: corta el azul y da el acento de la marca.
+        . '<tr><td style="background:' . CORREO_NARANJA . ';height:4px;'
+        . 'line-height:4px;font-size:0;">&nbsp;</td></tr>'
+
+        . '<tr><td style="padding:28px;">' . $contenido . '</td></tr>'
+
+        // Pie
+        . '<tr><td align="center" style="background:' . CORREO_FONDO . ';'
+        . 'padding:18px 28px;border-top:1px solid ' . CORREO_BORDE . ';'
+        . 'text-align:center;">'
+        . '<div style="color:' . CORREO_SUAVE . ';font-size:11px;line-height:17px;'
+        . 'text-align:center;">'
+        . 'Mensaje automático del sitio fondefos.com.co. No hace falta responderlo.<br>'
+        . 'FONDEFOS — Fondo de Empleados · Floridablanca, Santander'
+        . '</div></td></tr>'
+
+        . '</table></td></tr></table></body></html>';
+}
+
 /**
  * Manda el aviso interno y, si el formulario pide correo, el acuse de recibo.
  * Devuelve true solo si el aviso interno salió.
@@ -188,34 +311,172 @@ function enviarCorreos(
     string $firma,
     string $correoRemitente
 ): bool {
-    // El escapado va acá, al imprimir, y NO al recibir el dato. Escapar en la
-    // entrada corrompe lo que se guarda: alguien apellidado D'Angelo quedaría
-    // como D&#039;Angelo en el correo, en la hoja y en todo lo que se lea
-    // después.
-    // $valores viene indexado por el id del campo; la etiqueta legible se
-    // busca en la definición, que es donde vive.
-    $filas = '';
-    foreach ($definicion['campos'] as $id => $campo) {
-        $filas .= '<tr>'
-            . '<td style="padding:6px 12px;border:1px solid #ddd;background:#f6f6f6;"><strong>'
-            . htmlspecialchars($campo['etiqueta'], ENT_QUOTES, 'UTF-8')
-            . '</strong></td>'
-            . '<td style="padding:6px 12px;border:1px solid #ddd;">'
-            . nl2br(htmlspecialchars((string) ($valores[$id] ?? ''), ENT_QUOTES, 'UTF-8'))
-            . '</td></tr>';
-    }
+    $cuando = fechaLegible($fecha);
+    $aviso = cuerpoAviso($definicion, $valores, $radicado, $fecha, $firma, $correoRemitente);
+    $cuerpo = $aviso['html'];
+    $llanoCompleto = $aviso['texto'];
 
-    $cuerpo = '<p><strong>Radicado ' . htmlspecialchars($radicado, ENT_QUOTES, 'UTF-8') . '</strong><br>'
-        . htmlspecialchars($definicion['nombre'], ENT_QUOTES, 'UTF-8')
-        . '<br>Recibido el ' . htmlspecialchars($fecha, ENT_QUOTES, 'UTF-8') . '</p>'
-        . '<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px;">'
-        . $filas . '</table>';
+    $e = function (string $texto): string {
+        return htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
+    };
 
     // En pruebas nunca se escribe al buzón del cliente.
     $destinatarios = ENTORNO === 'produccion'
         ? $definicion['destinatarios']
         : [CORREO_PRUEBAS];
 
+    return despacharCorreos(
+        $definicion,
+        $destinatarios,
+        $radicado,
+        $cuando,
+        $firma,
+        $correoRemitente,
+        $cuerpo,
+        $llanoCompleto,
+        $e
+    );
+}
+
+/**
+ * Arma el aviso interno: devuelve `html` y `texto`, la versión para clientes
+ * que no muestran HTML.
+ *
+ * Está separado del envío para poder verlo sin mandar un correo: eso es lo que
+ * hace `vista-previa-correo.php`.
+ */
+function cuerpoAviso(
+    array $definicion,
+    array $valores,
+    string $radicado,
+    string $fecha,
+    string $firma,
+    string $correoRemitente
+): array {
+    // El escapado va acá, al imprimir, y NO al recibir el dato. Escapar en la
+    // entrada corrompe lo que se guarda: alguien apellidado D'Angelo quedaría
+    // como D&#039;Angelo en el correo, en la hoja y en todo lo que se lea
+    // después.
+    // $valores viene indexado por el id del campo; la etiqueta legible se
+    // busca en la definición, que es donde vive.
+    $e = function (string $texto): string {
+        return htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
+    };
+
+    $cuando = fechaLegible($fecha);
+
+    $filas = '';
+    $llano = '';
+    foreach ($definicion['campos'] as $id => $campo) {
+        $valor = (string) ($valores[$id] ?? '');
+
+        // Un campo opcional vacío no aporta nada y alarga el correo: se omite.
+        if (trim($valor) === '') {
+            continue;
+        }
+
+        // Los montos se muestran con separador de miles: "150000" no se lee, y
+        // a ojo se confunde con 15.000. Solo cambia acá, en el correo: en la
+        // base y en la hoja sigue el valor tal como lo escribió la persona,
+        // porque ahí se usa para calcular.
+        if ($campo['tipo'] === 'monto' && is_numeric($valor)) {
+            $valor = '$ ' . number_format((float) $valor, 0, ',', '.');
+        }
+
+        $filas .= '<tr>'
+            . '<td style="padding:10px 14px;background:' . CORREO_CELDA . ';'
+            . 'border-bottom:1px solid #ffffff;color:' . CORREO_AZUL_OSC . ';'
+            . 'font-size:13px;font-weight:bold;width:38%;vertical-align:top;">'
+            . $e($campo['etiqueta'])
+            . '</td>'
+            . '<td style="padding:10px 14px;border-bottom:1px solid ' . CORREO_BORDE . ';'
+            . 'color:' . CORREO_TEXTO . ';font-size:14px;line-height:21px;vertical-align:top;">'
+            . nl2br($e($valor))
+            . '</td></tr>';
+
+        $llano .= $campo['etiqueta'] . ': ' . $valor . "\n";
+    }
+
+    $contenido =
+        // Radicado: es el dato con el que después se busca el envío, así que va
+        // primero y en grande.
+        '<div style="color:' . CORREO_SUAVE . ';font-size:11px;'
+        . 'letter-spacing:1px;text-transform:uppercase;">Radicado</div>'
+        . '<div style="color:' . CORREO_AZUL . ';font-size:26px;font-weight:bold;'
+        . 'padding:2px 0 14px;">' . $e($radicado) . '</div>'
+
+        // El nombre del formulario ya va en el encabezado: acá solo la fecha.
+        . '<div style="color:' . CORREO_SUAVE . ';font-size:13px;padding:0 0 20px;">'
+        . 'Recibido el ' . $e($cuando) . '</div>'
+
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"'
+        . ' style="border-collapse:collapse;border:1px solid ' . CORREO_BORDE . ';'
+        . 'border-radius:6px;overflow:hidden;">' . $filas . '</table>';
+
+    if ($firma !== '') {
+        $contenido .= '<div style="padding-top:18px;color:' . CORREO_SUAVE . ';'
+            . 'font-size:13px;">La firma va adjunta a este correo, en PNG.</div>';
+    }
+
+    if ($correoRemitente !== '') {
+        $contenido .= '<div style="padding-top:18px;color:' . CORREO_SUAVE . ';'
+            . 'font-size:13px;">Respondiendo este correo le llega directo a '
+            . $e($correoRemitente) . '.</div>';
+    }
+
+    $cuerpo = plantillaCorreo(
+        $definicion['nombre'],
+        'Radicado ' . $radicado . ' · ' . $cuando,
+        $contenido,
+        $definicion['nombre']
+    );
+
+    // La versión de texto plano se arma aparte y no con strip_tags del cuerpo:
+    // sobre una plantilla con tablas eso deja un reguero de espacios y saltos.
+    $llanoCompleto = $definicion['nombre'] . "\n"
+        . 'Radicado ' . $radicado . "\n"
+        . 'Recibido el ' . $cuando . "\n\n"
+        . $llano;
+
+    return ['html' => $cuerpo, 'texto' => $llanoCompleto];
+}
+
+/**
+ * Embebe el logotipo del encabezado en el propio correo.
+ *
+ * Si el archivo no está —por ejemplo si al desplegar se subió api/ sin la
+ * carpeta marca/—, no se interrumpe nada: el <img> queda roto y en su lugar se
+ * lee el texto alternativo "FONDEFOS". Un correo sin logotipo se manda igual;
+ * un correo que no sale porque faltaba una imagen, no.
+ */
+function adjuntarLogo(PHPMailer $correo): void
+{
+    if (!is_file(RUTA_LOGO)) {
+        registrar('AVISO: falta el logotipo del correo en ' . RUTA_LOGO);
+        return;
+    }
+
+    try {
+        $correo->addEmbeddedImage(RUTA_LOGO, LOGO_CID, 'fondefos.png', 'base64', 'image/png');
+    } catch (Throwable $error) {
+        registrar('AVISO: no se pudo embeber el logotipo: ' . $error->getMessage());
+    }
+}
+
+/**
+ * Manda el aviso interno y, si hay a quién, el acuse de recibo.
+ */
+function despacharCorreos(
+    array $definicion,
+    array $destinatarios,
+    string $radicado,
+    string $cuando,
+    string $firma,
+    string $correoRemitente,
+    string $cuerpo,
+    string $llanoCompleto,
+    callable $e
+): bool {
     try {
         $correo = new PHPMailer(true);
         $correo->CharSet = 'UTF-8';
@@ -234,6 +495,8 @@ function enviarCorreos(
             $correo->addAddress($destino);
         }
 
+        adjuntarLogo($correo);
+
         // Responder desde Gmail le contesta directo a la persona. El valor ya
         // pasó por FILTER_VALIDATE_EMAIL, así que no hay inyección de
         // cabeceras posible.
@@ -244,7 +507,7 @@ function enviarCorreos(
         $correo->Subject = '[' . $radicado . '] ' . $definicion['nombre'];
         $correo->isHTML(true);
         $correo->Body = $cuerpo;
-        $correo->AltBody = trim(strip_tags(str_replace(['</tr>', '</td>'], ["\n", ' '], $cuerpo)));
+        $correo->AltBody = trim($llanoCompleto);
 
         if ($firma !== '') {
             $binario = base64_decode(
@@ -263,17 +526,48 @@ function enviarCorreos(
         if ($correoRemitente !== '') {
             $correo->clearAddresses();
             $correo->clearReplyTos();
+
+            // clearAttachments() se lleva también las imágenes embebidas, así
+            // que el logotipo hay que volver a ponerlo o el acuse sale con el
+            // encabezado roto.
             $correo->clearAttachments();
+            adjuntarLogo($correo);
+
             $correo->addAddress($correoRemitente);
             $correo->Subject = 'Recibimos tu mensaje — radicado ' . $radicado;
-            $correo->Body = '<p>Hola,</p>'
-                . '<p>Recibimos tu mensaje el ' . htmlspecialchars($fecha, ENT_QUOTES, 'UTF-8')
-                . '. Tu número de radicado es <strong>'
-                . htmlspecialchars($radicado, ENT_QUOTES, 'UTF-8')
-                . '</strong>. Guardalo para cualquier consulta.</p>'
-                . '<p>Te responderemos al correo o al teléfono que dejaste.</p>'
-                . '<p>FONDEFOS — Fondo de Empleados</p>';
-            $correo->AltBody = trim(strip_tags($correo->Body));
+            $correo->Body = plantillaCorreo(
+                'Recibimos tu mensaje',
+                'Tu radicado es ' . $radicado,
+                '<div style="color:' . CORREO_TINTA . ';font-size:17px;'
+                . 'font-weight:bold;padding-bottom:10px;">Recibimos tu mensaje</div>'
+
+                . '<div style="color:' . CORREO_TEXTO . ';font-size:14px;'
+                . 'line-height:22px;">Gracias por escribirnos. Registramos tu '
+                . 'mensaje el ' . $e($cuando) . '.</div>'
+
+                // El radicado enmarcado: es lo único que la persona tiene que
+                // guardar, así que se separa del texto para que no se pierda.
+                . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"'
+                . ' style="margin:18px 0;"><tr>'
+                . '<td style="background:' . CORREO_FONDO . ';border-left:4px solid '
+                . CORREO_NARANJA . ';padding:14px 18px;">'
+                . '<div style="color:' . CORREO_SUAVE . ';font-size:11px;'
+                . 'letter-spacing:1px;text-transform:uppercase;">Tu radicado</div>'
+                . '<div style="color:' . CORREO_AZUL . ';font-size:22px;'
+                . 'font-weight:bold;padding-top:2px;">' . $e($radicado) . '</div>'
+                . '</td></tr></table>'
+
+                . '<div style="color:' . CORREO_TEXTO . ';font-size:14px;'
+                . 'line-height:22px;">Guardalo: con ese número ubicamos tu '
+                . 'mensaje si necesitás consultarlo. Te respondemos al correo o '
+                . 'al teléfono que dejaste.</div>',
+                $definicion['nombre']
+            );
+            $correo->AltBody = "Recibimos tu mensaje\n\n"
+                . 'Registramos tu mensaje el ' . $cuando . ".\n"
+                . 'Tu radicado es ' . $radicado . ". Guardalo para cualquier consulta.\n\n"
+                . "Te respondemos al correo o al teléfono que dejaste.\n\n"
+                . 'FONDEFOS — Fondo de Empleados';
             $correo->send();
         }
 
