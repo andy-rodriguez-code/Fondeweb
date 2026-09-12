@@ -1280,7 +1280,9 @@
     }
   }
   .formulario {
-    padding: clamp(24px, 3vw, 34px);
+    /* Bajado de clamp(24px, 3vw, 34px) a pedido del cliente: la caja respiraba
+       de más y en teléfono empujaba los campos hacia abajo sin necesidad. */
+    padding: clamp(18px, 2.4vw, 26px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-white);
@@ -1954,7 +1956,9 @@
   .registro {
     max-width: 1024px;
     margin-inline: auto;
-    padding: clamp(20px, 3vw, 34px);
+    /* Mismo ajuste que .formulario: los dos formularios del sitio tenían que
+       quedar con el mismo aire. */
+    padding: clamp(16px, 2.4vw, 26px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-white);

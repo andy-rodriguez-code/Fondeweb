@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
 import Icono from '../components/ui/Icono.jsx'
@@ -110,26 +110,18 @@ export default function Programa100Page() {
     ),
   }))
   const [errores, setErrores] = useState({})
-  const [radicado, setRadicado] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [fallo, setFallo] = useState('')
   // Momento en que se abrió la página, para la comprobación antirrobot del
   // servidor. Inicializador diferido: llamar Date.now() durante el render es
   // impuro.
   const [abierto] = useState(Date.now)
-  const avisoRef = useRef(null)
+  const navegar = useNavigate()
   const { lienzoRef, hayFirma, limpiar, manejadores } = useFirma()
 
   const cuota = Number(valores.cuota) || 0
   const total = useMemo(() => PESOS.format(cuota * MESES), [cuota])
   const terminacion = useMemo(() => sumarMeses(valores.expedicion, MESES), [valores.expedicion])
-
-  // El foco al aviso va en un efecto y no dentro del envío: en ese momento el
-  // aviso todavía está en display:none, y focus() sobre un nodo oculto no hace
-  // nada. Después del render ya es visible y sí recibe el foco.
-  useEffect(() => {
-    if (radicado) avisoRef.current?.focus()
-  }, [radicado])
 
   const cambiar = (campo) => (evento) => {
     const valor = evento.target.type === 'checkbox' ? evento.target.checked : evento.target.value
@@ -142,7 +134,6 @@ export default function Programa100Page() {
   const enviar = async (evento) => {
     evento.preventDefault()
     setFallo('')
-    setRadicado('')
 
     const nuevos = {}
     for (const grupo of grupos) {
@@ -184,7 +175,16 @@ export default function Programa100Page() {
         autoriza,
         abierto,
       })
-      setRadicado(numero)
+      // El resultado se muestra en la pantalla de gracias. El radicado viaja
+      // en el `state` de la navegación y no en la URL: es el identificador de
+      // la inscripción de una persona, y una URL se comparte y se indexa.
+      navegar('/gracias', {
+        state: {
+          radicado: numero,
+          aviso: programa100.formulario.aviso.antes,
+          avisoFinal: programa100.formulario.aviso.despues,
+        },
+      })
     } catch (error) {
       setFallo(error.message)
       if (error.campo) setErrores({ [error.campo]: true })
@@ -219,24 +219,9 @@ export default function Programa100Page() {
                   responde no se inventa un número. */}
               <p className="registro__consecutivo">
                 <span>N.º</span>
-                <strong>{radicado || 'Al radicar'}</strong>
+                <strong>Al radicar</strong>
               </p>
             </header>
-
-            <div
-              className="aviso-envio"
-              data-visible={radicado ? 'si' : 'no'}
-              tabIndex="-1"
-              role="status"
-              ref={avisoRef}
-            >
-              <Icono nombre="check" size={18} />
-              <span>
-                {programa100.formulario.aviso.antes}
-                <strong>{radicado}</strong>
-                {programa100.formulario.aviso.despues}
-              </span>
-            </div>
 
             <div className="rejilla-campos registro__meta">
               <div className="campo" data-col="4">

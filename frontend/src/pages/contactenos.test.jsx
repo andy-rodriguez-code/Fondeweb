@@ -2,8 +2,9 @@
 import { afterEach, describe, expect, it, vi, beforeEach } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import ContactenosPage from './contactenos.jsx'
+import GraciasPage from './gracias.jsx'
 
 // Estas pruebas cubren una sola cosa: que la autorización de tratamiento de
 // datos sea de verdad obligatoria. Un «obligatorio» sin prueba es un deseo, y
@@ -12,10 +13,16 @@ import ContactenosPage from './contactenos.jsx'
 // No se prueba la maquetación ni los textos: eso cambia con el cliente y una
 // prueba así solo estorba.
 
+// Se monta con la ruta /gracias de verdad y no con un doble: lo que hay que
+// comprobar es que el radicado llegue hasta la pantalla que lo muestra, y eso
+// incluye el `state` de la navegación.
 function montar() {
   return render(
-    <MemoryRouter>
-      <ContactenosPage />
+    <MemoryRouter initialEntries={['/contactenos']}>
+      <Routes>
+        <Route path="/contactenos" element={<ContactenosPage />} />
+        <Route path="/gracias" element={<GraciasPage />} />
+      </Routes>
     </MemoryRouter>,
   )
 }
@@ -68,7 +75,7 @@ describe('formulario de Contáctenos', () => {
     expect(cuerpo.campos.nombre).toBe('Ana Gómez')
   })
 
-  it('muestra el radicado que devuelve el servidor', async () => {
+  it('lleva a la pantalla de gracias con el radicado del servidor', async () => {
     const usuario = userEvent.setup()
     montar()
 
@@ -76,7 +83,9 @@ describe('formulario de Contáctenos', () => {
     await usuario.click(screen.getByLabelText(/Autorizo la política de/))
     await usuario.click(screen.getByRole('button', { name: 'Enviar mensaje' }))
 
-    expect(await screen.findByText('CTC-2026-0001')).toBeTruthy()
+    expect(await screen.findByText('Gracias')).toBeTruthy()
+    expect(screen.getByText('CTC-2026-0001')).toBeTruthy()
+    expect(screen.getByText(/Hemos recibido tu solicitud/)).toBeTruthy()
   })
 
   it('el enlace de la casilla lleva a la política de datos', () => {

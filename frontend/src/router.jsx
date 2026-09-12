@@ -20,6 +20,7 @@ import PreguntasFrecuentesPage from './pages/preguntas-frecuentes.jsx'
 import ContactenosPage from './pages/contactenos.jsx'
 import PoliticaDeDatosPage from './pages/politica-de-datos.jsx'
 import Programa100Page from './pages/programa-100.jsx'
+import GraciasPage from './pages/gracias.jsx'
 import NotFoundPage from './pages/NotFound.jsx'
 
 // router — cableado createBrowserRouter (react-router-dom 7.18.3, decisión de
@@ -71,6 +72,9 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
+  // Fuera del Layout: la pantalla de gracias no lleva menú ni pie. Es el cierre
+  // de un envío, no una página del sitio para navegar.
+  { path: '/gracias', element: <GraciasPage /> },
 ])
 
 export default router

@@ -1,11 +1,10 @@
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
 import Rotulo from '../components/ui/Rotulo.jsx'
 import TituloDual from '../components/ui/TituloDual.jsx'
 import DatoContacto from '../components/ui/DatoContacto.jsx'
-import Icono from '../components/ui/Icono.jsx'
 import Button from '../components/ui/Button.jsx'
 import { contacto } from '../data/navegacion.js'
 import { enviarFormulario } from '../lib/enviarFormulario.js'
@@ -56,11 +55,10 @@ export default function ContactenosPage() {
   // `useRef(Date.now())`: llamarla durante el render es impuro y React puede
   // rehacerlo.
   const [abierto] = useState(Date.now)
+  const navegar = useNavigate()
   const formularioRef = useRef(null)
-  const avisoRef = useRef(null)
   const [errores, setErrores] = useState({})
   const [enviando, setEnviando] = useState(false)
-  const [radicado, setRadicado] = useState('')
   const [fallo, setFallo] = useState('')
 
   const limpiarError = (campo) => () => {
@@ -72,7 +70,6 @@ export default function ContactenosPage() {
   const enviar = async (evento) => {
     evento.preventDefault()
     setFallo('')
-    setRadicado('')
 
     const datos = Object.fromEntries(new FormData(formularioRef.current).entries())
 
@@ -103,11 +100,18 @@ export default function ContactenosPage() {
         autoriza: autoriza === 'on',
         abierto,
       })
-      setRadicado(numero)
       formularioRef.current.reset()
-      // El aviso está en display:none hasta este render: enfocarlo antes no
-      // hace nada. Por eso va después, ya visible.
-      requestAnimationFrame(() => avisoRef.current?.focus())
+
+      // El resultado ya no se muestra acá: se va a la pantalla de gracias. El
+      // radicado viaja en el `state` y no en la URL, que se comparte y se
+      // indexa.
+      navegar('/gracias', {
+        state: {
+          radicado: numero,
+          aviso: 'Recibimos tu mensaje con el radicado ',
+          avisoFinal: '. Guardalo para cualquier consulta: te llega una copia al correo.',
+        },
+      })
     } catch (error) {
       setFallo(error.message)
       if (error.campo) setErrores({ [error.campo]: true })
@@ -160,19 +164,6 @@ export default function ContactenosPage() {
             data-formulario=""
             data-od-id="formulario-contacto"
           >
-            <div
-              className="aviso-envio"
-              data-visible={radicado ? 'si' : 'no'}
-              tabIndex="-1"
-              role="status"
-              ref={avisoRef}
-            >
-              <Icono nombre="check" size={18} />
-              <span>
-                Listo. Recibimos tu mensaje con el radicado <strong>{radicado}</strong>.
-                Guardalo para cualquier consulta: te llega una copia al correo.
-              </span>
-            </div>
             <h2 className="text-[1.3rem] text-center">{FORMULARIO.titulo}</h2>
             <div className="campo" data-error={errores.nombre ? 'si' : 'no'}>
               <label htmlFor="c-nombre">Nombre completo</label>

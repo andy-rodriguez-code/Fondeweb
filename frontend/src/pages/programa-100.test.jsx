@@ -2,8 +2,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import Programa100Page from './programa-100.jsx'
+import GraciasPage from './gracias.jsx'
 
 // Mismo patrón que contactenos.test.jsx: se prueba que los dos
 // consentimientos bloqueen y que salgan del payload de campos. No se prueba
@@ -12,10 +13,15 @@ import Programa100Page from './programa-100.jsx'
 // El pad de firma usa un <canvas>, que en jsdom no tiene contexto 2D. Se
 // sustituye lo mínimo para que useFirma pueda dibujar y exportar.
 
+// Con la ruta /gracias real: el radicado ya no se muestra en el formato, se
+// pasa por el `state` de la navegación y lo muestra esa pantalla.
 function montar() {
   return render(
-    <MemoryRouter>
-      <Programa100Page />
+    <MemoryRouter initialEntries={['/programa-100']}>
+      <Routes>
+        <Route path="/programa-100" element={<Programa100Page />} />
+        <Route path="/gracias" element={<GraciasPage />} />
+      </Routes>
     </MemoryRouter>,
   )
 }
@@ -161,7 +167,7 @@ describe('formulario del Programa 100', () => {
     expect(document.activeElement?.id).toBe('p100-firma')
   })
 
-  it('muestra el radicado del servidor en el consecutivo del formato', async () => {
+  it('lleva a la pantalla de gracias con el radicado del servidor', async () => {
     const usuario = userEvent.setup()
     montar()
 
@@ -171,13 +177,9 @@ describe('formulario del Programa 100', () => {
     await usuario.click(screen.getByLabelText(/Autorizo la política de/))
     await usuario.click(screen.getByRole('button', { name: 'Guardar registro' }))
 
-    // Aparece en dos lugares a propósito: el consecutivo del encabezado del
-    // formato y el aviso de confirmación.
-    const apariciones = await screen.findAllByText('P100-2026-0001')
-    expect(apariciones).toHaveLength(2)
-    expect(document.querySelector('.registro__consecutivo strong').textContent).toBe(
-      'P100-2026-0001',
-    )
+    expect(await screen.findByText('Gracias')).toBeTruthy()
+    expect(screen.getByText('P100-2026-0001')).toBeTruthy()
+    expect(screen.getByText(/Hemos recibido tu solicitud/)).toBeTruthy()
   })
 
   it('el enlace de la casilla lleva a la política de datos', () => {
