@@ -1,0 +1,26 @@
+# robots.txt de fondefos.com.co
+#
+# Tiene que existir como archivo de verdad. Si no, la regla del SPA en el
+# .htaccess reescribe /robots.txt a index.html y el rastreador recibe HTML
+# donde espera texto: cada línea del documento le sale como error de sintaxis.
+# Vite copia todo lo que hay en public/ a la raíz de dist/, así que con estar
+# acá alcanza.
+
+User-agent: *
+Allow: /
+
+# Pantalla de cierre de los formularios. No tiene contenido propio y sin el
+# estado de la navegación ni siquiera muestra el radicado: indexarla solo
+# ensucia los resultados.
+Disallow: /gracias
+
+# El endpoint de los formularios. No hay nada que leer y solo responde a POST.
+Disallow: /api/
+
+# Rutas heredadas del sitio anterior. Sirven la misma página que su versión
+# canónica y se mantienen para no romper enlaces viejos, pero indexar las dos
+# es contenido duplicado.
+Disallow: /credito-de-impuestos-2
+Disallow: /como-ser_asociado
+
+Sitemap: https://fondefos.com.co/sitemap.xml
