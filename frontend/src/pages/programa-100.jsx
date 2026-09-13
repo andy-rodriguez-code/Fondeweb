@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
@@ -7,6 +7,7 @@ import Button from '../components/ui/Button.jsx'
 import useFirma from '../hooks/useFirma.js'
 import { grupos, terminos, firmasFondo, programa100, MESES } from '../data/programa100.js'
 import { enviarFormulario } from '../lib/enviarFormulario.js'
+import { precargarRecaptcha } from '../lib/recaptcha.js'
 import logotipo from '../assets/images/banner/Logo-Fondefos-sin-fondo.png'
 
 // programa-100 — formulario de inscripción al Programa 100 de ahorro
@@ -117,6 +118,10 @@ export default function Programa100Page() {
   // impuro.
   const [abierto] = useState(Date.now)
   const navegar = useNavigate()
+
+  // Se empieza a cargar el script de Google al abrir la página. Para cuando la
+  // persona termine de escribir, ya está listo y el envío no espera nada.
+  useEffect(precargarRecaptcha, [])
   const { lienzoRef, hayFirma, limpiar, manejadores } = useFirma()
 
   const cuota = Number(valores.cuota) || 0

@@ -7,6 +7,8 @@
 // El radicado lo asigna el servidor y no se calcula acá: es la constancia que
 // se le muestra a la persona y tiene que salir de un único lugar.
 
+import { obtenerTokenRecaptcha } from './recaptcha.js'
+
 const URL_API = import.meta.env.VITE_API_URL || '/api/enviar.php'
 
 // El servidor responde con códigos, no con frases. La traducción vive de este
@@ -19,12 +21,20 @@ export const ERRORES = {
   correo_invalido: 'Revisá el correo electrónico.',
   falta_autorizacion: 'Hace falta autorizar el tratamiento de datos.',
   falta_firma: 'Hace falta la firma del ahorrador.',
+  verificacion_fallida:
+    'No pudimos verificar que seas una persona. Recargá la página e intentá de nuevo.',
   correo_no_enviado: 'Guardamos tus datos, pero no pudimos enviarte la copia por correo.',
   desconocido: 'No se pudo enviar. Intentá de nuevo en unos minutos.',
 }
 
 export async function enviarFormulario({ formulario, campos, firma, autoriza, abierto }) {
   let respuesta
+
+  // El token se pide recién acá y no al abrir la página: vence a los dos
+  // minutos, y alguien que llena un formulario largo llegaría con uno muerto.
+  // La acción viaja con el nombre del formulario, que es lo que después se ve
+  // en el panel de reCAPTCHA para saber cuál recibe robots.
+  const recaptcha = await obtenerTokenRecaptcha(`envio_${formulario.replace(/-/g, '_')}`)
 
   try {
     respuesta = await fetch(URL_API, {
@@ -35,6 +45,7 @@ export async function enviarFormulario({ formulario, campos, firma, autoriza, ab
         campos,
         firma,
         autoriza,
+        recaptcha,
         // Campo trampa: queda vacío siempre. Un robot que complete todo lo llena.
         website: '',
         // Milisegundos desde que se abrió la página. El servidor descarta lo

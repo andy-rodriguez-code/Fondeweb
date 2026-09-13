@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import EncabezadoPagina from '../sections/EncabezadoPagina.jsx'
 import Seccion from '../sections/Seccion.jsx'
@@ -8,6 +8,7 @@ import DatoContacto from '../components/ui/DatoContacto.jsx'
 import Button from '../components/ui/Button.jsx'
 import { contacto } from '../data/navegacion.js'
 import { enviarFormulario } from '../lib/enviarFormulario.js'
+import { precargarRecaptcha } from '../lib/recaptcha.js'
 
 // contactenos — página de contacto. Rejilla .contacto con los datos de
 // atención a la izquierda (celular, correo, horario y sede, en el orden de
@@ -60,6 +61,10 @@ export default function ContactenosPage() {
   const [errores, setErrores] = useState({})
   const [enviando, setEnviando] = useState(false)
   const [fallo, setFallo] = useState('')
+
+  // Se empieza a cargar el script de Google al abrir la página. Para cuando la
+  // persona termine de escribir, ya está listo y el envío no espera nada.
+  useEffect(precargarRecaptcha, [])
 
   const limpiarError = (campo) => () => {
     // El error se apaga al escribir, no en el siguiente envío: dejarlo en rojo
