@@ -133,7 +133,7 @@ foreach ($definicion['campos'] as $id => $campo) {
 // El motivo queda en el registro para poder ajustar las reglas con datos
 // reales en vez de a ojo. Si aparecen rechazos de personas de verdad, ahí se
 // ve cuál regla los está atrapando.
-$motivo = motivoDeSpam($valores);
+$motivo = motivoDeSpam($definicion, $valores);
 if ($motivo !== '') {
     registrar('SPAM rechazado desde ' . $ip . ' — ' . $motivo);
     responder(422, ['ok' => false, 'error' => 'contenido_no_permitido']);

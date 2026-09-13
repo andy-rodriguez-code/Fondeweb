@@ -209,6 +209,11 @@ function limitarPorIp(string $ip): void
  */
 function contarEnlaces(string $texto): int
 {
+    // Las direcciones de correo se sacan ANTES de contar: toda dirección lleva
+    // un dominio adentro, y sin esto «maria@gmail.com» en la casilla del correo
+    // se cuenta como enlace y rechaza el formulario entero. Pasó en la prueba.
+    $texto = (string) preg_replace('/\b[^\s@]+@[^\s@]+\.[a-z]{2,}\b/i', ' ', $texto);
+
     preg_match_all(
         '#https?://\S+|www\.\S+|\b[a-z0-9-]+\.(?:com|net|org|ru|xyz|top|click|info|biz)\b#i',
         $texto,
@@ -225,11 +230,23 @@ function contarEnlaces(string $texto): int
     return count($ajenos);
 }
 
-function motivoDeSpam(array $valores): string
+function motivoDeSpam(array $definicion, array $valores): string
 {
-    // Campos donde un enlace NUNCA es legítimo. Nadie escribe una URL en la
-    // casilla del nombre o del teléfono; los robots la ponen en todas.
-    $sinEnlaces = ['nombre', 'telefono', 'asunto', 'ciudad', 'direccion'];
+    // Qué campo tolera un enlace se deduce de la definición del formulario y no
+    // de una lista de nombres escrita a mano. La primera versión listaba
+    // `nombre, telefono, asunto, ciudad, direccion` y dejaba pasar spam por los
+    // campos del beneficiario del Programa 100, que nadie se acordó de agregar.
+    // Una lista así queda vieja el día que alguien sume un campo.
+    //
+    // El criterio: solo la prosa libre puede llevar un enlace. Un campo con
+    // tope de 500 caracteres o más es un mensaje; el resto son datos —un
+    // nombre, una cédula, una dirección— donde una URL no tiene nada que hacer.
+    $prosaLibre = [];
+    foreach ($definicion['campos'] as $id => $campo) {
+        if (($campo['max'] ?? 0) >= 500) {
+            $prosaLibre[] = $id;
+        }
+    }
 
     foreach ($valores as $clave => $valor) {
         if ($valor === '') {
@@ -246,7 +263,7 @@ function motivoDeSpam(array $valores): string
 
         $enlaces = contarEnlaces($valor);
 
-        if ($enlaces > 0 && in_array($clave, $sinEnlaces, true)) {
+        if ($enlaces > 0 && !in_array($clave, $prosaLibre, true)) {
             return 'enlace en ' . $clave;
         }
 
@@ -264,15 +281,23 @@ function motivoDeSpam(array $valores): string
     }
 
     // El mismo texto repetido palabra por palabra suele ser una plantilla
-    // disparada muchas veces. Se mira solo el campo largo, si existe.
-    $largo = $valores['mensaje'] ?? '';
-    if ($largo !== '' && mb_strlen($largo) > 40) {
-        $palabras = preg_split('/\s+/u', mb_strtolower($largo), -1, PREG_SPLIT_NO_EMPTY);
-        $distintas = count(array_unique($palabras));
+    // disparada muchas veces. Se revisa cualquier campo con texto suficiente y
+    // no solo `mensaje`: el Programa 100 no tiene ese campo, y atarse a un
+    // nombre dejaba la regla sin efecto en ese formulario.
+    foreach ($valores as $clave => $valor) {
+        if ($valor === '' || mb_strlen($valor) <= 40) {
+            continue;
+        }
+
+        $palabras = preg_split('/\s+/u', mb_strtolower($valor), -1, PREG_SPLIT_NO_EMPTY);
+        if (count($palabras) < 20) {
+            continue;
+        }
+
         // Menos de un quinto de palabras distintas es texto generado, no
         // escrito: «crédito crédito crédito…».
-        if (count($palabras) >= 20 && $distintas / count($palabras) < 0.2) {
-            return 'texto repetitivo en mensaje';
+        if (count(array_unique($palabras)) / count($palabras) < 0.2) {
+            return 'texto repetitivo en ' . $clave;
         }
     }
 
