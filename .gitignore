@@ -38,3 +38,8 @@ RECON/
 .file-versions/
 openspec/
 archivos-listos/
+
+# Herramientas del asistente, no del sitio. El repositorio guarda la web:
+# frontend, backend y su documentación, nada más.
+.agents/
+skills-lock.json
