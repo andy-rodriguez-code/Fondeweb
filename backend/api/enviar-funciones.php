@@ -137,7 +137,57 @@ function guardarFirma(string $radicado, string $firma): string
 }
 
 /**
- * Cinco envíos por hora y por IP.
+ * La IP real de quien envía, no la del proxy.
+ *
+ * El sitio está detrás de Cloudflare, así que `REMOTE_ADDR` puede ser una IP
+ * del borde de Cloudflare y no la de la persona. Si el servidor no restaura la
+ * original, TODO el tráfico del sitio llega con un puñado de direcciones
+ * repetidas y el límite por IP deja de ser «por persona» para volverse «por
+ * sitio»: cinco envíos por hora en total, de todo el mundo.
+ *
+ * `CF-Connecting-IP` trae la verdadera, pero solo se acepta cuando la petición
+ * viene de un rango de Cloudflare. Es una cabecera y cualquiera puede
+ * escribirla: creerle a ciegas sería regalar la forma de saltarse el límite
+ * cambiando un valor en cada intento.
+ */
+function ipDelCliente(): string
+{
+    $directa = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    $reenviada = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? '');
+
+    if ($reenviada === '' || !filter_var($reenviada, FILTER_VALIDATE_IP)) {
+        return $directa;
+    }
+
+    // Rangos publicados por Cloudflare. Cambian muy de vez en cuando; si algún
+    // día dejara de reconocerlos, lo peor que pasa es volver a contar por la IP
+    // del proxy, que es exactamente como estaba antes.
+    $rangosCloudflare = [
+        '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
+        '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
+        '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+        '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+    ];
+
+    foreach ($rangosCloudflare as $rango) {
+        [$red, $bits] = explode('/', $rango);
+        $mascara = -1 << (32 - (int) $bits);
+        if ((ip2long($directa) & $mascara) === (ip2long($red) & $mascara)) {
+            return $reenviada;
+        }
+    }
+
+    return $directa;
+}
+
+/**
+ * Límite de envíos por hora y por IP.
+ *
+ * El tope sale de LIMITE_POR_IP si el config lo define; si no, treinta. Empezó
+ * en cinco y era demasiado poco para este público: los asociados escriben desde
+ * la red de la clínica, así que decenas de personas comparten una sola IP
+ * pública y entre todas agotaban el cupo en minutos. El que frena el spam de
+ * verdad es el filtro de contenido; esto es solo un techo contra una avalancha.
  *
  * Se queda en archivo y no en la base a propósito: es dato efímero que se
  * descarta a la hora, y meterlo en MySQL sumaría dos escrituras a cada
@@ -145,6 +195,8 @@ function guardarFirma(string $radicado, string $firma): string
  */
 function limitarPorIp(string $ip): void
 {
+    $tope = defined('LIMITE_POR_IP') ? (int) LIMITE_POR_IP : 30;
+
     $archivo = RUTA_ESTADO . '/limite.json';
     $ahora = time();
 
@@ -171,7 +223,7 @@ function limitarPorIp(string $ip): void
     }
 
     $propias = $registro[$ip] ?? [];
-    if (count($propias) >= 5) {
+    if (count($propias) >= $tope) {
         registrar('LIMITE alcanzado por ' . $ip);
         responder(429, ['ok' => false, 'error' => 'limite_alcanzado']);
     }

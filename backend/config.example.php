@@ -83,6 +83,13 @@ const ORIGENES_PERMITIDOS = [
     'https://www.ejemplo.com',
 ];
 
+// ── Límite de envíos por hora y por IP ────────────────────────────────────
+// Treinta es lo razonable para este público: los asociados escriben desde la
+// red de la clínica, así que decenas de personas comparten una sola IP pública
+// y con un tope bajo se bloquean entre ellas. El que frena el spam de verdad es
+// el filtro de contenido; esto es un techo contra una avalancha.
+const LIMITE_POR_IP = 30;
+
 // ── reCAPTCHA v3 (opcional) ───────────────────────────────────────────────
 // Vacío = desactivado, y es el estado por defecto: con trampa, límite por IP y
 // tiempo mínimo alcanza para el volumen de un fondo de empleados. Si aparece

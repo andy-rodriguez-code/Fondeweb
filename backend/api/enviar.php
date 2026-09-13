@@ -67,7 +67,7 @@ $definicion = FORMULARIOS[$clave];
 // Campo trampa: queda vacío siempre. Se responde ok para no darle señal al
 // robot de que fue detectado, pero no se procesa nada.
 if (!empty($entrada['website'])) {
-    registrar('TRAMPA activada desde ' . ($_SERVER['REMOTE_ADDR'] ?? '?'));
+    registrar('TRAMPA activada desde ' . ipDelCliente());
     responder(200, ['ok' => true, 'radicado' => 'no-procesado']);
 }
 
@@ -76,7 +76,7 @@ if ((int) ($entrada['demora'] ?? 0) < 3000) {
     responder(429, ['ok' => false, 'error' => 'demasiado_rapido']);
 }
 
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipDelCliente();
 limitarPorIp($ip);
 
 // Apagado mientras RECAPTCHA_SECRETO esté vacío.

@@ -156,7 +156,7 @@ internos y no tiene que saber en qué idioma está el sitio.
 | `json_invalido` | 400 | el cuerpo no era JSON |
 | `formulario_desconocido` | 400 | la clave no está en `FORMULARIOS` |
 | `demasiado_rapido` | 429 | llegó en menos de 3 segundos |
-| `limite_alcanzado` | 429 | cinco envíos en una hora desde la misma IP |
+| `limite_alcanzado` | 429 | se superó `LIMITE_POR_IP` envíos en una hora desde la misma IP (30 por omisión) |
 | `verificacion_fallida` | 400 | reCAPTCHA, si está activado |
 | `contenido_no_permitido` | 422 | el filtro antispam lo marcó; el motivo queda en el registro |
 | `campo_requerido` | 422 | falta un obligatorio; viene con `campo` |

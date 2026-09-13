@@ -15,7 +15,8 @@ const URL_API = import.meta.env.VITE_API_URL || '/api/enviar.php'
 // lado para que el backend no tenga que saber en qué idioma está el sitio.
 export const ERRORES = {
   sin_conexion: 'No pudimos conectarnos. Revisa tu conexión e intenta de nuevo.',
-  limite_alcanzado: 'Recibimos varios envíos desde esta conexión hace un momento. Espera unos minutos.',
+  limite_alcanzado:
+    'Recibimos muchos envíos desde esta red en la última hora. Espera un momento e intenta de nuevo, o escríbenos a contactenos@fondefos.com.co.',
   demasiado_rapido: 'El formulario se envió demasiado rápido. Intenta de nuevo.',
   campo_requerido: 'Falta completar un campo obligatorio.',
   correo_invalido: 'Revisa el correo electrónico.',
