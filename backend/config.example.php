@@ -25,9 +25,13 @@ const CORREO_PRUEBAS = 'tu-casilla@ejemplo.com';
 // ── SMTP ──────────────────────────────────────────────────────────────────
 // Cuenta del propio dominio, creada en cPanel → Email → Cuentas de correo.
 // No es el SMTP de Gmail: ver la decisión en BACKEND-FORMULARIOS.md.
+//
+// Este archivo SÍ se versiona: es la plantilla. Nunca puede tener un valor
+// real. Todo lo que sea credencial va como REEMPLAZAR, y el valor verdadero
+// solo existe en el config.php del servidor, que el .gitignore excluye.
 const SMTP_HOST    = 'mail.ejemplo.com';
 const SMTP_PUERTO  = 465;            // 465 con SSL/TLS, 587 con STARTTLS
-const SMTP_USUARIO = 'REEMPLAZAR';
+const SMTP_USUARIO = 'REEMPLAZAR';   // ej. web@ejemplo.com
 const SMTP_CLAVE   = 'REEMPLAZAR';
 const SMTP_NOMBRE  = 'Sitio web FONDEFOS';
 
