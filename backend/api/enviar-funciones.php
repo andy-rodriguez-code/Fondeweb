@@ -182,6 +182,104 @@ function limitarPorIp(string $ip): void
 }
 
 /**
+ * Filtro de spam propio, sin servicios de terceros.
+ *
+ * Devuelve el motivo por el que el envío parece spam, o cadena vacía si está
+ * limpio. El motivo se registra y sirve para ajustar las reglas mirando el log.
+ *
+ * La idea es no adivinar intenciones sino aprovechar que este formulario tiene
+ * un público muy definido: empleados de una clínica de Floridablanca que
+ * escriben en español sobre créditos y ahorros. Casi todo el spam automático se
+ * cae solo contra esa forma.
+ *
+ * Cada regla rechaza con un mensaje que una persona puede entender y corregir.
+ * No se responde «ok» en silencio como con el campo trampa: ahí sabemos que es
+ * un robot, acá es una sospecha, y a quien sospechamos de más hay que darle
+ * forma de arreglarlo.
+ */
+/**
+ * Cuenta enlaces sin contar dos veces el mismo.
+ *
+ * El orden de las alternativas importa: `https?://\S+` va primero y se come la
+ * URL entera, así que el dominio de adentro ya no vuelve a coincidir con la
+ * tercera regla. Al revés, «https://fondefos.com.co» contaba como dos.
+ *
+ * Los enlaces al propio sitio no cuentan: alguien que escribe «vi en la página
+ * de convenios que…» está citando, no haciendo propaganda.
+ */
+function contarEnlaces(string $texto): int
+{
+    preg_match_all(
+        '#https?://\S+|www\.\S+|\b[a-z0-9-]+\.(?:com|net|org|ru|xyz|top|click|info|biz)\b#i',
+        $texto,
+        $encontrados
+    );
+
+    $ajenos = array_filter(
+        $encontrados[0],
+        function ($enlace) {
+            return stripos($enlace, 'fondefos.com.co') === false;
+        }
+    );
+
+    return count($ajenos);
+}
+
+function motivoDeSpam(array $valores): string
+{
+    // Campos donde un enlace NUNCA es legítimo. Nadie escribe una URL en la
+    // casilla del nombre o del teléfono; los robots la ponen en todas.
+    $sinEnlaces = ['nombre', 'telefono', 'asunto', 'ciudad', 'direccion'];
+
+    foreach ($valores as $clave => $valor) {
+        if ($valor === '') {
+            continue;
+        }
+
+        // Alfabetos que este formulario no escribe. Un mensaje en cirílico o en
+        // chino a un fondo de empleados de Santander es spam con una certeza
+        // que ninguna otra regla alcanza. Se dejan pasar los acentos y la eñe,
+        // que son latinos.
+        if (preg_match('/[\x{0400}-\x{04FF}\x{0600}-\x{06FF}\x{4E00}-\x{9FFF}\x{3040}-\x{30FF}\x{0E00}-\x{0E7F}]/u', $valor)) {
+            return 'alfabeto no latino en ' . $clave;
+        }
+
+        $enlaces = contarEnlaces($valor);
+
+        if ($enlaces > 0 && in_array($clave, $sinEnlaces, true)) {
+            return 'enlace en ' . $clave;
+        }
+
+        // En el mensaje se tolera uno —alguien puede citar una página del
+        // propio sitio— pero dos o más ya es propaganda.
+        if ($enlaces >= 2) {
+            return $enlaces . ' enlaces en ' . $clave;
+        }
+
+        // Etiquetas HTML o BBCode: el formulario es texto plano y nadie las
+        // escribe a mano. Los robots las pegan para armar enlaces.
+        if (preg_match('#<\s*(a|script|iframe|img)\b|\[url[=\]]#i', $valor)) {
+            return 'marcado de enlaces en ' . $clave;
+        }
+    }
+
+    // El mismo texto repetido palabra por palabra suele ser una plantilla
+    // disparada muchas veces. Se mira solo el campo largo, si existe.
+    $largo = $valores['mensaje'] ?? '';
+    if ($largo !== '' && mb_strlen($largo) > 40) {
+        $palabras = preg_split('/\s+/u', mb_strtolower($largo), -1, PREG_SPLIT_NO_EMPTY);
+        $distintas = count(array_unique($palabras));
+        // Menos de un quinto de palabras distintas es texto generado, no
+        // escrito: «crédito crédito crédito…».
+        if (count($palabras) >= 20 && $distintas / count($palabras) < 0.2) {
+            return 'texto repetitivo en mensaje';
+        }
+    }
+
+    return '';
+}
+
+/**
  * Verifica el token de reCAPTCHA v3. Sin RECAPTCHA_SECRETO configurado no hace
  * nada y devuelve true: queda cableado pero apagado.
  */

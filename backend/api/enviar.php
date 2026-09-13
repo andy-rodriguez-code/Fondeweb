@@ -126,6 +126,19 @@ foreach ($definicion['campos'] as $id => $campo) {
     $valores[$id] = $valor;
 }
 
+// ── Filtro de spam propio ─────────────────────────────────────────────────
+// Va después de validar y antes de guardar: lo que se rechaza acá no llega a
+// la base, ni al correo, ni a la hoja, ni gasta un número de radicado.
+//
+// El motivo queda en el registro para poder ajustar las reglas con datos
+// reales en vez de a ojo. Si aparecen rechazos de personas de verdad, ahí se
+// ve cuál regla los está atrapando.
+$motivo = motivoDeSpam($valores);
+if ($motivo !== '') {
+    registrar('SPAM rechazado desde ' . $ip . ' — ' . $motivo);
+    responder(422, ['ok' => false, 'error' => 'contenido_no_permitido']);
+}
+
 // Autorización de tratamiento de datos (Ley 1581 de 2012). Obligatoria: sin
 // ella no hay base legal para guardar nada, así que se rechaza acá también y
 // no solo en la interfaz.

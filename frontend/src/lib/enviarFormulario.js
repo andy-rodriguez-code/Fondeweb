@@ -23,6 +23,11 @@ export const ERRORES = {
   falta_firma: 'Hace falta la firma del ahorrador.',
   verificacion_fallida:
     'No pudimos verificar que seas una persona. Recargá la página e intentá de nuevo.',
+  // El filtro antispam es una sospecha, no una certeza. El mensaje tiene que
+  // decirle a quien sí es una persona cómo salir del paso, porque el robot no
+  // lo lee.
+  contenido_no_permitido:
+    'No pudimos procesar el mensaje. Si escribiste enlaces o direcciones web, quitalos e intentá de nuevo.',
   correo_no_enviado: 'Guardamos tus datos, pero no pudimos enviarte la copia por correo.',
   desconocido: 'No se pudo enviar. Intentá de nuevo en unos minutos.',
 }

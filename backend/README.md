@@ -158,6 +158,7 @@ internos y no tiene que saber en qué idioma está el sitio.
 | `demasiado_rapido` | 429 | llegó en menos de 3 segundos |
 | `limite_alcanzado` | 429 | cinco envíos en una hora desde la misma IP |
 | `verificacion_fallida` | 400 | reCAPTCHA, si está activado |
+| `contenido_no_permitido` | 422 | el filtro antispam lo marcó; el motivo queda en el registro |
 | `campo_requerido` | 422 | falta un obligatorio; viene con `campo` |
 | `correo_invalido` | 422 | no pasó `FILTER_VALIDATE_EMAIL` |
 | `monto_invalido` | 422 | la cuota no es mayor que cero |
