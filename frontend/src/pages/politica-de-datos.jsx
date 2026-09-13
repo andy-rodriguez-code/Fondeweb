@@ -95,6 +95,7 @@ export default function PoliticaDeDatosPage() {
         ]}
         titulo={politica.titulo}
         entrada={politica.resumen}
+        banner="politica-de-datos"
       />
 
       <Seccion data-od-id="seccion-politica">

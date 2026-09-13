@@ -64,16 +64,19 @@ export const programa100 = {
   entrada: 'Ahorrá una cuota fija durante doce meses, participá cada mes en el sorteo de $100.000 y recibí todo lo ahorrado al cumplir el año. Diligenciá el formulario de inscripción y llevalo a la oficina de FONDEFOS.',
   formulario: {
     titulo: 'Formulario de inscripción',
+    // El formato no pide correo, así que no hay acuse de recibo posible para
+    // quien se inscribe: el radicado en pantalla es toda su constancia.
     aviso: {
-      antes: 'Listo. Este formulario es una demostración del prototipo: no envía datos a ningún servidor. Escribinos a ',
-      enlace: { etiqueta: 'fondo.empleados@foscal.com.co', href: 'mailto:fondo.empleados@foscal.com.co' },
-      despues: ' para inscribirte de verdad.',
+      antes: 'Listo. Registramos tu inscripción con el radicado ',
+      despues: '. Guardalo: es tu constancia mientras FONDEFOS procesa el formato.',
     },
     enviar: 'Guardar registro',
+    enviando: 'Enviando…',
     limpiarFirma: 'Limpiar firma',
     firmaVacia: 'Tocá o arrastrá para firmar',
     firmaError: 'Hace falta la firma del ahorrador.',
     aceptaError: 'Tenés que aceptar los términos para continuar.',
+    autorizaError: 'Tenés que autorizar el tratamiento de datos para continuar.',
     firmaRegistrada: 'Firma digital registrada',
   },
 }

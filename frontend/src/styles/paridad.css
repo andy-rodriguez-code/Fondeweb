@@ -1280,7 +1280,9 @@
     }
   }
   .formulario {
-    padding: clamp(24px, 3vw, 34px);
+    /* Bajado de clamp(24px, 3vw, 34px) a pedido del cliente: la caja respiraba
+       de más y en teléfono empujaba los campos hacia abajo sin necesidad. */
+    padding: clamp(18px, 2.4vw, 26px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-white);
@@ -1954,7 +1956,9 @@
   .registro {
     max-width: 1024px;
     margin-inline: auto;
-    padding: clamp(20px, 3vw, 34px);
+    /* Mismo ajuste que .formulario: los dos formularios del sitio tenían que
+       quedar con el mismo aire. */
+    padding: clamp(16px, 2.4vw, 26px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-white);
@@ -2317,5 +2321,21 @@
     .registro__acciones .btn {
       width: 100%;
     }
+  }
+}
+
+/* ---------- 27. Mensaje de fallo de envío ----------
+   Racional (§4.4): no es Tailwind porque los colores salen de tokens y la
+   clase la comparten los dos formularios; una utilidad por página los
+   desincronizaría en cuanto uno de los dos cambie. */
+@layer components {
+  .formulario__fallo {
+    margin: 14px 0 0;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--color-error-strong) 40%, transparent);
+    background: color-mix(in srgb, var(--color-error-strong) 8%, transparent);
+    color: var(--color-error-ink);
+    font-size: 0.9rem;
   }
 }

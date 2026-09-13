@@ -5,6 +5,7 @@ import Header from './Header.jsx'
 import Footer from './Footer.jsx'
 import VolverArriba from './VolverArriba.jsx'
 import useVisor from '../../hooks/useVisor.js'
+import useMetadatos from '../../hooks/useMetadatos.js'
 
 // Layout — the clone's body shell order: saltar > utilidad > cabecera >
 // main#contenido > pie > visor (index.html lines 375-380). main keeps
@@ -20,6 +21,9 @@ import useVisor from '../../hooks/useVisor.js'
 // identical to the clone, where the visor markup only exists on index.html.
 export default function Layout() {
   const { abierto, src, alt, visorRef, cerrar } = useVisor()
+  // Título y descripción por página: acá y no en cada una, porque el Layout es
+  // el único punto por el que pasan todas las rutas.
+  useMetadatos()
   return (
     <>
       <SkipLink />

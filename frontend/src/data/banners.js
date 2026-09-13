@@ -11,8 +11,8 @@
 //   - como-ser-asociado: producción usa `Nosotros-mobil.jpg` → acá `asociados-movil.jpg`
 //   - credito-de-consumo-por-bonos: producción usa `10-crediahorro-MOBIL.jpg` → acá `credito-bonos-movil.jpg`
 //
-// `convenios` y `preguntas-frecuentes` no tienen banner en producción, pero el
-// cliente entregó sus fotos (2026-09-08) y acá sí lo llevan.
+// `convenios`, `preguntas-frecuentes` y `politica-de-datos` no tienen banner en
+// producción, pero el cliente entregó sus fotos y acá sí lo llevan.
 
 const ESCRITORIO = import.meta.glob('../assets/images/banner/*-pc.jpg', {
   eager: true,
@@ -51,6 +51,7 @@ const BASES = {
   'tarjeta-express': 'credito-tarjeta-express',
   convenios: 'convenios',
   'preguntas-frecuentes': 'preguntas-frecuentes',
+  'politica-de-datos': 'politica-de-datos',
 }
 
 // Altura del banner en móvil. Producción usa 720px salvo en Nosotros, que la

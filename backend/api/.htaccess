@@ -1,0 +1,46 @@
+# Reglas de la carpeta del backend.
+#
+# Sintaxis de Apache 2.4: `Require`, no el `Order allow,deny` de 2.2, que en
+# 2.4 se ignora salvo que el hosting cargue mod_access_compat — y creer que
+# algo está bloqueado cuando no lo está es peor que no bloquearlo.
+#
+# Se deniega archivo por archivo en vez de "todo menos enviar.php": esa forma
+# necesita un lookahead negativo y depende del orden en que Apache mezcla
+# <Files> y <FilesMatch>. Explícito y aburrido es más seguro.
+
+Options -Indexes
+
+# Registros, cola de pendientes y notas: nunca por HTTP.
+<FilesMatch "\.(log|json|md|ini|roto)$">
+    Require all denied
+</FilesMatch>
+
+# Funciones compartidas: se incluyen desde enviar.php, no se piden solas.
+<Files "enviar-funciones.php">
+    Require all denied
+</Files>
+
+# Acceso a la base: mismo caso que el anterior, se incluye y no se pide solo.
+# Hoy pedirlo devuelve una página en blanco porque solo define funciones, pero
+# eso depende de que siga siendo así: el día que alguien agregue una línea de
+# diagnóstico al cuerpo del archivo, esa línea queda expuesta por URL.
+<Files "bd.php">
+    Require all denied
+</Files>
+
+# El cron corre por CLI. El propio archivo ya verifica PHP_SAPI, esto es el
+# segundo cerrojo.
+<Files "reintentar.php">
+    Require all denied
+</Files>
+
+# La plantilla de configuración no debería llegar acá, pero si alguien la sube
+# por error, que no se sirva.
+<Files "config.example.php">
+    Require all denied
+</Files>
+
+# Si el servidor deja de interpretar PHP, que no muestre errores en pantalla.
+<IfModule mod_php.c>
+    php_flag display_errors off
+</IfModule>

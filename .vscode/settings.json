@@ -1,0 +1,43 @@
+{
+  // PHPMailer es una dependencia de terceros que vive versionada dentro del
+  // repositorio porque este cPanel no tiene Composer. No es código nuestro y no
+  // se edita: cualquier cambio se pierde en la próxima actualización de la
+  // librería.
+  //
+  // Intelephense la analizaba como si fuera código del proyecto y reportaba
+  // seis diagnósticos que no son errores:
+  //
+  //   · Psr\Log\LoggerInterface — PHPMailer admite un logger PSR-3 opcional. La
+  //     única referencia es un `instanceof`, y en PHP preguntar `instanceof`
+  //     por una clase que no existe devuelve false sin error ni autoload.
+  //   · OAuthTokenProvider — tipo del parámetro de setOAuth(), un método que
+  //     nunca llamamos. PHP resuelve el tipo recién al invocarlo.
+  //   · $lang_file posiblemente indefinida — falso positivo: solo se lee cuando
+  //     $foundFile quedó en true, y eso únicamente pasa en la vuelta del bucle
+  //     donde se asignó. El analizador no puede probar esa correlación.
+  //
+  // Las dos primeras son dependencias opcionales que a propósito no traemos:
+  // de PHPMailer se suben solo los tres archivos que se usan.
+  //
+  // La combinación de abajo es la forma de tratar una carpeta como librería
+  // externa y no como fuente propia:
+  //
+  //   files.exclude       la saca del análisis, así que no reporta diagnósticos
+  //   includePaths        la sigue indexando, así que el autocompletado de
+  //                       PHPMailer, SMTP y Exception sigue andando en nuestro
+  //                       código
+  //
+  // Si se saca solo con files.exclude, `new PHPMailer(true)` en
+  // enviar-funciones.php pasa a marcar "tipo indefinido": se cambian seis
+  // avisos por otros.
+  "intelephense.files.exclude": [
+    "**/backend/api/phpmailer/**"
+  ],
+  "intelephense.environment.includePaths": [
+    "backend/api/phpmailer"
+  ],
+
+  // El backend corre sobre PHP 8.1+ en el hosting; el `declare(strict_types=1)`
+  // y los tipos de retorno del código propio se validan contra esa versión.
+  "intelephense.environment.phpVersion": "8.1.0"
+}

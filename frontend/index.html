@@ -8,11 +8,111 @@
       href="/src/assets/images/fondefos.com.co/fondefos_favicon-b6c180865f.png"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fondefos – Tu Fondo de Servicios</title>
+
+    <!--
+      El título lleva primero el nombre que la gente escribe y después lo que
+      busca quien todavía no conoce el fondo. Google corta alrededor de los 60
+      caracteres: lo importante va al principio.
+    -->
+    <title>FONDEFOS | Fondo de Empleados de la FOSCAL — Floridablanca</title>
     <meta
       name="description"
-      content="Fondo de empleados en Floridablanca: nueve líneas de crédito, ahorro programado y más de 65 convenios para los asociados."
+      content="Fondo de empleados de la FOSCAL en Floridablanca, Santander. Créditos por libranza, ahorro programado, estado de cuenta en línea y más de 65 convenios para los asociados."
     />
+    <link rel="canonical" href="https://fondefos.com.co/" />
+
+    <!--
+      Open Graph: lo que se ve cuando alguien pega el enlace en WhatsApp,
+      Facebook o LinkedIn.
+
+      Va acá, en el HTML estático, y no puesto por React: esos rastreadores NO
+      ejecutan JavaScript. Piden el documento, leen las etiquetas y se van. Si
+      las escribiera la aplicación al montarse, la vista previa saldría vacía.
+
+      La imagen tiene que ser una URL absoluta y de un archivo con nombre fijo:
+      por eso vive en public/ y no en assets/, donde Vite le pondría un hash
+      distinto en cada compilación y las vistas previas ya compartidas se
+      romperían.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FONDEFOS" />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:url" content="https://fondefos.com.co/" />
+    <meta
+      property="og:title"
+      content="FONDEFOS — Fondo de Empleados de la FOSCAL"
+    />
+    <meta
+      property="og:description"
+      content="Ahorro, crédito y convenios para los empleados de la FOSCAL. Floridablanca, Santander."
+    />
+    <meta property="og:image" content="https://fondefos.com.co/og-fondefos.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Logotipo de FONDEFOS, Fondo de Empleados de la FOSCAL"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="FONDEFOS — Fondo de Empleados de la FOSCAL"
+    />
+    <meta
+      name="twitter:description"
+      content="Ahorro, crédito y convenios para los empleados de la FOSCAL. Floridablanca, Santander."
+    />
+    <meta name="twitter:image" content="https://fondefos.com.co/og-fondefos.jpg" />
+
+    <!--
+      Datos estructurados. Es lo que le permite a Google entender que esto es
+      una entidad financiera concreta, con dirección y teléfono, y no un sitio
+      cualquiera que menciona la palabra crédito. Alimenta el panel de la
+      derecha en los resultados y la ficha del mapa.
+
+      `alternateName` importa más de lo que parece: mucha gente no busca
+      "Fondefos" sino "fondo de empleados de la Foscal", y así las dos formas
+      apuntan a la misma entidad.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FinancialService",
+        "name": "FONDEFOS",
+        "legalName": "Fondo de Empleados de la Fundación Oftalmológica de Santander",
+        "alternateName": [
+          "Fondo de Empleados de la FOSCAL",
+          "Fondefos FOSCAL"
+        ],
+        "url": "https://fondefos.com.co/",
+        "logo": "https://fondefos.com.co/og-fondefos.jpg",
+        "image": "https://fondefos.com.co/og-fondefos.jpg",
+        "description": "Fondo de empleados de la FOSCAL: ahorro programado, créditos por libranza, convenios y auxilios para los asociados.",
+        "foundingDate": "1997-06-25",
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Santander, Colombia"
+        },
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Calle 155 A # 23-09, Torre Milton Salazar, FOSCAL",
+          "addressLocality": "Floridablanca",
+          "addressRegion": "Santander",
+          "addressCountry": "CO"
+        },
+        "email": "contactenos@fondefos.com.co",
+        "sameAs": ["https://www.facebook.com/fondefos"],
+        "makesOffer": [
+          { "@type": "Offer", "name": "Ahorro programado y ahorro permanente" },
+          { "@type": "Offer", "name": "Crédito de libre inversión" },
+          { "@type": "Offer", "name": "Crédito educativo" },
+          { "@type": "Offer", "name": "Crédito de recreación y turismo" },
+          { "@type": "Offer", "name": "Crédito de impuestos" },
+          { "@type": "Offer", "name": "Convenios para asociados" }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,66 @@
+# Reglas de servidor para el SPA. Vite copia este archivo a la raíz de dist/
+# en cada build, así que viaja con el sitio y no se sube a mano.
+
+RewriteEngine On
+
+# HTTPS obligatorio.
+#
+# Las tres condiciones tienen que fallar a la vez para que redirija. `%{HTTPS}`
+# solo no alcanza: cuando el certificado lo termina un proxy —LiteSpeed en
+# cPanel, o un CDN adelante—, Apache recibe la petición por HTTP interno y
+# `%{HTTPS}` vale off aunque la persona esté navegando en https. Sin las otras
+# dos, cada petición se redirige a una URL que ya es la actual: bucle infinito,
+# 502, y los POST llegan convertidos en GET porque un 301 cambia el método.
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteCond %{HTTP:X-Forwarded-SSL} !=on
+# 307 y no 301: preserva el método. Un POST redirigido con 301 llega como GET y
+# el endpoint responde `metodo_no_permitido` sin que se vea por qué.
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=307]
+
+# El backend se sirve tal cual. Esta regla va PRIMERO: si no, la reescritura
+# del SPA se traga /api/enviar.php y devuelve el index.html.
+RewriteRule ^api/ - [L]
+
+# Archivos y carpetas que existen: se sirven directo.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Todo lo demás lo resuelve React Router.
+RewriteRule ^ index.html [L]
+
+# Cabeceras de seguridad. Van en <IfModule> porque si el hosting no tiene
+# mod_headers cargado, un `Header` suelto tumba el sitio entero con un 500.
+<IfModule mod_headers.c>
+  # HSTS: el navegador no vuelve a intentar por HTTP durante un año. La
+  # redirección de arriba protege a partir de la segunda visita; esta cabecera
+  # cierra la primera, que es donde alguien en la misma red puede interceptar.
+  # Se activa recién cuando el certificado ya está andando: si se pone antes,
+  # el navegador se niega a abrir el sitio y no hay forma de convencerlo.
+  Header always set Strict-Transport-Security "max-age=31536000"
+
+  # Nadie mete el sitio en un iframe: evita que una página ajena lo superponga
+  # con un formulario falso encima.
+  Header always set X-Frame-Options "SAMEORIGIN"
+
+  # El navegador respeta el Content-Type y no adivina. Un .jpg subido que en
+  # realidad trae HTML no se ejecuta como página.
+  Header always set X-Content-Type-Options "nosniff"
+
+  # Al salir del sitio no se filtra la ruta completa que la persona venía
+  # visitando, solo el dominio.
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Los bundles llevan hash en el nombre: se pueden cachear para siempre.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  <FilesMatch "\.(js|css|woff2|png|jpg|webp|svg)$">
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+  # El index no: es el que apunta a los bundles nuevos.
+  <FilesMatch "^index\.html$">
+    ExpiresDefault "access plus 0 seconds"
+  </FilesMatch>
+</IfModule>
