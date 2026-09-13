@@ -16,7 +16,7 @@ export const politica = {
   entidad: 'FONDEFOS – Fondo de Empleados',
   actualizacion: '3 de septiembre de 2026',
   resumen:
-    'Cómo recolectamos, usamos y protegemos tus datos personales, y qué derechos tenés sobre ellos según la Ley 1581 de 2012.',
+    'Cómo recolectamos, usamos y protegemos tus datos personales, y qué derechos tienes sobre ellos según la Ley 1581 de 2012.',
 
   // Datos del responsable, que la página muestra como tarjeta destacada.
   responsable: {

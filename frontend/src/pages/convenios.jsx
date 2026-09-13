@@ -12,7 +12,7 @@ import Cifra from '../components/ui/Cifra.jsx'
 // cajon-convenio), banda-cierre.
 
 const ENCABEZADO = {
-  entrada: 'Descuentos y condiciones preferenciales con 28 aliados comerciales de Santander. Elegí una categoría y consultá los datos del asesor.',
+  entrada: 'Descuentos y condiciones preferenciales con 28 aliados comerciales de Santander. Elige una categoría y consulta los datos del asesor.',
   cifras: [
     { valor: '28', etiqueta: 'Aliados publicados', acento: '' },
     { valor: '14', etiqueta: 'Categorías', acento: 'interactivo' },
@@ -21,7 +21,7 @@ const ENCABEZADO = {
 
 const BANDA_CIERRE = {
   titulo: 'Si estás interesado en realizar convenio con nosotros',
-  texto: 'Escribinos desde el formulario de contacto con el asunto "Convenios".',
+  texto: 'Escríbenos desde el formulario de contacto con el asunto "Convenios".',
   accion: { etiqueta: 'Proponer un convenio', to: '/contactenos' },
 }
 

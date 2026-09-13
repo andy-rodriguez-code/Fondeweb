@@ -40,7 +40,7 @@ const PORTADA = {
   // las utilidades de Tailwind viven en una capa posterior y ganan siempre.
   acciones: [
     {
-      etiqueta: 'Conocé el fondo',
+      etiqueta: 'Conoce el fondo',
       to: '/nosotros',
       variante: 'claro',
       odId: 'cta-portada',
@@ -56,14 +56,14 @@ const PORTADA = {
 }
 
 const BANDA_REGISTRO = {
-  titulo: 'Registrate ahora y recibí todos los beneficios como asociado.',
-  texto: 'Sin costo de afiliación. Solo necesitás tu último desprendible de nómina, la fotocopia de la cédula y la certificación laboral.',
+  titulo: 'Regístrate ahora y recibe todos los beneficios como asociado.',
+  texto: 'Sin costo de afiliación. Solo necesitas tu último desprendible de nómina, la fotocopia de la cédula y la certificación laboral.',
   accion: { etiqueta: 'Registrarme aquí', to: '/como-ser-asociado', variante: 'claro', odId: 'cta-registro' },
 }
 
 const ACCESOS = [
   { icono: 'tag', titulo: 'Convenios', texto: 'Con múltiples marcas de la región', href: '/convenios', odId: 'acceso-convenios' },
-  { icono: 'alianza', titulo: 'Cómo ser asociado', texto: 'Descargá el formato y afiliate', href: '/como-ser-asociado', odId: 'acceso-como-ser-asociado' },
+  { icono: 'alianza', titulo: 'Cómo ser asociado', texto: 'Descarga el formato y afíliate', href: '/como-ser-asociado', odId: 'acceso-como-ser-asociado' },
   { icono: 'ahorro', titulo: 'Ahorro', texto: 'Programado y de fácil acceso', href: '/ahorro', odId: 'acceso-ahorro' },
   { icono: 'regalo', titulo: 'Beneficios', texto: 'En servicios a nuestros asociados', href: '/beneficios', odId: 'acceso-beneficios' },
 ]

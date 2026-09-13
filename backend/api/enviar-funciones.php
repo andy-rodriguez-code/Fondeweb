@@ -744,14 +744,14 @@ function despacharCorreos(
                 . '</td></tr></table>'
 
                 . '<div style="color:' . CORREO_TEXTO . ';font-size:12px;'
-                . 'line-height:20px;">Guardalo: con ese número ubicamos tu '
-                . 'mensaje si necesitás consultarlo. Te respondemos al correo o '
+                . 'line-height:20px;">Guárdalo: con ese número ubicamos tu '
+                . 'mensaje si necesitas consultarlo. Te respondemos al correo o '
                 . 'al teléfono que dejaste.</div>',
                 $definicion['nombre']
             );
             $correo->AltBody = "Recibimos tu mensaje\n\n"
                 . 'Registramos tu mensaje el ' . $cuando . ".\n"
-                . 'Tu radicado es ' . $radicado . ". Guardalo para cualquier consulta.\n\n"
+                . 'Tu radicado es ' . $radicado . ". Guárdalo para cualquier consulta.\n\n"
                 . "Te respondemos al correo o al teléfono que dejaste.\n\n"
                 . 'FONDEFOS — Fondo de Empleados';
             $correo->send();

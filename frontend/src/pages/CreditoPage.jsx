@@ -55,7 +55,7 @@ export default function CreditoPage({ slug }) {
             rotulo: 'Nuestras líneas',
             titulo: (
               <>
-                Compará antes de <strong>decidir</strong>
+                Compara antes de <strong>decidir</strong>
               </>
             ),
           }}

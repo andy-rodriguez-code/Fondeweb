@@ -7,7 +7,7 @@ export const notifondo = {
   encabezado: {
     rotulo: 'Boletín del asociado',
     titulo: { inicio: '¡', destacado: 'Notifondo', fin: '!' },
-    texto: 'Las novedades del fondo, edición vigente. Tocá cualquier página para ampliarla.',
+    texto: 'Las novedades del fondo, edición vigente. Toca cualquier página para ampliarla.',
   },
   paginas: [
     { pagina: 'Página 1', accion: 'Ampliar', src: 'assets/images/fondefos.com.co/notifondo-web-1-819x1024-d6a063db7d.webp', alt: 'Notifondo de Fondefos, página 1 de 8' },

@@ -75,7 +75,7 @@ const INTRO = {
 
 const BANDA_CIERRE = {
   titulo: 'Los beneficios empiezan con el primer aporte',
-  texto: 'Desde el primer mes de ahorro ya podés tramitar un crédito de tesorería.',
+  texto: 'Desde el primer mes de ahorro ya puedes tramitar un crédito de tesorería.',
   accion: { etiqueta: 'Ver cómo funciona el ahorro', to: '/ahorro' },
 }
 
