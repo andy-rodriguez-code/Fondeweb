@@ -21,49 +21,96 @@ function responder(int $codigo, array $cuerpo): void
     exit;
 }
 
+// Acá vivía `responderYSeguir()`, que contestaba al navegador y seguía
+// trabajando con la conexión cerrada para mandar el correo y escribir en la
+// hoja sin hacer esperar a nadie.
+//
+// Se eliminó el 16/09/2026 porque en este hosting no funciona: LiteSpeed con
+// lsphp recicla el proceso en `fastcgi_finish_request()` y nada de lo que
+// venía después llegaba a ejecutarse. No dejaba rastro —ni línea en el
+// registro ni error en el log de PHP—, así que estuvo semanas perdiendo
+// correos en silencio.
+//
+// Si algún día el hosting pasa a PHP-FPM, el patrón vuelve a ser válido. Pero
+// no hay que volver a atarle el correo: la cola de reintentar.php no depende
+// del servidor y ya demostró que entrega.
+
 /**
- * Contesta al navegador y sigue trabajando con la conexión ya cerrada.
+ * Lanza el trabajo de la cola en un proceso aparte y vuelve enseguida.
  *
- * El envío se guarda en MySQL en menos de un parpadeo, pero después hay que
- * mandar el correo por SMTP y escribir en el Google Sheet, y eso son segundos:
- * el Apps Script responde con un 302 que hay que seguir, y a veces tarda. La
- * persona quedaba mirando el botón mientras tanto, y en una red móvil lenta el
- * navegador cortaba la espera antes de recibir nada: el formulario mostraba
- * "no se pudo enviar" cuando en realidad había entrado perfecto.
+ * Esto es lo que devuelve la entrega instantánea sin volver a depender de que
+ * el proceso web sobreviva a la respuesta. La diferencia con lo que había
+ * antes es de fondo: no se trata de seguir trabajando después de contestar
+ * —eso acá no funciona—, sino de que el trabajo lo haga OTRO proceso. El hijo
+ * se desprende con `nohup` y la salida redirigida, así que cuando LiteSpeed
+ * recicle al padre, el hijo ya no le pertenece y termina igual.
  *
- * Acá se le contesta apenas la base confirma, que es lo único que decide si el
- * envío existe. El correo y la hoja son derivados: se hacen después, y si
- * fallan quedan marcados y el cron los recupera.
+ * El candado de reintentar.php es lo que hace esto seguro por mucho que se
+ * dispare: si ya hay una corrida en curso, la nueva se va sin tocar nada. Sin
+ * ese candado, diez envíos juntos serían diez procesos leyendo la misma cola
+ * y mandando el mismo correo diez veces.
  *
- * `ignore_user_abort` es la pieza que hace que esto funcione: sin eso, PHP mata
- * el proceso cuando la conexión se cierra y no se mandaría ningún correo.
+ * Si el hosting tiene exec() deshabilitado —pasa en planes compartidos— no
+ * hace nada y lo deja anotado en el registro. No es una falla: el cron entrega
+ * igual, solo que con hasta un minuto de demora.
  */
-function responderYSeguir(int $codigo, array $cuerpo): void
+function dispararCola(): void
 {
-    $json = json_encode($cuerpo, JSON_UNESCAPED_UNICODE);
-
-    ignore_user_abort(true);
-    set_time_limit(120);
-
-    http_response_code($codigo);
-    header('Content-Length: ' . strlen($json));
-    header('Connection: close');
-    echo $json;
-
-    // Con PHP-FPM y con el LiteSpeed de cPanel esta función cierra la conexión
-    // de verdad y deja el proceso corriendo. Es el camino bueno.
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
+    $deshabilitadas = array_map('trim', explode(',', (string) ini_get('disable_functions')));
+    if (!function_exists('exec') || in_array('exec', $deshabilitadas, true)) {
+        registrar('AVISO: exec() no disponible; la cola queda solo a cargo del cron.');
         return;
     }
 
-    // Sin FastCGI se vacían los búferes a mano. No garantiza que el navegador
-    // corte la espera —depende del servidor de adelante—, pero no rompe nada:
-    // en el peor caso la petición dura lo que duraba antes.
-    while (ob_get_level() > 0) {
-        ob_end_flush();
+    // En cPanel el binario de consola suele ser /usr/local/bin/php. PHP_BINARY
+    // apunta al lsphp de la petición web, que no siempre sirve para lanzar un
+    // proceso de consola, así que se puede fijar en el config.
+    $php = defined('RUTA_PHP_CLI') && RUTA_PHP_CLI !== ''
+        ? RUTA_PHP_CLI
+        : '/usr/local/bin/php';
+    $guion = __DIR__ . '/reintentar.php';
+
+    if (!is_file($php)) {
+        registrar('AVISO: no existe el PHP de consola en ' . $php . '; entrega a cargo del cron.');
+        return;
     }
-    flush();
+
+    $inicio = microtime(true);
+
+    if (DIRECTORY_SEPARATOR === '\\') {
+        // Windows (el XAMPP de desarrollo). `exec()` con `start /B` se queda
+        // esperando igual —medido: 8 s con un hijo de 8 s— porque comparte la
+        // consola. Con popen/pclose vuelve en centésimas.
+        $tuberia = popen(
+            sprintf('start /B "" %s %s', escapeshellarg($php), escapeshellarg($guion)),
+            'r'
+        );
+        if ($tuberia !== false) {
+            pclose($tuberia);
+        }
+    } else {
+        // Linux (el servidor). Las tres piezas hacen falta: `nohup` para que
+        // no lo mate la señal de cuelgue cuando LiteSpeed cierra la petición,
+        // la redirección para que exec() no espere a que se cierre la salida,
+        // y el `&` para que el shell devuelva el control enseguida. Si falta
+        // cualquiera de las tres, la persona vuelve a esperar por el correo.
+        @exec(sprintf(
+            'nohup %s %s > /dev/null 2>&1 &',
+            escapeshellarg($php),
+            escapeshellarg($guion)
+        ));
+    }
+
+    // Testigo. Lanzar un proceso son milisegundos; si esto tarda, es que el
+    // hijo NO se desprendió y la persona está esperando por el correo otra
+    // vez. Mejor que lo diga el registro a que lo descubramos por una queja.
+    $tardanza = microtime(true) - $inicio;
+    if ($tardanza > 1.0) {
+        registrar(sprintf(
+            'AVISO: lanzar la cola tardó %.1f s — el proceso no se está desprendiendo.',
+            $tardanza
+        ));
+    }
 }
 
 function registrar(string $linea): void
@@ -852,7 +899,14 @@ function escribirEnHoja(array $carga): bool
         // de la respuesta nunca llega y no habría forma de saber si escribió.
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_TIMEOUT        => 20,
+        // Sesenta segundos y no veinte. El tope de veinte se puso cuando esto
+        // corría dentro de la petición del formulario, con una persona mirando
+        // la pantalla. Ahora corre en el cron, donde no hay nadie esperando, y
+        // veinte segundos se quedaban cortos: con doce filas seguidas el
+        // LockService del Apps Script las pone en cola y cinco se cayeron por
+        // tiempo agotado. Un reenvío lento no le cuesta nada a nadie; uno que
+        // no entra se queda otros quince minutos en la cola.
+        CURLOPT_TIMEOUT        => 60,
     ]);
 
     $respuesta = curl_exec($ch);

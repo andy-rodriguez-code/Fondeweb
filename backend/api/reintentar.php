@@ -1,11 +1,17 @@
 <?php
-// Reenvía al Google Sheet los envíos que quedaron marcados como pendientes.
+// Manda los correos y escribe en el Google Sheet los envíos pendientes.
 //
-// La cola vive en la base —`envios.hoja_escrita = 0`— y ya no en una carpeta
-// de archivos .json: un solo lugar donde mirar cuando algo falta, y sin riesgo
-// de que la carpeta y la base cuenten historias distintas.
+// Esto NO es una red de seguridad: es el camino normal. Desde el 16/09/2026
+// `enviar.php` solo guarda en MySQL y contesta, porque el LiteSpeed de este
+// hosting mata el proceso al cerrar la conexión y todo lo que iba después se
+// perdía en silencio. Acá, por línea de comandos, no hay worker que reciclar.
 //
-// Lo corre el cron de cPanel cada 15 minutos:
+// La cola vive en la base —`envios.correo_enviado = 0` y `envios.hoja_escrita
+// = 0`— y no en una carpeta de archivos .json: un solo lugar donde mirar
+// cuando algo falta, y sin riesgo de que la carpeta y la base cuenten
+// historias distintas.
+//
+// Lo corre el cron de cPanel cada minuto:
 //   /usr/local/bin/php /home/USUARIO/public_html/api/reintentar.php
 
 declare(strict_types=1);
@@ -30,6 +36,20 @@ require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 require __DIR__ . '/enviar-funciones.php';
 require __DIR__ . '/bd.php';
+
+// ── Un candado, para que dos corridas no se pisen ─────────────────────────
+// Con el cron cada minuto esto deja de ser teórico: una corrida con la cola
+// llena tarda más de un minuto —cada escritura en la hoja puede esperar hasta
+// sesenta segundos— y la siguiente arrancaría leyendo los mismos pendientes,
+// porque las banderas se marcan recién al terminar cada envío. Resultado: el
+// mismo correo dos veces y la misma fila duplicada en la hoja.
+//
+// `LOCK_NB` es lo que importa: si ya hay una corrida en curso, esta se va sin
+// hacer nada en vez de quedarse esperando y amontonar procesos.
+$candado = fopen(RUTA_ESTADO . '/reintentar.lock', 'c');
+if ($candado === false || !flock($candado, LOCK_EX | LOCK_NB)) {
+    exit(0);
+}
 
 // ── La hoja ───────────────────────────────────────────────────────────────
 
@@ -73,5 +93,8 @@ foreach ($sinCorreo as $envio) {
 if ($reenviados > 0) {
     registrar('REINTENTO correo: recuperó ' . $reenviados . ' de ' . count($sinCorreo));
 }
+
+flock($candado, LOCK_UN);
+fclose($candado);
 
 exit(0);
