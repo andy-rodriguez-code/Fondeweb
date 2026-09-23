@@ -24,16 +24,53 @@ const CORREO_PRUEBAS = 'tu-casilla@ejemplo.com';
 
 // ── SMTP ──────────────────────────────────────────────────────────────────
 // Cuenta del propio dominio, creada en cPanel → Email → Cuentas de correo.
-// No es el SMTP de Gmail: ver la decisión en BACKEND-FORMULARIOS.md.
+// **Nunca el SMTP de Gmail**, y esto no es preferencia: es la única forma de
+// que el correo no caiga en spam.
+//
+// El DNS de fondefos.com.co ya está armado para enviar, y bien:
+//
+//   SPF    v=spf1 +a +mx +ip4:190.8.176.55 ... -all   ← rechazo duro
+//   DKIM   default._domainkey → clave RSA publicada
+//   DMARC  v=DMARC1; p=reject                          ← la política más dura
+//
+// Saliendo desde este servidor con un remitente @fondefos.com.co, las tres
+// alinean y el correo llega con la máxima confianza posible. Saliendo desde
+// una cuenta @gmail.com, el mensaje dice "Sitio web FONDEFOS" pero la
+// dirección real es un Gmail cualquiera: ninguna de las tres aplica y los
+// filtros lo tratan como lo que parece. Así estuvo hasta el 16/09/2026.
+//
+// Tampoco sirve poner acá una dirección de otro dominio —por ejemplo
+// @foscal.com.co, que es Google Workspace de la clínica—: su SPF no incluye
+// la IP de este hosting, no podemos firmar DKIM por un dominio ajeno, y su
+// DMARC está en `p=quarantine`. Sería el mismo problema con otro nombre.
+// Los destinos pueden ser de cualquier dominio; el REMITENTE no.
+//
+// El puerto define el cifrado en enviar-funciones.php: 587 va con STARTTLS,
+// cualquier otro con SSL directo. Poner 465 esperando STARTTLS no conecta.
 //
 // Este archivo SÍ se versiona: es la plantilla. Nunca puede tener un valor
 // real. Todo lo que sea credencial va como REEMPLAZAR, y el valor verdadero
 // solo existe en el config.php del servidor, que el .gitignore excluye.
-const SMTP_HOST    = 'mail.ejemplo.com';
+const SMTP_HOST    = 'mail.fondefos.com.co';
 const SMTP_PUERTO  = 465;            // 465 con SSL/TLS, 587 con STARTTLS
-const SMTP_USUARIO = 'REEMPLAZAR';   // ej. web@ejemplo.com
+// La contraseña normal del buzón, la del webmail (puerto 2096). No es una
+// App Password: eso era cosa de Gmail y ya no aplica.
+const SMTP_USUARIO = 'administracion@fondefos.com.co';
 const SMTP_CLAVE   = 'REEMPLAZAR';
 const SMTP_NOMBRE  = 'Sitio web FONDEFOS';
+
+// ── PHP de consola ────────────────────────────────────────────────────────
+// Con qué binario se lanza el proceso que entrega el correo y escribe la hoja.
+// Es lo que hace que el correo salga en el momento del envío y no cuando pase
+// el cron.
+//
+// En cPanel casi siempre es /usr/local/bin/php, que es el valor por omisión si
+// esta constante no está. Se puede ver el camino exacto en
+// cPanel → Trabajos cron, en los ejemplos que muestra la propia página.
+//
+// Si el hosting tiene exec() deshabilitado, esto no se usa y la entrega queda
+// a cargo del cron: hasta un minuto de demora y nada se pierde.
+const RUTA_PHP_CLI = '/usr/local/bin/php';
 
 // ── Base de datos MySQL ───────────────────────────────────────────────────
 // Se crea en cPanel → Bases de datos → MySQL® Databases: primero la base,
@@ -102,7 +139,12 @@ const RECAPTCHA_MINIMO  = 0.5;
 // Un bloque por formulario. Agregar uno nuevo es agregar una entrada acá.
 //
 //   prefijo       → primeras letras del radicado
-//   destinatarios → a quién le llega el aviso interno
+//   destinatarios → a quién le llega el aviso interno. Acá sí puede ir
+//                   cualquier dominio: el que no puede ser ajeno es el
+//                   REMITENTE, no el destino. Van las casillas
+//                   institucionales, nunca una cuenta personal: el día que esa
+//                   persona se va del fondo, los formularios se quedan sin
+//                   nadie que los lea y nadie se entera.
 //   campoCorreo   → clave del campo con el correo de quien escribe, para el
 //                   acuse de recibo y el Reply-To. null si no lo pide.
 //   firma         → true si el formulario trae firma digital
@@ -112,7 +154,10 @@ const FORMULARIOS = [
     'contacto' => [
         'nombre'        => 'Contáctenos',
         'prefijo'       => 'CTC',
-        'destinatarios' => ['adminweb@ejemplo.com'],
+        'destinatarios' => [
+            'administracion@fondefos.com.co',
+            'fondo.empleados@foscal.com.co',
+        ],
         'campoCorreo'   => 'correo',
         'firma'         => false,
         'campos'        => [
@@ -133,7 +178,10 @@ const FORMULARIOS = [
     'programa-100' => [
         'nombre'        => 'Programa 100 de ahorro voluntario',
         'prefijo'       => 'P100',
-        'destinatarios' => ['adminweb@ejemplo.com'],
+        'destinatarios' => [
+            'administracion@fondefos.com.co',
+            'fondo.empleados@foscal.com.co',
+        ],
         'campoCorreo'   => null,
         'firma'         => true,
         'campos'        => [
