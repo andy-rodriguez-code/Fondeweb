@@ -16,18 +16,37 @@ existió y se rechaza la petición: es preferible que la persona vuelva a
 intentar a decirle que quedó registrada cuando no quedó en ninguna parte.
 
 El correo y la hoja son derivados. Que fallen no borra el registro: se marcan
-en las columnas `correo_enviado` y `hoja_escrita`, y la cola los entrega
-leyendo de la propia base.
+en las columnas `correo_enviado` y `hoja_escrita`, y la cola recoge lo que
+quedó pendiente leyendo de la propia base.
+
+### Qué se entrega dónde
+
+| | Cuándo sale | Por qué ahí |
+|---|---|---|
+| **Correo** | dentro de la petición, antes de contestar | hay una persona esperándolo |
+| **Hoja** | en la cola, por el cron | es registro, tarda, y falla seguido |
+
+Lo que este hosting mata es lo que pasa **después** de responder. Antes de
+responder se puede trabajar tranquilo — es lo mismo que hace WordPress en este
+mismo servidor, y por eso su formulario parece más rápido: no lo es, hace
+esperar unos segundos y nadie lo nota.
+
+El correo sale con un tope corto (`TIEMPO_MAXIMO_SMTP_EN_PETICION`). Si el SMTP
+no responde pronto se suelta sin drama: el envío ya está en MySQL, así que la
+cola lo entrega en el minuto siguiente. Nunca se pierde; como mucho, llega
+tarde.
+
+La hoja no va acá a propósito. Es la que devuelve 404 y páginas HTML de Google
+a mitad de camino: ponerla en el camino de la persona sería cambiar un minuto
+de demora por un formulario que a veces se cuelga.
+
+> `dispararCola()` existe para que la hoja tampoco espere al cron, pero en este
+> hosting **`exec()` está deshabilitado** y no puede funcionar. Se deja porque
+> es correcta el día que eso cambie.
 
 ### Cómo entrega la cola
 
-`enviar.php` guarda y contesta. Nada más: en este hosting el proceso web no
-sobrevive al cierre de la conexión. Todo lo que hay que entregar lo hace
-`reintentar.php`, que corre por CLI —el cron cada minuto, y además disparado
-como proceso aparte en cada envío para que no haya que esperar al minuto.
-
-Tres reglas sostienen esa cola, y las tres salen de fallas reales en
-producción:
+Tres reglas la sostienen, y las tres salen de fallas reales en producción:
 
 1. **El correo primero, la hoja después.** Detrás del correo hay una persona
    esperando; la hoja es registro. Con la hoja adelante, una fila que Google

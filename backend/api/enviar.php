@@ -190,38 +190,77 @@ if ($rutaFirma !== '') {
     }
 }
 
-// ── Se contesta acá, y acá termina la petición ────────────────────────────
-// El correo y la hoja NO se hacen en esta petición. Se hacían hasta el
-// 16/09/2026, y el resultado medido fue que no se hacían nunca.
+// ── De acá al final: nada puede hacer desaparecer el envío ────────────────
+// El envío ya está en MySQL con su radicado. Lo que sigue son derivados, y
+// ninguno puede cambiar el hecho de que entró.
 //
-// Este hosting corre LiteSpeed con lsphp, y ahí el proceso no sobrevive al
-// cierre de la conexión: `fastcgi_finish_request()` deja vivo al worker en
-// PHP-FPM, pero acá lo reciclan antes de que termine el trabajo. El envío
-// entraba a MySQL, el navegador recibía su radicado, y ni el correo ni la
-// fila de la hoja salían jamás. Sin línea en el registro y sin error en el
-// log de PHP, porque PHP no falló: lo mataron.
+// Sobre este archivo pasaron tres diseños, y vale saber por qué, porque los
+// dos primeros parecían razonables:
 //
-// El mismo código por línea de comandos funciona: el cron recuperó 7 de 7
-// correos pendientes. Así que el trabajo derivado queda donde sí se ejecuta
-// —reintentar.php— y la cola vive en la propia base, en `correo_enviado = 0`
-// y `hoja_escrita = 0`.
+// 1. Contestar y seguir trabajando con `fastcgi_finish_request()`. Es lo
+//    correcto en PHP-FPM y acá no funciona: este hosting es LiteSpeed con
+//    lsphp y recicla el proceso ahí mismo. Ni el correo ni la hoja salían
+//    jamás, sin un error en ningún log, porque PHP no falló: lo mataron.
+//    Estuvo semanas perdiendo correos en silencio.
 //
-// El precio es que el acuse de recibo llega hasta un minuto después en vez de
-// al instante. A cambio esto deja de depender de una decisión del servidor
-// sobre la que no mandamos.
+// 2. No trabajar acá y dejarlo todo en la cola de reintentar.php, disparada
+//    además como proceso aparte para que saliera al instante. Lo del proceso
+//    aparte NO se puede en este hosting: el registro dice
+//    `AVISO: exec() no disponible` en cada envío desde el 16/09/2026. Sin eso,
+//    el único que entrega es el cron y el correo tarda hasta un minuto. El
+//    cliente lo notó, y con razón: antes llegaba al instante.
+//
+// 3. Lo que hay hoy, y es la lectura correcta del problema. Lo que LiteSpeed
+//    mata es lo que pasa DESPUÉS de responder. Antes de responder, esto es una
+//    petición como cualquier otra y se puede trabajar tranquilo. Es
+//    exactamente lo que hace WordPress en este mismo servidor, y por eso su
+//    formulario parece más rápido: no lo es, hace esperar a la persona unos
+//    segundos y nadie lo nota.
+//
+// El correo va acá porque hay alguien esperándolo. La hoja se queda en la
+// cola: es registro, tarda, y es la que devuelve 404 y páginas HTML de Google
+// a mitad de camino. Poner eso en el camino de la persona sería cambiar un
+// minuto de demora por un formulario que a veces se cuelga.
 
-// El registro va ANTES de contestar, a propósito: es la única forma de que
-// quede constancia del envío aunque el proceso no sobreviva a la respuesta.
-// Lo que pase después con el correo y la hoja lo escribe reintentar.php.
-registrar(sprintf(
-    '%s | %s | guardado — correo y hoja en cola',
+// El registro va ANTES del correo y de la respuesta, a propósito: es la única
+// forma de que quede constancia del envío aunque lo que siga se cuelgue o el
+// proceso no sobreviva.
+registrar(sprintf('%s | %s | guardado', $radicado, $definicion['nombre']));
+
+// ── El correo, con la persona esperando ───────────────────────────────────
+// Con un tope corto (TIEMPO_MAXIMO_SMTP_EN_PETICION): si el SMTP no responde
+// pronto se suelta y listo. No se pierde nada, porque `correo_enviado` sigue
+// en 0 y la cola lo reintenta con más paciencia en el minuto siguiente.
+//
+// `enviarCorreos()` no lanza: atrapa lo suyo y devuelve false. Un correo que
+// no sale no es motivo para decirle a la persona que su envío falló —sí
+// entró, y tiene su radicado.
+$correoSalio = enviarCorreos(
+    $definicion,
+    $valores,
     $radicado,
-    $definicion['nombre']
+    $fecha,
+    $firma,
+    $correoRemitente,
+    TIEMPO_MAXIMO_SMTP_EN_PETICION
+);
+
+if ($correoSalio) {
+    marcarEnvio($radicado, 'correo_enviado', true);
+}
+
+// El contador de intentos NO se toca acá. Este intento usó un tope más corto
+// que el de la cola, así que rendirse no significa lo mismo y no tiene por qué
+// gastarle una oportunidad.
+registrar(sprintf(
+    '%s | correo %s',
+    $radicado,
+    $correoSalio ? 'entregado en el envío' : 'no salió acá — queda en cola'
 ));
 
-// El disparo va ANTES de contestar, porque después de `responder()` ya no
-// corre nada. Lanzar el proceso hijo cuesta milisegundos: la persona no lo
-// nota, y el correo sale en el momento en vez de esperar al cron.
+// La hoja queda para la cola. Esto la dispara para que no haya que esperar al
+// cron, y no hace nada si el hosting tiene exec() deshabilitado —que es el
+// caso hoy—. Va antes de `responder()` porque después no corre nada.
 dispararCola();
 
 responder(200, ['ok' => true, 'radicado' => $radicado]);

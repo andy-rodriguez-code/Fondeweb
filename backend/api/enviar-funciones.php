@@ -27,6 +27,25 @@ const TIEMPO_MAXIMO_SMTP = 20;
 const TIEMPO_MAXIMO_HOJA = 30;
 
 /**
+ * El tope del correo cuando sale DENTRO de la petición, con alguien esperando.
+ *
+ * Ocho y no veinte porque los dos fallos no cuestan lo mismo. Acá el costo de
+ * insistir lo paga una persona mirando un botón que no responde; el de
+ * rendirse no lo paga nadie, porque el envío ya está en MySQL y la cola lo
+ * entrega en el minuto siguiente. Entre hacer esperar y entregar un minuto
+ * más tarde, se elige entregar un minuto más tarde.
+ *
+ * Ocho segundos le sobran a un SMTP sano del mismo hosting: conectar, STARTTLS,
+ * autenticar y mandar son milisegundos en la misma red. Lo que pase de ahí no
+ * está sano y no va a mejorar por esperarlo diez segundos más.
+ *
+ * Un fallo acá NO cuenta como intento (`intentos_correo` no se toca): se
+ * rindió con un tope más corto que el de la cola, así que no es la misma
+ * pregunta y no tiene por qué gastar las oportunidades de la cola.
+ */
+const TIEMPO_MAXIMO_SMTP_EN_PETICION = 8;
+
+/**
  * Cierra la petición con un JSON. Los mensajes son códigos, no frases: la
  * traducción vive en el frontend (src/lib/enviarFormulario.js) y así el
  * servidor no filtra detalles internos ni tiene que saber el idioma del sitio.
@@ -53,6 +72,31 @@ function responder(int $codigo, array $cuerpo): void
 // del servidor y ya demostró que entrega.
 
 /**
+ * Escribe una línea en el registro como mucho una vez por día.
+ *
+ * Para condiciones permanentes del servidor, que son verdad en cada envío. La
+ * de `exec()` deshabilitado se repitió en cada uno durante una semana: el
+ * registro se llenó de la misma línea y lo que sí había que leer quedó
+ * sepultado. Un aviso que aparece siempre deja de ser un aviso.
+ *
+ * Una vez al día y no una sola vez nunca más: si la condición se arregla y
+ * vuelve, hay que enterarse. El testigo es un archivo con la fecha, así que se
+ * reinicia solo al cambiar el día y no hay nada que limpiar.
+ */
+function avisarUnaVezAlDia(string $clave, string $linea): void
+{
+    $testigo = RUTA_ESTADO . '/aviso-' . $clave . '.txt';
+    $hoy = date('Y-m-d');
+
+    if (is_file($testigo) && trim((string) @file_get_contents($testigo)) === $hoy) {
+        return;
+    }
+
+    @file_put_contents($testigo, $hoy);
+    registrar($linea);
+}
+
+/**
  * Lanza el trabajo de la cola en un proceso aparte y vuelve enseguida.
  *
  * Esto es lo que devuelve la entrega instantánea sin volver a depender de que
@@ -67,15 +111,22 @@ function responder(int $codigo, array $cuerpo): void
  * ese candado, diez envíos juntos serían diez procesos leyendo la misma cola
  * y mandando el mismo correo diez veces.
  *
- * Si el hosting tiene exec() deshabilitado —pasa en planes compartidos— no
- * hace nada y lo deja anotado en el registro. No es una falla: el cron entrega
- * igual, solo que con hasta un minuto de demora.
+ * Si el hosting tiene exec() deshabilitado —que es el caso de este, confirmado
+ * en el registro— no hace nada. No es una falla y ya no retrasa el correo, que
+ * desde el 23/09/2026 sale dentro de la petición: lo único que queda para el
+ * cron es la fila de la hoja, y esa puede esperar un minuto.
+ *
+ * Se deja igual porque es correcta el día que el hosting cambie, y porque el
+ * aviso de que no se puede es información que hay que tener a mano.
  */
 function dispararCola(): void
 {
     $deshabilitadas = array_map('trim', explode(',', (string) ini_get('disable_functions')));
     if (!function_exists('exec') || in_array('exec', $deshabilitadas, true)) {
-        registrar('AVISO: exec() no disponible; la cola queda solo a cargo del cron.');
+        avisarUnaVezAlDia(
+            'exec-no-disponible',
+            'AVISO: exec() no disponible; la hoja queda a cargo del cron.'
+        );
         return;
     }
 
@@ -88,7 +139,12 @@ function dispararCola(): void
     $guion = __DIR__ . '/reintentar.php';
 
     if (!is_file($php)) {
-        registrar('AVISO: no existe el PHP de consola en ' . $php . '; entrega a cargo del cron.');
+        // También es una condición permanente: la ruta no va a aparecer sola
+        // entre un envío y el siguiente.
+        avisarUnaVezAlDia(
+            'sin-php-cli',
+            'AVISO: no existe el PHP de consola en ' . $php . '; la hoja queda a cargo del cron.'
+        );
         return;
     }
 
@@ -604,6 +660,13 @@ function plantillaCorreo(
 /**
  * Manda el aviso interno y, si el formulario pide correo, el acuse de recibo.
  * Devuelve true solo si el aviso interno salió.
+ *
+ * `$tiempoMaximo` cambia según quién llame, y la diferencia importa. Desde
+ * `enviar.php` hay una persona mirando la pantalla, así que se usa un tope
+ * corto: más vale soltar y dejar que la cola lo entregue en un minuto que
+ * tener a alguien esperando. Desde la cola no hay nadie esperando y el tope
+ * puede ser más largo, que es lo que le da la última oportunidad a un servidor
+ * que anda lento.
  */
 function enviarCorreos(
     array $definicion,
@@ -611,7 +674,8 @@ function enviarCorreos(
     string $radicado,
     string $fecha,
     string $firma,
-    string $correoRemitente
+    string $correoRemitente,
+    int $tiempoMaximo = TIEMPO_MAXIMO_SMTP
 ): bool {
     $cuando = fechaLegible($fecha);
     $aviso = cuerpoAviso($definicion, $valores, $radicado, $fecha, $firma, $correoRemitente);
@@ -636,7 +700,8 @@ function enviarCorreos(
         $correoRemitente,
         $cuerpo,
         $llanoCompleto,
-        $e
+        $e,
+        $tiempoMaximo
     );
 }
 
@@ -777,7 +842,8 @@ function despacharCorreos(
     string $correoRemitente,
     string $cuerpo,
     string $llanoCompleto,
-    callable $e
+    callable $e,
+    int $tiempoMaximo = TIEMPO_MAXIMO_SMTP
 ): bool {
     try {
         $correo = new PHPMailer(true);
@@ -793,12 +859,25 @@ function despacharCorreos(
             : PHPMailer::ENCRYPTION_SMTPS;
 
         // PHPMailer trae 300 segundos por omisión, y eso acá es inaceptable:
-        // los correos salen de una cola con candado, así que un servidor SMTP
-        // que acepta la conexión y después no contesta deja a TODA la cola
-        // parada cinco minutos. La entrega de una persona no puede depender de
-        // la paciencia de la anterior. Veinte le sobran a un servidor sano, y
-        // lo que no sea sano se reintenta al minuto siguiente.
-        $correo->Timeout = TIEMPO_MAXIMO_SMTP;
+        // un servidor SMTP que acepta la conexión y después no contesta deja
+        // colgada a la persona que envió el formulario, o a toda la cola si
+        // esto corre desde el cron. Cinco minutos, en cualquiera de los dos
+        // casos. El tope lo decide quien llama, porque no es el mismo si hay
+        // alguien esperando que si no.
+        $correo->Timeout = $tiempoMaximo;
+
+        // La conexión se mantiene abierta entre el aviso interno y el acuse de
+        // recibo. Sin esto PHPMailer cierra al terminar el primer send() y el
+        // segundo vuelve a hacer todo: TCP, STARTTLS y autenticación contra el
+        // servidor de correo. Medido con Gmail: 9,9 s de respuesta para la
+        // persona, cuando una sola conexión son unos 5.
+        //
+        // Importa además porque `Timeout` es POR CONEXIÓN, no por petición:
+        // con dos conexiones el peor caso era el doble del tope que creíamos
+        // haber puesto. Con una sola, el tope vuelve a significar lo que dice.
+        //
+        // Obliga a cerrar a mano al final (`smtpClose()`).
+        $correo->SMTPKeepAlive = true;
 
         $correo->setFrom(SMTP_USUARIO, SMTP_NOMBRE);
         foreach ($destinatarios as $destino) {
@@ -830,6 +909,14 @@ function despacharCorreos(
         }
 
         $correo->send();
+
+        // ── A partir de acá el aviso interno YA SALIÓ ─────────────────────
+        // Lo que siga no puede cambiar eso. El acuse de recibo va en su propio
+        // try porque si falla y dejáramos que se lleve puesto el `return true`,
+        // el envío quedaría con `correo_enviado = 0`, la cola lo tomaría, y el
+        // fondo recibiría el aviso interno DOS VECES por un acuse que no salió.
+        // Es el mismo error que duplicó filas en la hoja: un fallo parcial
+        // contado como fallo total.
 
         // Acuse de recibo. Solo existe si el formulario pide correo: el formato
         // del Programa 100 no lo hace, así que ahí no hay a dónde mandarlo.
@@ -878,14 +965,49 @@ function despacharCorreos(
                 . 'Tu radicado es ' . $radicado . ". Guárdalo para cualquier consulta.\n\n"
                 . "Te respondemos al correo o al teléfono que dejaste.\n\n"
                 . 'FONDEFOS — Fondo de Empleados';
-            $correo->send();
+
+            try {
+                $correo->send();
+            } catch (Throwable $error) {
+                // Se anota con su propio prefijo para poder distinguirlo:
+                // "ERROR SMTP" es el aviso interno, que sí es grave; "ACUSE"
+                // es que la persona no recibió su copia, que se puede vivir.
+                registrar('ACUSE no salió ' . $radicado . ': ' . $error->getMessage());
+            }
         }
+
+        cerrarSmtp($correo);
 
         return true;
     } catch (Throwable $error) {
         // El detalle va al log, nunca a la respuesta.
         registrar('ERROR SMTP ' . $radicado . ': ' . $error->getMessage());
+        cerrarSmtp($correo ?? null);
         return false;
+    }
+}
+
+/**
+ * Cierra la conexión SMTP que `SMTPKeepAlive` deja abierta.
+ *
+ * Hace falta porque sin `SMTPKeepAlive` PHPMailer cerraba solo al terminar
+ * cada `send()`, y con él ya no. Dejar el socket abierto no rompe una petición
+ * web —termina y se cierra igual—, pero sí una corrida de la cola, que manda
+ * decenas de correos seguidos y acumularía una conexión por cada uno.
+ *
+ * Acepta null porque el `catch` de afuera también cubre el `new PHPMailer`: si
+ * revienta ahí, no hay objeto que cerrar.
+ */
+function cerrarSmtp(?PHPMailer $correo): void
+{
+    if ($correo === null) {
+        return;
+    }
+
+    try {
+        $correo->smtpClose();
+    } catch (Throwable $error) {
+        // Cerrar un socket que ya se cayó no es un problema de nadie.
     }
 }
 
