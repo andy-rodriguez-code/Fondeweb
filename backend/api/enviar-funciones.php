@@ -10,6 +10,23 @@ declare(strict_types=1);
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
+ * Lo máximo que puede tardar una entrega antes de que la demos por perdida.
+ *
+ * Están acá y no sueltos en cada llamada porque reintentar.php los necesita
+ * para su presupuesto de tiempo: la única forma de que una corrida no se pase
+ * del minuto es saber de antemano cuánto puede tardar lo próximo que va a
+ * intentar. Si alguno de estos dos números cambia sin que el otro lado se
+ * entere, el presupuesto deja de ser un presupuesto.
+ *
+ * Los dos son deliberadamente cortos. Antes de tener cola con candado, esperar
+ * de más solo retrasaba a quien ya estaba esperando; ahora retrasa a todos los
+ * que vienen detrás. Rendirse rápido y volver al minuto siguiente sale más
+ * barato que insistir.
+ */
+const TIEMPO_MAXIMO_SMTP = 20;
+const TIEMPO_MAXIMO_HOJA = 30;
+
+/**
  * Cierra la petición con un JSON. Los mensajes son códigos, no frases: la
  * traducción vive en el frontend (src/lib/enviarFormulario.js) y así el
  * servidor no filtra detalles internos ni tiene que saber el idioma del sitio.
@@ -775,6 +792,14 @@ function despacharCorreos(
             ? PHPMailer::ENCRYPTION_STARTTLS
             : PHPMailer::ENCRYPTION_SMTPS;
 
+        // PHPMailer trae 300 segundos por omisión, y eso acá es inaceptable:
+        // los correos salen de una cola con candado, así que un servidor SMTP
+        // que acepta la conexión y después no contesta deja a TODA la cola
+        // parada cinco minutos. La entrega de una persona no puede depender de
+        // la paciencia de la anterior. Veinte le sobran a un servidor sano, y
+        // lo que no sea sano se reintenta al minuto siguiente.
+        $correo->Timeout = TIEMPO_MAXIMO_SMTP;
+
         $correo->setFrom(SMTP_USUARIO, SMTP_NOMBRE);
         foreach ($destinatarios as $destino) {
             $correo->addAddress($destino);
@@ -899,14 +924,22 @@ function escribirEnHoja(array $carga): bool
         // de la respuesta nunca llega y no habría forma de saber si escribió.
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_SSL_VERIFYPEER => true,
-        // Sesenta segundos y no veinte. El tope de veinte se puso cuando esto
-        // corría dentro de la petición del formulario, con una persona mirando
-        // la pantalla. Ahora corre en el cron, donde no hay nadie esperando, y
-        // veinte segundos se quedaban cortos: con doce filas seguidas el
-        // LockService del Apps Script las pone en cola y cinco se cayeron por
-        // tiempo agotado. Un reenvío lento no le cuesta nada a nadie; uno que
-        // no entra se queda otros quince minutos en la cola.
-        CURLOPT_TIMEOUT        => 60,
+        // Treinta segundos. Estuvo en sesenta unos días, y fue un error de
+        // razonamiento que salió caro: se subió para que ninguna escritura se
+        // cayera por tiempo agotado, porque entonces una caída por tiempo
+        // significaba una fila duplicada —el Apps Script escribía igual, la
+        // respuesta no llegaba a tiempo, y el reintento la escribía otra vez.
+        //
+        // Eso ya no pasa: los Apps Script descartan un radicado que ya está en
+        // la hoja, así que una caída por tiempo no duplica nada, solo demora.
+        // Y con esa red puesta, esperar de más es lo caro: la corrida es una
+        // sola, con candado, y cada segundo que pasa acá es un segundo que el
+        // correo de otra persona pasa en la cola.
+        //
+        // Treinta le alcanzan de sobra a una escritura sana, incluso con el
+        // LockService del Apps Script encolando un lote. Lo que tarde más que
+        // eso no está sano, y lo correcto es soltarlo y volver en un minuto.
+        CURLOPT_TIMEOUT        => TIEMPO_MAXIMO_HOJA,
     ]);
 
     $respuesta = curl_exec($ch);

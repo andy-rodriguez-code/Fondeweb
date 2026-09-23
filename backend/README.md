@@ -16,8 +16,37 @@ existió y se rechaza la petición: es preferible que la persona vuelva a
 intentar a decirle que quedó registrada cuando no quedó en ninguna parte.
 
 El correo y la hoja son derivados. Que fallen no borra el registro: se marcan
-en las columnas `correo_enviado` y `hoja_escrita`, y el cron los recupera
+en las columnas `correo_enviado` y `hoja_escrita`, y la cola los entrega
 leyendo de la propia base.
+
+### Cómo entrega la cola
+
+`enviar.php` guarda y contesta. Nada más: en este hosting el proceso web no
+sobrevive al cierre de la conexión. Todo lo que hay que entregar lo hace
+`reintentar.php`, que corre por CLI —el cron cada minuto, y además disparado
+como proceso aparte en cada envío para que no haya que esperar al minuto.
+
+Tres reglas sostienen esa cola, y las tres salen de fallas reales en
+producción:
+
+1. **El correo primero, la hoja después.** Detrás del correo hay una persona
+   esperando; la hoja es registro. Con la hoja adelante, una fila que Google
+   tardaba en aceptar se comía la corrida entera y el correo de todos los
+   demás salía tarde.
+2. **Presupuesto de tiempo por corrida.** Una corrida no arranca una entrega
+   más si no le entra en el peor caso. La corrida siguiente encuentra el
+   candado tomado y se va sin hacer nada, así que pasarse del minuto no se
+   atrasa a sí misma: atrasa al correo del que acaba de enviar.
+3. **Tope de intentos por fila** (`intentos_correo`, `intentos_hoja`). Al
+   agotarlos la fila sale de la cola y queda una línea `SE RINDIÓ` en el
+   registro con qué hacer. Sin tope, una fila que nunca se pueda entregar se
+   reintenta para siempre y nadie se entera.
+
+Y del lado de la hoja, **los dos Apps Script descartan un radicado que ya está
+escrito**. Eso es lo que hace que reintentar sea inofensivo: el backend no
+puede saber si la fila entró cuando la respuesta se pierde en el camino, así
+que la reenvía. Sobre HTTP nadie puede garantizar «exactamente una vez»; lo
+único que se puede hacer es que el que recibe sea idempotente.
 
 ## Qué hay acá
 
@@ -26,14 +55,15 @@ backend/
 ├── api/
 │   ├── enviar.php             ← único punto de entrada
 │   ├── bd.php                 ← acceso a MySQL con PDO
-│   ├── enviar-funciones.php   ← compartido con el cron
-│   ├── reintentar.php         ← reenvía lo pendiente a la hoja (solo CLI)
+│   ├── enviar-funciones.php   ← compartido con la cola
+│   ├── reintentar.php         ← entrega correo y hoja (solo CLI)
 │   └── .htaccess              ← solo enviar.php se sirve por HTTP
 ├── apps-script/
 │   ├── contactenos.gs         ← se pega en el Apps Script de SU hoja
 │   └── programa-100.gs        ← otra hoja, otro script, otra URL /exec
 ├── sql/
-│   └── esquema.sql            ← se ejecuta una vez en phpMyAdmin
+│   ├── esquema.sql            ← se ejecuta una vez en phpMyAdmin
+│   └── migracion-*.sql        ← cambios sobre una base que ya está viva
 ├── config.example.php         ← plantilla; el real NO se versiona
 └── README.md
 ```
