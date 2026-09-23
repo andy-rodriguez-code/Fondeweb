@@ -27,7 +27,7 @@ export const ahorro = {
     },
   ],
   franja: {
-    titulo: 'Podés retirar un porcentaje del ahorro permanente una vez al año',
+    titulo: 'Puedes retirar un porcentaje del ahorro permanente una vez al año',
     accion: { etiqueta: 'Ver condiciones', href: 'preguntas-frecuentes.html', slug: '/preguntas-frecuentes' },
   },
   cierre: {

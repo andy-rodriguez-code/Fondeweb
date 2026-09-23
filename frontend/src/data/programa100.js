@@ -20,11 +20,11 @@ export const grupos = [
     titulo: 'Datos del ahorrador principal',
     icono: 'usuario',
     campos: [
-      { id: 'nombre', etiqueta: 'Nombres y apellidos del ahorrador', tipo: 'text', col: 7, requerido: true, autoComplete: 'name', error: 'Escribí el nombre completo del ahorrador.' },
+      { id: 'nombre', etiqueta: 'Nombres y apellidos del ahorrador', tipo: 'text', col: 7, requerido: true, autoComplete: 'name', error: 'Escribe el nombre completo del ahorrador.' },
       { id: 'tipo-documento', etiqueta: 'Tipo', tipo: 'select', col: 2, opciones: ['CC', 'CE', 'NIT'] },
-      { id: 'documento', etiqueta: 'Número de identificación', tipo: 'text', col: 3, requerido: true, inputMode: 'numeric', error: 'Escribí el número de identificación.' },
+      { id: 'documento', etiqueta: 'Número de identificación', tipo: 'text', col: 3, requerido: true, inputMode: 'numeric', error: 'Escribe el número de identificación.' },
       { id: 'direccion', etiqueta: 'Dirección', tipo: 'text', col: 6, autoComplete: 'street-address' },
-      { id: 'telefono', etiqueta: 'Teléfono', tipo: 'tel', col: 3, requerido: true, autoComplete: 'tel', error: 'Escribí un teléfono de contacto.' },
+      { id: 'telefono', etiqueta: 'Teléfono', tipo: 'tel', col: 3, requerido: true, autoComplete: 'tel', error: 'Escribe un teléfono de contacto.' },
       { id: 'ciudad', etiqueta: 'Ciudad', tipo: 'text', col: 3, autoComplete: 'address-level2' },
     ],
   },
@@ -61,22 +61,22 @@ export const firmasFondo = ['Firma presidente', 'Firma gerente']
 
 export const programa100 = {
   titulo: 'Programa 100 de ahorro voluntario',
-  entrada: 'Ahorrá una cuota fija durante doce meses, participá cada mes en el sorteo de $100.000 y recibí todo lo ahorrado al cumplir el año. Diligenciá el formulario de inscripción y llevalo a la oficina de FONDEFOS.',
+  entrada: 'Ahorra una cuota fija durante doce meses, participa cada mes en el sorteo de $100.000 y recibe todo lo ahorrado al cumplir el año. Diligencia el formulario de inscripción y llévalo a la oficina de FONDEFOS.',
   formulario: {
     titulo: 'Formulario de inscripción',
     // El formato no pide correo, así que no hay acuse de recibo posible para
     // quien se inscribe: el radicado en pantalla es toda su constancia.
     aviso: {
       antes: 'Listo. Registramos tu inscripción con el radicado ',
-      despues: '. Guardalo: es tu constancia mientras FONDEFOS procesa el formato.',
+      despues: '. Guárdalo: es tu constancia mientras FONDEFOS procesa el formato.',
     },
     enviar: 'Guardar registro',
     enviando: 'Enviando…',
     limpiarFirma: 'Limpiar firma',
-    firmaVacia: 'Tocá o arrastrá para firmar',
+    firmaVacia: 'Toca o arrastra para firmar',
     firmaError: 'Hace falta la firma del ahorrador.',
-    aceptaError: 'Tenés que aceptar los términos para continuar.',
-    autorizaError: 'Tenés que autorizar el tratamiento de datos para continuar.',
+    aceptaError: 'Debes aceptar los términos para continuar.',
+    autorizaError: 'Debes autorizar el tratamiento de datos para continuar.',
     firmaRegistrada: 'Firma digital registrada',
   },
 }

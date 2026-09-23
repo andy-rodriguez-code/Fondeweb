@@ -1,6 +1,6 @@
 // TituloDual — two-weight heading; the <strong> carries the brand color
 // (assets/site.css lines 203-211). Children are composed freely
-// ("Compará antes de <strong>decidir</strong>"); the descendant styling uses
+// ("Compara antes de <strong>decidir</strong>"); the descendant styling uses
 // Tailwind arbitrary variants. tono="claro" matches the tinta-section override;
 // tono="naranja" tiñe el <strong> con --color-accent (accesos rápidos).
 

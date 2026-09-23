@@ -10,6 +10,23 @@ declare(strict_types=1);
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
+ * Lo máximo que puede tardar una entrega antes de que la demos por perdida.
+ *
+ * Están acá y no sueltos en cada llamada porque reintentar.php los necesita
+ * para su presupuesto de tiempo: la única forma de que una corrida no se pase
+ * del minuto es saber de antemano cuánto puede tardar lo próximo que va a
+ * intentar. Si alguno de estos dos números cambia sin que el otro lado se
+ * entere, el presupuesto deja de ser un presupuesto.
+ *
+ * Los dos son deliberadamente cortos. Antes de tener cola con candado, esperar
+ * de más solo retrasaba a quien ya estaba esperando; ahora retrasa a todos los
+ * que vienen detrás. Rendirse rápido y volver al minuto siguiente sale más
+ * barato que insistir.
+ */
+const TIEMPO_MAXIMO_SMTP = 20;
+const TIEMPO_MAXIMO_HOJA = 30;
+
+/**
  * Cierra la petición con un JSON. Los mensajes son códigos, no frases: la
  * traducción vive en el frontend (src/lib/enviarFormulario.js) y así el
  * servidor no filtra detalles internos ni tiene que saber el idioma del sitio.
@@ -21,49 +38,96 @@ function responder(int $codigo, array $cuerpo): void
     exit;
 }
 
+// Acá vivía `responderYSeguir()`, que contestaba al navegador y seguía
+// trabajando con la conexión cerrada para mandar el correo y escribir en la
+// hoja sin hacer esperar a nadie.
+//
+// Se eliminó el 16/09/2026 porque en este hosting no funciona: LiteSpeed con
+// lsphp recicla el proceso en `fastcgi_finish_request()` y nada de lo que
+// venía después llegaba a ejecutarse. No dejaba rastro —ni línea en el
+// registro ni error en el log de PHP—, así que estuvo semanas perdiendo
+// correos en silencio.
+//
+// Si algún día el hosting pasa a PHP-FPM, el patrón vuelve a ser válido. Pero
+// no hay que volver a atarle el correo: la cola de reintentar.php no depende
+// del servidor y ya demostró que entrega.
+
 /**
- * Contesta al navegador y sigue trabajando con la conexión ya cerrada.
+ * Lanza el trabajo de la cola en un proceso aparte y vuelve enseguida.
  *
- * El envío se guarda en MySQL en menos de un parpadeo, pero después hay que
- * mandar el correo por SMTP y escribir en el Google Sheet, y eso son segundos:
- * el Apps Script responde con un 302 que hay que seguir, y a veces tarda. La
- * persona quedaba mirando el botón mientras tanto, y en una red móvil lenta el
- * navegador cortaba la espera antes de recibir nada: el formulario mostraba
- * "no se pudo enviar" cuando en realidad había entrado perfecto.
+ * Esto es lo que devuelve la entrega instantánea sin volver a depender de que
+ * el proceso web sobreviva a la respuesta. La diferencia con lo que había
+ * antes es de fondo: no se trata de seguir trabajando después de contestar
+ * —eso acá no funciona—, sino de que el trabajo lo haga OTRO proceso. El hijo
+ * se desprende con `nohup` y la salida redirigida, así que cuando LiteSpeed
+ * recicle al padre, el hijo ya no le pertenece y termina igual.
  *
- * Acá se le contesta apenas la base confirma, que es lo único que decide si el
- * envío existe. El correo y la hoja son derivados: se hacen después, y si
- * fallan quedan marcados y el cron los recupera.
+ * El candado de reintentar.php es lo que hace esto seguro por mucho que se
+ * dispare: si ya hay una corrida en curso, la nueva se va sin tocar nada. Sin
+ * ese candado, diez envíos juntos serían diez procesos leyendo la misma cola
+ * y mandando el mismo correo diez veces.
  *
- * `ignore_user_abort` es la pieza que hace que esto funcione: sin eso, PHP mata
- * el proceso cuando la conexión se cierra y no se mandaría ningún correo.
+ * Si el hosting tiene exec() deshabilitado —pasa en planes compartidos— no
+ * hace nada y lo deja anotado en el registro. No es una falla: el cron entrega
+ * igual, solo que con hasta un minuto de demora.
  */
-function responderYSeguir(int $codigo, array $cuerpo): void
+function dispararCola(): void
 {
-    $json = json_encode($cuerpo, JSON_UNESCAPED_UNICODE);
-
-    ignore_user_abort(true);
-    set_time_limit(120);
-
-    http_response_code($codigo);
-    header('Content-Length: ' . strlen($json));
-    header('Connection: close');
-    echo $json;
-
-    // Con PHP-FPM y con el LiteSpeed de cPanel esta función cierra la conexión
-    // de verdad y deja el proceso corriendo. Es el camino bueno.
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
+    $deshabilitadas = array_map('trim', explode(',', (string) ini_get('disable_functions')));
+    if (!function_exists('exec') || in_array('exec', $deshabilitadas, true)) {
+        registrar('AVISO: exec() no disponible; la cola queda solo a cargo del cron.');
         return;
     }
 
-    // Sin FastCGI se vacían los búferes a mano. No garantiza que el navegador
-    // corte la espera —depende del servidor de adelante—, pero no rompe nada:
-    // en el peor caso la petición dura lo que duraba antes.
-    while (ob_get_level() > 0) {
-        ob_end_flush();
+    // En cPanel el binario de consola suele ser /usr/local/bin/php. PHP_BINARY
+    // apunta al lsphp de la petición web, que no siempre sirve para lanzar un
+    // proceso de consola, así que se puede fijar en el config.
+    $php = defined('RUTA_PHP_CLI') && RUTA_PHP_CLI !== ''
+        ? RUTA_PHP_CLI
+        : '/usr/local/bin/php';
+    $guion = __DIR__ . '/reintentar.php';
+
+    if (!is_file($php)) {
+        registrar('AVISO: no existe el PHP de consola en ' . $php . '; entrega a cargo del cron.');
+        return;
     }
-    flush();
+
+    $inicio = microtime(true);
+
+    if (DIRECTORY_SEPARATOR === '\\') {
+        // Windows (el XAMPP de desarrollo). `exec()` con `start /B` se queda
+        // esperando igual —medido: 8 s con un hijo de 8 s— porque comparte la
+        // consola. Con popen/pclose vuelve en centésimas.
+        $tuberia = popen(
+            sprintf('start /B "" %s %s', escapeshellarg($php), escapeshellarg($guion)),
+            'r'
+        );
+        if ($tuberia !== false) {
+            pclose($tuberia);
+        }
+    } else {
+        // Linux (el servidor). Las tres piezas hacen falta: `nohup` para que
+        // no lo mate la señal de cuelgue cuando LiteSpeed cierra la petición,
+        // la redirección para que exec() no espere a que se cierre la salida,
+        // y el `&` para que el shell devuelva el control enseguida. Si falta
+        // cualquiera de las tres, la persona vuelve a esperar por el correo.
+        @exec(sprintf(
+            'nohup %s %s > /dev/null 2>&1 &',
+            escapeshellarg($php),
+            escapeshellarg($guion)
+        ));
+    }
+
+    // Testigo. Lanzar un proceso son milisegundos; si esto tarda, es que el
+    // hijo NO se desprendió y la persona está esperando por el correo otra
+    // vez. Mejor que lo diga el registro a que lo descubramos por una queja.
+    $tardanza = microtime(true) - $inicio;
+    if ($tardanza > 1.0) {
+        registrar(sprintf(
+            'AVISO: lanzar la cola tardó %.1f s — el proceso no se está desprendiendo.',
+            $tardanza
+        ));
+    }
 }
 
 function registrar(string $linea): void
@@ -137,7 +201,57 @@ function guardarFirma(string $radicado, string $firma): string
 }
 
 /**
- * Cinco envíos por hora y por IP.
+ * La IP real de quien envía, no la del proxy.
+ *
+ * El sitio está detrás de Cloudflare, así que `REMOTE_ADDR` puede ser una IP
+ * del borde de Cloudflare y no la de la persona. Si el servidor no restaura la
+ * original, TODO el tráfico del sitio llega con un puñado de direcciones
+ * repetidas y el límite por IP deja de ser «por persona» para volverse «por
+ * sitio»: cinco envíos por hora en total, de todo el mundo.
+ *
+ * `CF-Connecting-IP` trae la verdadera, pero solo se acepta cuando la petición
+ * viene de un rango de Cloudflare. Es una cabecera y cualquiera puede
+ * escribirla: creerle a ciegas sería regalar la forma de saltarse el límite
+ * cambiando un valor en cada intento.
+ */
+function ipDelCliente(): string
+{
+    $directa = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    $reenviada = (string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? '');
+
+    if ($reenviada === '' || !filter_var($reenviada, FILTER_VALIDATE_IP)) {
+        return $directa;
+    }
+
+    // Rangos publicados por Cloudflare. Cambian muy de vez en cuando; si algún
+    // día dejara de reconocerlos, lo peor que pasa es volver a contar por la IP
+    // del proxy, que es exactamente como estaba antes.
+    $rangosCloudflare = [
+        '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
+        '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
+        '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+        '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+    ];
+
+    foreach ($rangosCloudflare as $rango) {
+        [$red, $bits] = explode('/', $rango);
+        $mascara = -1 << (32 - (int) $bits);
+        if ((ip2long($directa) & $mascara) === (ip2long($red) & $mascara)) {
+            return $reenviada;
+        }
+    }
+
+    return $directa;
+}
+
+/**
+ * Límite de envíos por hora y por IP.
+ *
+ * El tope sale de LIMITE_POR_IP si el config lo define; si no, treinta. Empezó
+ * en cinco y era demasiado poco para este público: los asociados escriben desde
+ * la red de la clínica, así que decenas de personas comparten una sola IP
+ * pública y entre todas agotaban el cupo en minutos. El que frena el spam de
+ * verdad es el filtro de contenido; esto es solo un techo contra una avalancha.
  *
  * Se queda en archivo y no en la base a propósito: es dato efímero que se
  * descarta a la hora, y meterlo en MySQL sumaría dos escrituras a cada
@@ -145,6 +259,8 @@ function guardarFirma(string $radicado, string $firma): string
  */
 function limitarPorIp(string $ip): void
 {
+    $tope = defined('LIMITE_POR_IP') ? (int) LIMITE_POR_IP : 30;
+
     $archivo = RUTA_ESTADO . '/limite.json';
     $ahora = time();
 
@@ -171,7 +287,7 @@ function limitarPorIp(string $ip): void
     }
 
     $propias = $registro[$ip] ?? [];
-    if (count($propias) >= 5) {
+    if (count($propias) >= $tope) {
         registrar('LIMITE alcanzado por ' . $ip);
         responder(429, ['ok' => false, 'error' => 'limite_alcanzado']);
     }
@@ -676,6 +792,14 @@ function despacharCorreos(
             ? PHPMailer::ENCRYPTION_STARTTLS
             : PHPMailer::ENCRYPTION_SMTPS;
 
+        // PHPMailer trae 300 segundos por omisión, y eso acá es inaceptable:
+        // los correos salen de una cola con candado, así que un servidor SMTP
+        // que acepta la conexión y después no contesta deja a TODA la cola
+        // parada cinco minutos. La entrega de una persona no puede depender de
+        // la paciencia de la anterior. Veinte le sobran a un servidor sano, y
+        // lo que no sea sano se reintenta al minuto siguiente.
+        $correo->Timeout = TIEMPO_MAXIMO_SMTP;
+
         $correo->setFrom(SMTP_USUARIO, SMTP_NOMBRE);
         foreach ($destinatarios as $destino) {
             $correo->addAddress($destino);
@@ -744,14 +868,14 @@ function despacharCorreos(
                 . '</td></tr></table>'
 
                 . '<div style="color:' . CORREO_TEXTO . ';font-size:12px;'
-                . 'line-height:20px;">Guardalo: con ese número ubicamos tu '
-                . 'mensaje si necesitás consultarlo. Te respondemos al correo o '
+                . 'line-height:20px;">Guárdalo: con ese número ubicamos tu '
+                . 'mensaje si necesitas consultarlo. Te respondemos al correo o '
                 . 'al teléfono que dejaste.</div>',
                 $definicion['nombre']
             );
             $correo->AltBody = "Recibimos tu mensaje\n\n"
                 . 'Registramos tu mensaje el ' . $cuando . ".\n"
-                . 'Tu radicado es ' . $radicado . ". Guardalo para cualquier consulta.\n\n"
+                . 'Tu radicado es ' . $radicado . ". Guárdalo para cualquier consulta.\n\n"
                 . "Te respondemos al correo o al teléfono que dejaste.\n\n"
                 . 'FONDEFOS — Fondo de Empleados';
             $correo->send();
@@ -800,7 +924,22 @@ function escribirEnHoja(array $carga): bool
         // de la respuesta nunca llega y no habría forma de saber si escribió.
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_TIMEOUT        => 20,
+        // Treinta segundos. Estuvo en sesenta unos días, y fue un error de
+        // razonamiento que salió caro: se subió para que ninguna escritura se
+        // cayera por tiempo agotado, porque entonces una caída por tiempo
+        // significaba una fila duplicada —el Apps Script escribía igual, la
+        // respuesta no llegaba a tiempo, y el reintento la escribía otra vez.
+        //
+        // Eso ya no pasa: los Apps Script descartan un radicado que ya está en
+        // la hoja, así que una caída por tiempo no duplica nada, solo demora.
+        // Y con esa red puesta, esperar de más es lo caro: la corrida es una
+        // sola, con candado, y cada segundo que pasa acá es un segundo que el
+        // correo de otra persona pasa en la cola.
+        //
+        // Treinta le alcanzan de sobra a una escritura sana, incluso con el
+        // LockService del Apps Script encolando un lote. Lo que tarde más que
+        // eso no está sano, y lo correcto es soltarlo y volver en un minuto.
+        CURLOPT_TIMEOUT        => TIEMPO_MAXIMO_HOJA,
     ]);
 
     $respuesta = curl_exec($ch);

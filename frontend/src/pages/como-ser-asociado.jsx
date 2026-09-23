@@ -29,29 +29,29 @@ const TRAMITE = {
     </>
   ),
   texto: 'En el siguiente enlace se encuentra el formulario descargable para que puedas inscribirte.',
-  notaAntes: 'También podés descargar el ',
+  notaAntes: 'También puedes descargar el ',
   notaEnlace: { etiqueta: 'formulario de conocimiento de personas naturales y asociados (v2)', href: '/docs/formulario-conocimiento-personas-naturales.pdf' },
 }
 
 const PASOS = [
   {
-    titulo: 'Descargá el formato',
-    texto: 'Bajá el formato de afiliación y el formulario de conocimiento del asociado.',
+    titulo: 'Descarga el formato',
+    texto: 'Baja el formato de afiliación y el formulario de conocimiento del asociado.',
     odId: 'paso-descarga-el-formato',
   },
   {
-    titulo: 'Reuní los documentos',
+    titulo: 'Reúne los documentos',
     texto: 'Último desprendible de nómina, fotocopia de la cédula y certificación laboral (aplica para independientes).',
     odId: 'paso-reuni-los-documentos',
   },
   {
     titulo: 'Entregalo en la sede',
-    texto: 'Radicá los documentos en la oficina de Floridablanca o consultanos por teléfono.',
+    texto: 'Radica los documentos en la oficina de Floridablanca o consultanos por teléfono.',
     odId: 'paso-entregalo-en-la-sede',
   },
   {
-    titulo: 'Empezá a ahorrar',
-    texto: 'Desde el primer mes de ahorro ya podés tramitar un crédito por la línea de tesorería.',
+    titulo: 'Empieza a ahorrar',
+    texto: 'Desde el primer mes de ahorro ya puedes tramitar un crédito por la línea de tesorería.',
     odId: 'paso-empeza-a-ahorrar',
   },
 ]
@@ -131,7 +131,7 @@ export default function ComoSerAsociadoPage() {
           <div className="max-w-[56ch] mb-[30px] max-md:mx-auto max-md:text-center">
             <Rotulo>Documentos</Rotulo>
             <TituloDual>
-              Lo que tenés que <strong>llevar</strong>
+              Lo que debes <strong>llevar</strong>
             </TituloDual>
           </div>
           <div className="rejilla rejilla--3">

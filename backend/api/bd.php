@@ -155,7 +155,62 @@ function marcarEnvio(string $radicado, string $columna, bool $valor): void
 }
 
 /**
- * Envíos cuyo correo no salió. Los usa reintentar.php.
+ * Cuántas veces se intenta una entrega antes de darla por perdida.
+ *
+ * La cola tiene que poder rendirse. Sin un tope, una fila que no se pueda
+ * entregar nunca —el webhook se reimplementó con otra URL, la casilla de
+ * destino dejó de existir, el formulario se sacó de config.php— vuelve cada
+ * minuto para siempre. Y como la corrida es una sola y con candado, esa fila
+ * atascada se come el tiempo de la corrida y le retrasa el correo a todos los
+ * envíos que vengan detrás. Un problema de una fila se convierte en un
+ * problema de todo el sitio.
+ *
+ * Diez es generoso a propósito: con el cron cada minuto, cubre más de diez
+ * minutos de caída de Google o del SMTP sin rendirse. Lo que pasa de ahí ya no
+ * es intermitente y reintentar no lo va a resolver; lo que hace falta es que
+ * alguien lo vea, y para eso está la línea `SE RINDIÓ` del registro.
+ *
+ * Rendirse no pierde nada: el envío sigue completo en `envios`. Para
+ * reencolarlo, poner el contador en 0 (ver migracion-2026-09-23-intentos.sql).
+ */
+const MAX_INTENTOS_ENTREGA = 10;
+
+/**
+ * Anota que un intento de entrega falló y devuelve cuántos van.
+ *
+ * El contador sube en el intento fallido y no en el exitoso: mientras entregue,
+ * el número queda donde estaba y no hay nada que limpiar.
+ *
+ * Devuelve el total para que quien llama pueda avisar en el registro justo
+ * cuando la fila agota los intentos. Avisar una sola vez, en el momento
+ * exacto, es lo que hace que el aviso se lea; una línea por intento es ruido
+ * que se aprende a ignorar.
+ */
+function anotarIntentoFallido(string $radicado, string $columna): int
+{
+    // Igual que en marcarEnvio: el nombre de la columna nunca viene de afuera,
+    // pero la lista blanca se queda porque es lo único que separa a esta
+    // consulta de una concatenación peligrosa.
+    if (!in_array($columna, ['intentos_correo', 'intentos_hoja'], true)) {
+        return 0;
+    }
+
+    try {
+        bd()->prepare("UPDATE envios SET {$columna} = {$columna} + 1 WHERE radicado = :radicado")
+            ->execute([':radicado' => $radicado]);
+
+        $consulta = bd()->prepare("SELECT {$columna} FROM envios WHERE radicado = :radicado");
+        $consulta->execute([':radicado' => $radicado]);
+
+        return (int) $consulta->fetchColumn();
+    } catch (Throwable $error) {
+        registrar('ERROR BD ' . $columna . ' ' . $radicado . ': ' . $error->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Envíos cuyo correo no salió y que todavía no agotaron sus intentos.
  *
  * Existe desde que enviar.php contesta antes de mandar el correo: si el SMTP
  * falla, ya no hay a quién avisarle en el momento, así que el reintento es la
@@ -167,6 +222,7 @@ function enviosPendientesDeCorreo(int $limite = 25): array
         'SELECT id, radicado, formulario, recibido_en, correo_respuesta, firma_archivo
          FROM envios
          WHERE correo_enviado = 0
+           AND intentos_correo < ' . MAX_INTENTOS_ENTREGA . '
          ORDER BY id
          LIMIT ' . (int) $limite
     );
@@ -213,12 +269,18 @@ function enviosPendientesDeCorreo(int $limite = 25): array
 }
 
 /**
- * Envíos que todavía no llegaron al Google Sheet. Los usa reintentar.php.
+ * Envíos que todavía no llegaron al Google Sheet y no agotaron sus intentos.
  *
  * La cola vive en la base y ya no en una carpeta de archivos .json: un solo
  * lugar donde mirar cuando algo falta.
+ *
+ * El límite bajó de 50 a 15. Cincuenta filas por corrida se pensó cuando esto
+ * era una red de seguridad que corría cada quince minutos; ahora corre cada
+ * minuto y comparte la corrida con el correo, que es lo que alguien está
+ * esperando. Quince entran holgadas en el presupuesto de tiempo de una
+ * corrida, y lo que sobre lo toma la del minuto siguiente.
  */
-function enviosPendientesDeHoja(int $limite = 50): array
+function enviosPendientesDeHoja(int $limite = 15): array
 {
     // `formulario` es la clave del formulario, y hay que traerla sí o sí: desde
     // que cada formulario tiene su propia hoja, es lo único que dice a cuál de
@@ -229,6 +291,7 @@ function enviosPendientesDeHoja(int $limite = 50): array
                 autoriza_datos, firma_archivo
          FROM envios
          WHERE hoja_escrita = 0
+           AND intentos_hoja < ' . MAX_INTENTOS_ENTREGA . '
          ORDER BY id
          LIMIT ' . (int) $limite
     );

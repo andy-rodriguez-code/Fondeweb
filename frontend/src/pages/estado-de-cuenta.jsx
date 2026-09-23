@@ -27,7 +27,7 @@ const PORTAL_URL = 'https://fondefos.sflfintech.com/administrador/componentes/in
 
 const PASOS = [
   <>
-    Ingresá a la página web:{' '}
+    Ingresa a la página web:{' '}
     {/* Se muestra solo el dominio y no la ruta completa: el texto va en medio
         de una frase y la dirección entera la parte en dos en teléfono. El
         enlace sí lleva a la URL completa. */}
@@ -35,10 +35,10 @@ const PASOS = [
       fondefos.sflfintech.com
     </a>
   </>,
-  'Digitá tu usuario: número de cédula.',
-  'Digitá la contraseña: los últimos 4 números de la cédula.',
-  'Cambiá la contraseña y hacé clic en la opción «Aplicar».',
-  'Listo, ya podés acceder a la información de tu cuenta.',
+  'Digita tu usuario: número de cédula.',
+  'Digita la contraseña: los últimos 4 números de la cédula.',
+  'Cambia la contraseña y haz clic en la opción «Aplicar».',
+  'Listo, ya puedes acceder a la información de tu cuenta.',
 ]
 
 const PORTAL = {
@@ -47,7 +47,7 @@ const PORTAL = {
   accion: { etiqueta: 'Ir a mi extracto', href: PORTAL_URL },
   olvido: {
     titulo: '¿Olvidaste tu contraseña?',
-    antes: 'Escribí a ',
+    antes: 'Escribe a ',
     enlace: { etiqueta: 'contactenos@fondefos.com.co', href: 'mailto:contactenos@fondefos.com.co' },
   },
 }
@@ -73,7 +73,7 @@ export default function EstadoDeCuentaPage() {
             <div className="max-md:text-center">
               <Rotulo>Primer ingreso</Rotulo>
               <TituloDual>
-                Consultá tu extracto <strong>¡aquí!</strong>
+                Consulta tu extracto <strong>¡aquí!</strong>
               </TituloDual>
             </div>
             <ListaRequisitos items={PASOS} className="mt-6" />

@@ -273,7 +273,7 @@ export default function Programa100Page() {
                       aria-required="true"
                     />
                   </div>
-                  <span className="campo__error">Escribí el valor de la cuota mensual.</span>
+                  <span className="campo__error">Escribe el valor de la cuota mensual.</span>
                 </div>
                 <div className="campo" data-col="4">
                   <label htmlFor="p100-total">Valor total ahorrado (proyectado)</label>

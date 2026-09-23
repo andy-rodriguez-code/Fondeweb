@@ -68,11 +68,19 @@ CREATE TABLE IF NOT EXISTS envios (
     firma_archivo     VARCHAR(255) NULL COMMENT 'ruta del PNG, fuera de public_html',
     correo_enviado    TINYINT(1)   NOT NULL DEFAULT 0,
     hoja_escrita      TINYINT(1)   NOT NULL DEFAULT 0,
+    -- Cuántas veces se intentó cada entrega. Sin esto, una fila que nunca se
+    -- pueda entregar —un webhook que se cambió, una casilla que ya no existe—
+    -- se reintenta cada minuto para siempre: gasta la corrida entera, retrasa
+    -- al resto de la cola y nadie se entera nunca de que está atascada.
+    intentos_correo   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    intentos_hoja     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     UNIQUE KEY uq_radicado (radicado),
     KEY idx_formulario (formulario, recibido_en),
-    -- Sostiene la consulta del cron de reintentos.
-    KEY idx_hoja_pendiente (hoja_escrita, id)
+    -- Sostienen las dos consultas de la cola. La del correo faltaba: se agregó
+    -- cuando el correo pasó de ser un derivado a ser el camino normal.
+    KEY idx_hoja_pendiente (hoja_escrita, intentos_hoja, id),
+    KEY idx_correo_pendiente (correo_enviado, intentos_correo, id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 

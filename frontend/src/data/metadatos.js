@@ -29,17 +29,17 @@ export const metadatos = {
   ahorro: {
     titulo: `Ahorro programado y permanente para asociados | ${MARCA}`,
     descripcion:
-      'Ahorro permanente y ahorro voluntario con descuento de nómina para los empleados de la FOSCAL. Conocé las modalidades, los montos y cómo empezar.',
+      'Ahorro permanente y ahorro voluntario con descuento de nómina para los empleados de la FOSCAL. Conoce las modalidades, los montos y cómo empezar.',
   },
   'como-ser-asociado': {
     titulo: `Cómo afiliarse al fondo de empleados de la FOSCAL | ${MARCA}`,
     descripcion:
-      'Requisitos, documentos y pasos para afiliarte a FONDEFOS. Quién puede asociarse, cuánto es el aporte y qué beneficios tenés desde el primer mes.',
+      'Requisitos, documentos y pasos para afiliarte a FONDEFOS. Quién puede asociarse, cuánto es el aporte y qué beneficios tienes desde el primer mes.',
   },
   nosotros: {
     titulo: `Quiénes somos — Fondo de Empleados de la FOSCAL | ${MARCA}`,
     descripcion:
-      'FONDEFOS es el fondo de empleados de la Fundación Oftalmológica de Santander, constituido en 1997 en Floridablanca. Conocé su historia, misión y gobierno.',
+      'FONDEFOS es el fondo de empleados de la Fundación Oftalmológica de Santander, constituido en 1997 en Floridablanca. Conoce su historia, misión y gobierno.',
   },
   beneficios: {
     titulo: `Beneficios y auxilios para los asociados | ${MARCA}`,
@@ -54,7 +54,7 @@ export const metadatos = {
   'estado-de-cuenta': {
     titulo: `Consultar estado de cuenta y extracto en línea | ${MARCA}`,
     descripcion:
-      'Ingresá al portal del asociado de FONDEFOS para ver saldos, aportes y el estado de tus créditos. Instrucciones paso a paso para consultar tu extracto.',
+      'Ingresa al portal del asociado de FONDEFOS para ver saldos, aportes y el estado de tus créditos. Instrucciones paso a paso para consultar tu extracto.',
   },
   'preguntas-frecuentes': {
     titulo: `Preguntas frecuentes de los asociados | ${MARCA}`,
@@ -64,12 +64,12 @@ export const metadatos = {
   contactenos: {
     titulo: `Contacto — Fondo de Empleados de la FOSCAL | ${MARCA}`,
     descripcion:
-      'Escribinos o acercate a la sede de FONDEFOS en la Torre Milton Salazar de la FOSCAL, Floridablanca. Teléfono, correo y horario de atención.',
+      'Escríbenos o acércate a la sede de FONDEFOS en la Torre Milton Salazar de la FOSCAL, Floridablanca. Teléfono, correo y horario de atención.',
   },
   'programa-100': {
     titulo: `Programa 100 de ahorro voluntario — inscripción | ${MARCA}`,
     descripcion:
-      'Inscribite al Programa 100 de ahorro voluntario de FONDEFOS: doce cuotas mensuales, sorteos para los ahorradores al día y seguro sobre lo ahorrado.',
+      'Inscríbete al Programa 100 de ahorro voluntario de FONDEFOS: doce cuotas mensuales, sorteos para los ahorradores al día y seguro sobre lo ahorrado.',
   },
   'politica-de-datos': {
     titulo: `Política de tratamiento de datos personales | ${MARCA}`,
@@ -87,7 +87,7 @@ export const metadatos = {
   'credito-educativo': {
     titulo: `Crédito educativo para asociados y sus hijos | ${MARCA}`,
     descripcion:
-      'Financiá matrículas y estudios de tu familia con el crédito educativo de FONDEFOS. Descuento por nómina, plazos cómodos y trámite sin banco.',
+      'Financia matrículas y estudios de tu familia con el crédito educativo de FONDEFOS. Descuento por nómina, plazos cómodos y trámite sin banco.',
   },
   'credito-de-confianza': {
     titulo: `Crédito de confianza, desembolso rápido | ${MARCA}`,
@@ -97,17 +97,17 @@ export const metadatos = {
   'credito-de-impuestos': {
     titulo: `Crédito para pago de impuestos | ${MARCA}`,
     descripcion:
-      'Pagá predial, vehículos y renta con el crédito de impuestos de FONDEFOS, diferido por nómina y sin los intereses de una tarjeta.',
+      'Paga predial, vehículos y renta con el crédito de impuestos de FONDEFOS, diferido por nómina y sin los intereses de una tarjeta.',
   },
   'credito-de-recreacion-y-turismo': {
     titulo: `Crédito de recreación y turismo para asociados | ${MARCA}`,
     descripcion:
-      'Financiá tus vacaciones y planes de descanso con el crédito de recreación y turismo de FONDEFOS, con descuento de nómina.',
+      'Financia tus vacaciones y planes de descanso con el crédito de recreación y turismo de FONDEFOS, con descuento de nómina.',
   },
   'credito-de-consumo-por-bonos': {
     titulo: `Crédito de consumo por bonos | ${MARCA}`,
     descripcion:
-      'Comprá en los comercios aliados con los bonos de consumo de FONDEFOS y pagalos por nómina, en cuotas fijas.',
+      'Compra en los comercios aliados con los bonos de consumo de FONDEFOS y págalos por nómina, en cuotas fijas.',
   },
   'creditos-de-tesoreria': {
     titulo: `Crédito de tesorería a corto plazo | ${MARCA}`,
@@ -117,7 +117,7 @@ export const metadatos = {
   'crediaportes-10': {
     titulo: `Crediaportes 10 — crédito sobre tus aportes | ${MARCA}`,
     descripcion:
-      'Accedé a un crédito respaldado por tus propios aportes al fondo, con una de las tasas más bajas del portafolio de FONDEFOS.',
+      'Accede a un crédito respaldado por tus propios aportes al fondo, con una de las tasas más bajas del portafolio de FONDEFOS.',
   },
   'tarjeta-express': {
     titulo: `Tarjeta Express de compras para asociados | ${MARCA}`,

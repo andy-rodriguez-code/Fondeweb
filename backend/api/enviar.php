@@ -67,7 +67,7 @@ $definicion = FORMULARIOS[$clave];
 // Campo trampa: queda vacío siempre. Se responde ok para no darle señal al
 // robot de que fue detectado, pero no se procesa nada.
 if (!empty($entrada['website'])) {
-    registrar('TRAMPA activada desde ' . ($_SERVER['REMOTE_ADDR'] ?? '?'));
+    registrar('TRAMPA activada desde ' . ipDelCliente());
     responder(200, ['ok' => true, 'radicado' => 'no-procesado']);
 }
 
@@ -76,7 +76,7 @@ if ((int) ($entrada['demora'] ?? 0) < 3000) {
     responder(429, ['ok' => false, 'error' => 'demasiado_rapido']);
 }
 
-$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+$ip = ipDelCliente();
 limitarPorIp($ip);
 
 // Apagado mientras RECAPTCHA_SECRETO esté vacío.
@@ -190,54 +190,38 @@ if ($rutaFirma !== '') {
     }
 }
 
-// ── Se contesta acá, no al final ──────────────────────────────────────────
-// La base ya confirmó, así que el envío existe y el radicado es válido. Todo
-// lo que sigue son derivados que tardan segundos —SMTP, y el Apps Script que
-// contesta con un 302 que hay que seguir—, y hacer esperar a la persona por
-// eso es lo que provocaba el "no se pudo enviar" en redes móviles lentas: el
-// navegador cortaba antes de recibir la respuesta, con el envío ya guardado.
+// ── Se contesta acá, y acá termina la petición ────────────────────────────
+// El correo y la hoja NO se hacen en esta petición. Se hacían hasta el
+// 16/09/2026, y el resultado medido fue que no se hacían nunca.
 //
-// Lo que falle de acá en adelante queda marcado en la base y lo recupera el
-// cron de reintentar.php.
+// Este hosting corre LiteSpeed con lsphp, y ahí el proceso no sobrevive al
+// cierre de la conexión: `fastcgi_finish_request()` deja vivo al worker en
+// PHP-FPM, pero acá lo reciclan antes de que termine el trabajo. El envío
+// entraba a MySQL, el navegador recibía su radicado, y ni el correo ni la
+// fila de la hoja salían jamás. Sin línea en el registro y sin error en el
+// log de PHP, porque PHP no falló: lo mataron.
+//
+// El mismo código por línea de comandos funciona: el cron recuperó 7 de 7
+// correos pendientes. Así que el trabajo derivado queda donde sí se ejecuta
+// —reintentar.php— y la cola vive en la propia base, en `correo_enviado = 0`
+// y `hoja_escrita = 0`.
+//
+// El precio es que el acuse de recibo llega hasta un minuto después en vez de
+// al instante. A cambio esto deja de depender de una decisión del servidor
+// sobre la que no mandamos.
 
-responderYSeguir(200, ['ok' => true, 'radicado' => $radicado]);
-
-// ── Derivados: correo y Google Sheet ──────────────────────────────────────
-// A partir de acá nada puede hacer desaparecer el envío, y nadie está
-// esperando: la conexión con el navegador ya se cerró.
-
-$enviado = enviarCorreos($definicion, $valores, $radicado, $fecha, $firma, $correoRemitente);
-marcarEnvio($radicado, 'correo_enviado', $enviado);
-
-$escrita = escribirEnHoja([
-    'clave_formulario' => $clave,
-    'token'            => TOKEN_HOJA,
-    'formulario'       => $definicion['nombre'],
-    'radicado'         => $radicado,
-    // ISO 8601 con desfase (2026-09-10T04:08:04-05:00), no el formato de
-    // MySQL. Sin el desfase, el `new Date()` del Apps Script interpretaría la
-    // cadena en la zona horaria del script y la hora saldría corrida sin que
-    // nadie lo note. Es el mismo instante que `recibido_en`, escrito distinto.
-    'fecha'            => date('c', strtotime($fecha)),
-    'campos'           => $valores,
-    // Booleano, no la imagen: la hoja solo registra si hubo firma. Mandar los
-    // 60 KB de base64 en cada envío es tráfico que nadie usa y arriesga el
-    // tiempo de espera del Apps Script.
-    'firma'            => $firma !== '',
-    'ip'               => $ip,
-    'autoriza'         => $autoriza,
-]);
-marcarEnvio($radicado, 'hoja_escrita', $escrita);
-
+// El registro va ANTES de contestar, a propósito: es la única forma de que
+// quede constancia del envío aunque el proceso no sobreviva a la respuesta.
+// Lo que pase después con el correo y la hoja lo escribe reintentar.php.
 registrar(sprintf(
-    '%s | %s | correo=%s | hoja=%s',
+    '%s | %s | guardado — correo y hoja en cola',
     $radicado,
-    $definicion['nombre'],
-    $enviado ? 'ok' : 'fallo',
-    $escrita ? 'ok' : 'pendiente'
+    $definicion['nombre']
 ));
 
-// La respuesta ya salió. Un correo que no sale no es motivo para decirle a la
-// persona que su envío falló —sí entró, y tiene su radicado—: queda en
-// `correo_enviado = 0` y el cron lo reintenta.
-exit(0);
+// El disparo va ANTES de contestar, porque después de `responder()` ya no
+// corre nada. Lanzar el proceso hijo cuesta milisegundos: la persona no lo
+// nota, y el correo sale en el momento en vez de esperar al cron.
+dispararCola();
+
+responder(200, ['ok' => true, 'radicado' => $radicado]);

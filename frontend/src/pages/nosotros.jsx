@@ -84,7 +84,7 @@ const OBJETIVOS = {
 }
 
 const BANDA_CIERRE = {
-  titulo: '¿Querés hacer parte del fondo?',
+  titulo: '¿Quieres hacer parte del fondo?',
   texto: 'La afiliación no tiene costo y el trámite se hace con tres documentos.',
   accion: { etiqueta: 'Ver cómo afiliarme', to: '/como-ser-asociado' },
 }

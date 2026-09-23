@@ -42,10 +42,10 @@ const ASUNTOS = ['Afiliación', 'Créditos', 'Ahorro', 'Convenios', 'Estados de 
 const REQUERIDOS = ['nombre', 'correo', 'telefono', 'asunto']
 
 const FORMULARIO = {
-  titulo: 'Dejanos tus datos, pronto te responderemos',
+  titulo: 'Déjanos tus datos, pronto te responderemos',
   enviar: 'Enviar mensaje',
   enviando: 'Enviando…',
-  autorizaError: 'Tenés que autorizar el tratamiento de datos para continuar.',
+  autorizaError: 'Debes autorizar el tratamiento de datos para continuar.',
   legal: 'FONDEFOS cumple con la Ley 1581 de 2012 y el Decreto 1377 de 2013 sobre protección de datos personales.',
 }
 
@@ -114,7 +114,7 @@ export default function ContactenosPage() {
         state: {
           radicado: numero,
           aviso: 'Recibimos tu mensaje con el radicado ',
-          avisoFinal: '. Guardalo para cualquier consulta: te llega una copia al correo.',
+          avisoFinal: '. Guárdalo para cualquier consulta: te llega una copia al correo.',
         },
       })
     } catch (error) {
@@ -173,17 +173,17 @@ export default function ContactenosPage() {
             <div className="campo" data-error={errores.nombre ? 'si' : 'no'}>
               <label htmlFor="c-nombre">Nombre completo</label>
               <input id="c-nombre" name="nombre" type="text" required autoComplete="name" placeholder="Ingresa tu nombre" onChange={limpiarError('nombre')} />
-              <span className="campo__error">Ingresá tu nombre completo.</span>
+              <span className="campo__error">Ingresa tu nombre completo.</span>
             </div>
             <div className="campo" data-error={errores.correo ? 'si' : 'no'}>
               <label htmlFor="c-correo">Correo electrónico</label>
               <input id="c-correo" name="correo" type="email" required autoComplete="email" placeholder="Email" onChange={limpiarError('correo')} />
-              <span className="campo__error">Ingresá un correo electrónico válido.</span>
+              <span className="campo__error">Ingresa un correo electrónico válido.</span>
             </div>
             <div className="campo" data-error={errores.telefono ? 'si' : 'no'}>
               <label htmlFor="c-telefono">Teléfono</label>
               <input id="c-telefono" name="telefono" type="tel" required autoComplete="tel" placeholder="Ingresa tu teléfono" onChange={limpiarError('telefono')} />
-              <span className="campo__error">Ingresá tu teléfono.</span>
+              <span className="campo__error">Ingresa tu teléfono.</span>
             </div>
             <div className="campo" data-error={errores.asunto ? 'si' : 'no'}>
               <label htmlFor="c-asunto">Asunto</label>
@@ -198,7 +198,7 @@ export default function ContactenosPage() {
                   </option>
                 ))}
               </select>
-              <span className="campo__error">Seleccioná un asunto.</span>
+              <span className="campo__error">Selecciona un asunto.</span>
             </div>
             <div className="campo" data-error="no">
               <label htmlFor="c-mensaje">Mensaje</label>
