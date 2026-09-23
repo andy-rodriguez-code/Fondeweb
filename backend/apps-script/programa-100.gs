@@ -47,6 +47,11 @@ const CAMPOS = [
 // en la página: así la hoja no puede quedar en desacuerdo con la cuota.
 const MESES = 12;
 
+// En qué columna queda el radicado. Es la tercera por el orden del appendRow:
+// Fecha, Hora, Radicado. Si algún día se agrega una columna antes, hay que
+// mover este número o la comprobación de duplicados deja de ver nada.
+const COLUMNA_RADICADO = 3;
+
 function doPost(e) {
   const bloqueo = LockService.getScriptLock();
   bloqueo.waitLock(30000);
@@ -63,6 +68,17 @@ function doPost(e) {
     // último que abrió el archivo.
     const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
     asegurarCabeceras(hoja);
+
+    // El radicado es la identidad del envío y llega igual en cada reintento.
+    // Si ya está en la hoja, esta llamada es un reintento de algo que sí se
+    // escribió y lo único correcto es no escribirlo otra vez.
+    const radicado = String(data.radicado || '');
+    if (yaEstaEscrito(hoja, radicado)) {
+      // `true` a propósito: para el backend esto es un éxito. Devolver falso
+      // dejaría el envío marcado como pendiente y lo traería de vuelta cada
+      // minuto para siempre, que es justo lo que estamos cerrando.
+      return respuesta(true, 'duplicado_ignorado');
+    }
 
     // `data.fecha` llega en ISO 8601 con desfase (2026-09-10T04:08:04-05:00).
     // Sin el desfase, new Date() la interpretaría en la zona del script y la
@@ -89,6 +105,49 @@ function doPost(e) {
   } finally {
     bloqueo.releaseLock();
   }
+}
+
+/**
+ * ¿Este radicado ya tiene su fila en la hoja?
+ *
+ * Esto es lo que hace que reenviar sea inofensivo, y hace falta porque el
+ * backend no puede saber si escribimos. Manda la fila por HTTP y espera la
+ * respuesta; si la respuesta se pierde en el camino —se agota el tiempo, se
+ * cae la conexión, Google devuelve un error transitorio— él lee "no se
+ * escribió" cuando en realidad sí se escribió, deja el envío en la cola y lo
+ * vuelve a mandar. Así aparecieron cuatro filas idénticas del mismo radicado
+ * en producción.
+ *
+ * Eso no se arregla del lado que manda: sobre HTTP nadie puede garantizar
+ * "exactamente una vez". Se arregla acá, que es el único lugar que sabe la
+ * verdad. Mientras el que recibe sea idempotente, el backend puede reintentar
+ * las veces que necesite y la hoja queda igual.
+ *
+ * Va DENTRO del LockService del doPost a propósito: mirar y escribir tienen
+ * que ser un solo paso, o dos llamadas simultáneas del mismo radicado miran
+ * las dos, no ven nada, y las dos escriben.
+ *
+ * Se recorre de abajo hacia arriba porque un reintento es siempre de algo
+ * reciente: en una hoja con miles de filas encuentra a la primera.
+ */
+function yaEstaEscrito(hoja, radicado) {
+  // Sin radicado no hay con qué comparar. Es preferible una fila de más que
+  // descartar en silencio un envío real.
+  if (!radicado) return false;
+
+  const ultima = hoja.getLastRow();
+  // 1 es solo el encabezado; 0 es una hoja recién creada.
+  if (ultima < 2) return false;
+
+  // Una sola lectura de la columna entera. Leer celda por celda son miles de
+  // llamadas al servicio y revienta la cuota antes que el tiempo.
+  const columna = hoja.getRange(2, COLUMNA_RADICADO, ultima - 1, 1).getValues();
+
+  for (let i = columna.length - 1; i >= 0; i--) {
+    if (String(columna[i][0]).trim() === radicado) return true;
+  }
+
+  return false;
 }
 
 // El nombre de la propiedad es TOKEN_HOJA, igual que la constante de
