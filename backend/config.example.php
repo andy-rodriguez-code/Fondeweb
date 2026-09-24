@@ -55,7 +55,12 @@ const SMTP_HOST    = 'mail.fondefos.com.co';
 const SMTP_PUERTO  = 465;            // 465 con SSL/TLS, 587 con STARTTLS
 // La contraseña normal del buzón, la del webmail (puerto 2096). No es una
 // App Password: eso era cosa de Gmail y ya no aplica.
-const SMTP_USUARIO = 'administracion@fondefos.com.co';
+//
+// El buzón va como marcador y no con el valor verdadero: es la mitad de usuario
+// de una credencial de webmail, y este repositorio es público. El dominio sí
+// queda, porque no es un dato a proteger —es la condición de que el correo
+// salga alineado con SPF, DKIM y DMARC, y está explicado arriba—.
+const SMTP_USUARIO = 'REEMPLAZAR@fondefos.com.co';
 const SMTP_CLAVE   = 'REEMPLAZAR';
 const SMTP_NOMBRE  = 'Sitio web FONDEFOS';
 
