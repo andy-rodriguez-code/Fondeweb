@@ -227,6 +227,26 @@ function aplicarCors(): void
 }
 
 /**
+ * Lo más que puede medir la firma que llega del navegador, en caracteres de la
+ * cadena base64.
+ *
+ * Está acá y no suelto en enviar.php porque es el par del control de contenido
+ * de guardarFirma(): los dos acotan lo mismo desde dos ángulos —cuánto pesa y
+ * qué es— y separarlos es garantizar que un día uno cambie sin el otro.
+ *
+ * 400 000 caracteres son unos 300 KB de PNG. Una firma de este lienzo pesa
+ * decenas de KB, así que el margen es amplio a propósito: el objetivo es poner
+ * un techo, no apretar a quien firma con un dedo grande en una pantalla densa.
+ */
+const MAXIMO_FIRMA_BASE64 = 400000;
+
+/**
+ * Los ocho bytes con los que empieza todo PNG. Están en la especificación y no
+ * dependen del programa que lo haya generado.
+ */
+const FIRMA_PNG_BYTES_MAGICOS = "\x89PNG\r\n\x1a\n";
+
+/**
  * Guarda el PNG de la firma fuera de public_html y devuelve su ruta.
  *
  * Va como archivo y no como BLOB en la base: son decenas de KB por envío que
@@ -244,6 +264,24 @@ function guardarFirma(string $radicado, string $firma): string
         true
     );
     if ($binario === false || $binario === '') {
+        return '';
+    }
+
+    // Que la cadena empiece con `data:image/png;base64,` no la hace un PNG: ese
+    // prefijo lo escribe quien envía y no dice nada de los bytes que vienen
+    // detrás. Sin esta comprobación se guardaba con nombre .png cualquier cosa
+    // que decodificara, y eso mismo se adjuntaba al correo del fondo.
+    //
+    // Se mira la firma del formato y además se pide que getimagesizefromstring
+    // lo reconozca: lo primero descarta el contenido que no es PNG, lo segundo
+    // el PNG con la cabecera correcta y el resto roto.
+    //
+    // Devolver '' es lo correcto y no rechazar el envío: acá ya estamos después
+    // de validar, y perder una firma es malo, perder la inscripción entera es
+    // peor. El motivo queda en el registro para poder verlo.
+    if (strncmp($binario, FIRMA_PNG_BYTES_MAGICOS, 8) !== 0
+        || @getimagesizefromstring($binario) === false) {
+        registrar('FIRMA descartada: el contenido no es un PNG (' . $radicado . ')');
         return '';
     }
 

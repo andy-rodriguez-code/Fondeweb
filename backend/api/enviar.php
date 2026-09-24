@@ -153,6 +153,19 @@ if ($definicion['firma']) {
     if (strpos($firma, 'data:image/png;base64,') !== 0) {
         responder(422, ['ok' => false, 'error' => 'falta_firma']);
     }
+
+    // Tope de tamaño. `firma` viaja como clave propia del JSON y no dentro de
+    // `campos`, así que no le aplica ningún `max` de la configuración: sin esta
+    // línea, cada envío escribe en disco lo que quepa en el post_max_size del
+    // hosting. Y el disco es compartido con MySQL y con el registro, así que
+    // llenarlo no rompe la firma: deja de recibir envíos el formulario entero.
+    //
+    // Una firma de este lienzo —trazo de 2,2 px sobre un canvas de pantalla—
+    // pesa decenas de KB. 400 000 caracteres de base64 son unos 300 KB: le
+    // sobra a una firma real y es un techo para lo que no lo es.
+    if (strlen($firma) > MAXIMO_FIRMA_BASE64) {
+        responder(422, ['ok' => false, 'error' => 'firma_demasiado_grande']);
+    }
 }
 
 // ── Base de datos: la fuente de verdad ────────────────────────────────────

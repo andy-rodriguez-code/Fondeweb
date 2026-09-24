@@ -22,6 +22,9 @@ export const ERRORES = {
   correo_invalido: 'Revisa el correo electrónico.',
   falta_autorizacion: 'Hace falta autorizar el tratamiento de datos.',
   falta_firma: 'Hace falta la firma del ahorrador.',
+  // La firma sale de un canvas y nunca llega a este tamaño: si aparece, es que
+  // algo la infló por el camino y volver a firmar es lo que corresponde.
+  firma_demasiado_grande: 'No pudimos procesar la firma. Bórrala y vuelve a firmar.',
   verificacion_fallida:
     'No pudimos verificar que seas una persona. Recarga la página e intenta de nuevo.',
   // El filtro antispam es una sospecha, no una certeza. El mensaje tiene que
