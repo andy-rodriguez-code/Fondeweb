@@ -21,6 +21,9 @@ export const ERRORES = {
   campo_requerido: 'Falta completar un campo obligatorio.',
   correo_invalido: 'Revisa el correo electrónico.',
   falta_autorizacion: 'Hace falta autorizar el tratamiento de datos.',
+  // El servidor exige los dos consentimientos, no solo el de datos. La página
+  // ya los bloquea; este mensaje es para el caso en que igual llegue el rechazo.
+  falta_aceptacion: 'Hace falta aceptar los términos del programa.',
   falta_firma: 'Hace falta la firma del ahorrador.',
   // La firma sale de un canvas y nunca llega a este tamaño: si aparece, es que
   // algo la infló por el camino y volver a firmar es lo que corresponde.

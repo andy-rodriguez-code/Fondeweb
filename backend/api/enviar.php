@@ -147,6 +147,24 @@ if (!$autoriza) {
     responder(422, ['ok' => false, 'error' => 'falta_autorizacion']);
 }
 
+// Aceptación de los términos del formato, cuando el formulario la pide. Se
+// exige acá con la misma dureza que la autorización de datos porque los dos
+// consentimientos tienen el mismo peso: sin ellos no hay inscripción.
+//
+// Hacía falta porque `acepta-terminos` viaja dentro de `campos`, y ahí la única
+// regla disponible es «requerido», que `No` cumple igual que `Sí`. Un envío
+// hecho con curl —o un cliente propio mal escrito— quedaba guardado, radicado,
+// enviado por correo y escrito en la hoja declarando en su propia columna que
+// la persona NO aceptó los términos. La interfaz lo bloquea, pero la interfaz
+// no es la que manda: este endpoint se puede llamar sin pasar por el navegador.
+//
+// La condición mira la definición del formulario y no el nombre del formato: el
+// día que otro formulario pida términos, queda cubierto sin tocar esta línea.
+if (isset($definicion['campos']['acepta-terminos'])
+    && ($valores['acepta-terminos'] ?? '') !== 'Sí') {
+    responder(422, ['ok' => false, 'error' => 'falta_aceptacion']);
+}
+
 $firma = '';
 if ($definicion['firma']) {
     $firma = (string) ($entrada['firma'] ?? '');
