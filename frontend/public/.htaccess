@@ -38,6 +38,20 @@ RewriteRule ^ index.html [L]
   # cierra la primera, que es donde alguien en la misma red puede interceptar.
   # Se activa recién cuando el certificado ya está andando: si se pone antes,
   # el navegador se niega a abrir el sitio y no hay forma de convencerlo.
+  #
+  # A propósito SIN `includeSubDomains`, y conviene saber por qué antes de
+  # agregarlo. Esa palabra extiende la regla a TODO subdominio de
+  # fondefos.com.co, y en cPanel eso alcanza a mail., webmail. y cpanel., que no
+  # los sirve este .htaccess. Si alguno respondiera por HTTP o con un
+  # certificado que no coincide, el navegador se negaría a abrirlo durante un
+  # año y quien perdería el acceso es el personal del fondo, que lee por ahí los
+  # avisos de los formularios. No es un riesgo que se pueda medir desde el
+  # repositorio.
+  #
+  # Para agregarlo: abrir https://mail.fondefos.com.co,
+  # https://webmail.fondefos.com.co y https://cpanel.fondefos.com.co, comprobar
+  # que las tres cargan con certificado válido, y recién entonces dejar la línea
+  # como `"max-age=31536000; includeSubDomains"`.
   Header always set Strict-Transport-Security "max-age=31536000"
 
   # Nadie mete el sitio en un iframe: evita que una página ajena lo superponga
@@ -51,6 +65,49 @@ RewriteRule ^ index.html [L]
   # Al salir del sitio no se filtra la ruta completa que la persona venía
   # visitando, solo el dominio.
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # De dónde puede cargar cosas el navegador. Todo del propio origen y nada más.
+  #
+  # Esto es defensa en profundidad y no el cierre de un agujero: el sitio no
+  # tiene una sola inserción de HTML sin escapar —ni dangerouslySetInnerHTML, ni
+  # innerHTML, ni eval—, así que hoy no hay por dónde inyectar un script. La CSP
+  # es la red para el día que alguien agregue esa puerta sin darse cuenta.
+  #
+  # `style-src 'self'` SIN 'unsafe-inline', y eso hay que explicarlo porque
+  # parece un error: gracias.jsx usa style={{...}} en una docena de elementos.
+  # No hace falta aflojarlo. React aplica esos estilos por CSSOM
+  # —node.style.color = ...— y la CSP no gobierna CSSOM, solo los atributos
+  # `style` que vienen en el HTML y los <style> del documento. El prerenderizado
+  # escribe únicamente el <head>, así que en el HTML servido no hay ni un
+  # atributo style. Medido con Chromium sirviendo dist/ con esta misma política:
+  # cero violaciones en siete rutas, y en /gracias el color computado sigue
+  # siendo el azul de la marca.
+  #
+  # Lo que cada directiva sostiene:
+  #   default-src 'self'      todo lo no listado: media, workers, manifest
+  #   script-src 'self'       el único script es /assets/index-<hash>.js
+  #   style-src 'self'        la única hoja es /assets/index-<hash>.css
+  #   img-src 'self'          imágenes y fuentes salen de /assets/ con hash;
+  #   font-src 'self'         assetsInlineLimit:0 en vite.config.js garantiza
+  #                           que ninguna venga como data: URI
+  #   connect-src 'self'      el fetch del formulario va a /api/enviar.php
+  #   frame-src google        el mapa de la sede en la portada es un iframe de
+  #                           Google Maps (portada.jsx, data/navegacion.js). Es
+  #                           la única excepción al 'self', y hace falta: sin
+  #                           ella el mapa se queda en blanco. Se descubrió
+  #                           midiendo, no leyendo el código
+  #   form-action 'self'      ningún formulario postea a otro dominio
+  #   base-uri 'none'         un <base> inyectado reescribiría cada ruta
+  #   object-src 'none'       no hay plugins ni <embed>
+  #   frame-ancestors 'self'  el equivalente moderno de X-Frame-Options, que se
+  #                           deja igual arriba para navegadores viejos
+  #
+  # SI SE ENCIENDE reCAPTCHA hay que ampliarla, o el formulario deja de enviar
+  # sin un mensaje que lo explique: el script de Google es de otro origen y esta
+  # política lo bloquea. La línea que hay que usar en ese caso, en lugar de la de
+  # abajo, está documentada junto a VITE_RECAPTCHA_SITE_KEY en
+  # frontend/.env.example, que es donde se enciende.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; frame-src https://www.google.com; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'; upgrade-insecure-requests"
 </IfModule>
 
 # Los bundles llevan hash en el nombre: se pueden cachear para siempre.
