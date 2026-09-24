@@ -358,9 +358,35 @@ function limitarPorIp(string $ip): void
     $archivo = RUTA_ESTADO . '/limite.json';
     $ahora = time();
 
-    $registro = is_file($archivo)
-        ? json_decode((string) file_get_contents($archivo), true)
-        : [];
+    // Un solo descriptor con el candado tomado alrededor de leer, contar y
+    // escribir. Antes se leía con file_get_contents y se escribía con
+    // file_put_contents(LOCK_EX), y eso no alcanza: LOCK_EX ahí es un candado
+    // por operación, no una sección crítica. Dos peticiones que se solapan leen
+    // la misma foto del archivo y la última en escribir descarta las marcas de
+    // la otra, así que una ráfaga en paralelo pasaba del tope sin que el
+    // contador se diera cuenta.
+    //
+    // El modo 'c+' abre para leer y escribir, crea el archivo si no está y NO
+    // lo trunca: truncar antes de tomar el candado sería borrar el contador de
+    // las peticiones que están en curso.
+    $puntero = @fopen($archivo, 'c+');
+    if ($puntero === false || !flock($puntero, LOCK_EX)) {
+        // Sin candado no se puede contar bien, y un contador que no cuenta no
+        // es motivo para rechazar a una persona: el que frena el spam de verdad
+        // es el filtro de contenido. Se deja pasar y queda la constancia, que
+        // es lo único que permite enterarse de que el directorio de estado
+        // tiene un problema de permisos.
+        avisarUnaVezAlDia(
+            'sin-candado-limite',
+            'AVISO: no se pudo tomar el candado de ' . $archivo . '; el límite por IP no está contando.'
+        );
+        if ($puntero !== false) {
+            fclose($puntero);
+        }
+        return;
+    }
+
+    $registro = json_decode((string) stream_get_contents($puntero), true);
     if (!is_array($registro)) {
         $registro = [];
     }
@@ -383,12 +409,25 @@ function limitarPorIp(string $ip): void
     $propias = $registro[$ip] ?? [];
     if (count($propias) >= $tope) {
         registrar('LIMITE alcanzado por ' . $ip);
+        // `responder()` termina el proceso, y al terminar el sistema libera el
+        // candado y cierra el descriptor. Es correcto, pero es la razón por la
+        // que entre el flock y esta línea no puede entrar trabajo lento: cada
+        // segundo acá es un segundo que espera la siguiente petición.
         responder(429, ['ok' => false, 'error' => 'limite_alcanzado']);
     }
 
     $propias[] = $ahora;
     $registro[$ip] = $propias;
-    @file_put_contents($archivo, json_encode($registro), LOCK_EX);
+
+    // Truncar y volver al principio antes de escribir: el descriptor quedó
+    // posicionado al final por la lectura, y sin esto el JSON nuevo se pegaría
+    // detrás del viejo y el archivo dejaría de ser válido en el primer envío.
+    ftruncate($puntero, 0);
+    rewind($puntero);
+    fwrite($puntero, json_encode($registro));
+    fflush($puntero);
+    flock($puntero, LOCK_UN);
+    fclose($puntero);
 }
 
 /**
