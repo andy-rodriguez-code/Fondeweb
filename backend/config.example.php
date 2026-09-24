@@ -132,6 +132,19 @@ const ORIGENES_PERMITIDOS = [
 // el filtro de contenido; esto es un techo contra una avalancha.
 const LIMITE_POR_IP = 30;
 
+// ── Conservación del registro ─────────────────────────────────────────────
+// Cuántos meses de `registro-AAAA-MM.log` se guardan. Se conserva el mes en
+// curso y los que diga este número; el resto los borra el cron.
+//
+// Existe porque el registro anota la IP de quien envía cada formulario, y eso
+// es dato personal de la Ley 1581 de 2012: se trata para un fin y por el tiempo
+// que ese fin necesite. El fin es diagnosticar entregas que fallan, y para eso
+// un archivo del año pasado no sirve de nada —es el riesgo sin el beneficio—.
+//
+// Opcional: si no está, son 6. Las firmas en PNG no las toca nadie; su tiempo
+// de conservación lo decide el fondo, no este archivo.
+const MESES_DE_REGISTRO = 6;
+
 // ── reCAPTCHA v3 (opcional) ───────────────────────────────────────────────
 // Vacío = desactivado, y es el estado por defecto: con trampa, límite por IP y
 // tiempo mínimo alcanza para el volumen de un fondo de empleados. Si aparece

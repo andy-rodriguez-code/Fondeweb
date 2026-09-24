@@ -196,6 +196,78 @@ function registrar(string $linea): void
 }
 
 /**
+ * Borra los registros mensuales que ya pasaron el tiempo de conservación.
+ *
+ * El registro guarda la dirección IP de quien envía cada formulario, y eso es
+ * dato personal en los términos de la Ley 1581 de 2012: se puede tratar para un
+ * fin y por el tiempo que ese fin necesite, no para siempre. El fin acá es
+ * diagnosticar entregas que fallan, y para eso no sirve de nada un archivo del
+ * año pasado. Guardarlo era el riesgo sin el beneficio.
+ *
+ * Seis meses por omisión, configurables con MESES_DE_REGISTRO. Se conserva el
+ * mes en curso y los seis anteriores: sobra para ver un patrón estacional y para
+ * reconstruir cualquier incidente que alguien reporte tarde.
+ *
+ * La rotación ya existía sola —`registrar()` escribe un archivo por mes—, lo que
+ * faltaba era el borrado.
+ *
+ * Una vez al día, con un testigo con la fecha, por lo mismo que
+ * avisarUnaVezAlDia(): esto lo llama el cron cada minuto y recorrer el
+ * directorio en cada corrida es trabajo repetido para nada.
+ *
+ * Las firmas en PNG NO se tocan y no es un olvido: la firma es la constancia de
+ * que alguien se inscribió, así que su tiempo de conservación lo decide la vida
+ * del contrato y no un aviso de diagnóstico. Borrarlas es una decisión del
+ * fondo, no del código.
+ */
+function purgarRegistrosViejos(): void
+{
+    $meses = defined('MESES_DE_REGISTRO') ? (int) MESES_DE_REGISTRO : 6;
+
+    // Menos de un mes sería borrar el registro que se está escribiendo ahora.
+    if ($meses < 1) {
+        return;
+    }
+
+    $testigo = RUTA_ESTADO . '/purga-registros.txt';
+    $hoy = date('Y-m-d');
+    if (is_file($testigo) && trim((string) @file_get_contents($testigo)) === $hoy) {
+        return;
+    }
+    @file_put_contents($testigo, $hoy);
+
+    // `first day of this month` antes de restar, y no `-6 months` a secas: un 31
+    // menos seis meses cae en un mes que no tiene 31, PHP lo normaliza al día
+    // siguiente y el corte se iría un mes entero de más. Desde el día 1 la
+    // resta es exacta siempre.
+    $corte = date('Y-m', (int) strtotime('first day of this month -' . $meses . ' months'));
+
+    $borrados = [];
+    foreach (glob(RUTA_ESTADO . '/registro-*.log') ?: [] as $archivo) {
+        if (!preg_match('/registro-(\d{4}-\d{2})\.log$/', $archivo, $partes)) {
+            continue;
+        }
+        if ($partes[1] >= $corte) {
+            continue;
+        }
+        if (@unlink($archivo)) {
+            $borrados[] = $partes[1];
+        }
+    }
+
+    // Solo se anota cuando hubo algo que borrar: una línea diaria diciendo que
+    // no había nada es el ruido que avisarUnaVezAlDia() existe para evitar.
+    if ($borrados !== []) {
+        registrar(sprintf(
+            'PURGA: borrados los registros de %s. Se conservan %s y los %d meses anteriores.',
+            implode(', ', $borrados),
+            date('Y-m'),
+            $meses
+        ));
+    }
+}
+
+/**
  * Emite las cabeceras de CORS solo si el origen está en la lista. Nunca un
  * comodín: con `*` cualquier sitio podría usar el endpoint desde el navegador
  * de un visitante.

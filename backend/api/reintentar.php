@@ -189,6 +189,15 @@ if ($intentados > 0) {
     registrar('COLA hoja: escribió ' . $recuperados . ' de ' . $intentados);
 }
 
+// La limpieza va al final, después de las entregas y fuera del presupuesto de
+// tiempo, porque no hay nadie esperándola: primero sale el correo de quien
+// acaba de enviar el formulario. Por dentro se salta sola si ya corrió hoy.
+//
+// Va acá y no en enviar.php a propósito: recorrer el directorio de estado en la
+// petición de una persona es trabajo que ella paga en pantalla, y esto es
+// mantenimiento.
+purgarRegistrosViejos();
+
 flock($candado, LOCK_UN);
 fclose($candado);
 
