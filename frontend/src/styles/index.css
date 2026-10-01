@@ -2,6 +2,13 @@
 @import "./paridad.css";
 @import "../assets/fonts/brand/brand-fonts.css";
 
+/* El widget de accesibilidad trae su propio CSS y no usa Tailwind, pero vive en
+   public/, que Tailwind sí escanea. Palabras que aparecen en su hoja de estilos
+   —fixed, grid, block, underline— se detectan como candidatas a utilidad y
+   Tailwind las emite en el bundle del sitio, donde nadie las usa. Excluirlo
+   devuelve esos kilobytes. */
+@source not "../../public/a11y-widget.js";
+
 @theme {
   /* --- Paleta de marca confirmada por el cliente (2026-09-05); shades derivados regenerados ---
      Fuente: assets/site.css :root (líneas 9-47) */
@@ -67,6 +74,11 @@
   --color-aviso-bg: #e8f5ee; /* fondo .aviso-envio */
   --color-aviso-border: #b7dcc6; /* borde .aviso-envio */
   --color-aviso-ink: #14602f; /* texto .aviso-envio */
+
+  /* --- Marca de terceros: botón flotante de WhatsApp ---
+     Verde oficial de la marca; el tono oscuro es su estado hover. */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-800: #1da851;
 
   /* --- Tipografía --- */
   --font-display: "Montserrat", "Segoe UI", sans-serif;

@@ -83,10 +83,27 @@ export const pie = {
   legal: 'Copyright © 2026 | Fondefos',
   proteccion: 'FONDEFOS cumple con la Ley 1581 de 2012 y el Decreto 1377 de 2013, en el marco general de la protección de datos personales.',
   politica: 'Ver la política de tratamiento de datos',
+  // Entidad que vigila al fondo. `nombre` es el texto alternativo del logo, que
+  // es lo único que se ve del enlace.
+  vigilancia: {
+    etiqueta: 'Vigilado por:',
+    nombre: 'Superintendencia de la Economía Solidaria',
+    href: 'https://www.supersolidaria.gov.co/',
+  },
+  // Cada red nombra su propio icono (clave de Icono.jsx): el pie no depende
+  // del orden de esta lista para saber qué dibujar.
   redes: [
-    { etiqueta: 'Fondefos en Facebook', href: 'https://www.facebook.com/fondefos' },
-    { etiqueta: 'Fondefos en Instagram', href: 'https://www.instagram.com/fondefos.oficial/' },
+    { etiqueta: 'Fondefos en Instagram', icono: 'instagram', href: 'https://www.instagram.com/fondefos.oficial/' },
+    { etiqueta: 'Fondefos en Facebook', icono: 'facebook', href: 'https://www.facebook.com/fondefos' },
+    { etiqueta: 'Fondefos en TikTok', icono: 'tiktok', href: 'https://www.tiktok.com/@fondefos' },
   ],
+}
+
+// Botón flotante de WhatsApp (BotonWhatsapp.jsx). El enlace es el acortado que
+// entregó el cliente; el número al que apunta se cambia desde wa.link.
+export const whatsapp = {
+  etiqueta: 'Escríbenos por WhatsApp',
+  href: 'https://wa.link/1mckuc',
 }
 
 export const contacto = {

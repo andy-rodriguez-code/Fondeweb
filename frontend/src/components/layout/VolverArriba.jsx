@@ -43,7 +43,7 @@ export default function VolverArriba() {
   return (
     <button
       type="button"
-      className="volver-arriba"
+      className="flotante volver-arriba"
       data-visible={visible ? 'si' : 'no'}
       aria-label="Volver al inicio de la página"
       title="Volver arriba"

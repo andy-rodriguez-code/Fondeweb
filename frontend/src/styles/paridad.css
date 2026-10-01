@@ -507,6 +507,78 @@
     font-size: 0.85rem;
     color: var(--color-pie-legal);
   }
+  /* Copyright y entidad que vigila: un solo bloque que el teléfono mantiene en
+     un renglón. El logo se mide en em para que acompañe al texto cuando este
+     se achica. */
+  .pie__creditos {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 1.2em;
+  }
+  .pie__vigilancia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  /* .pie a fija su propio tamaño de letra; acá se hereda el del renglón para
+     que el em del logo sea el mismo que el del texto de al lado. */
+  .pie__vigilancia a {
+    display: block;
+    font-size: inherit;
+  }
+  .pie__vigilancia img {
+    display: block;
+    width: auto;
+    height: 2em;
+  }
+  /* El enlace a la política es parte del aviso: toma su tamaño de letra y no
+     el de los enlaces de las columnas. */
+  .pie__aviso a {
+    font-size: inherit;
+  }
+  /* Carril de los botones flotantes (grupo 25). Al llegar al final de la
+     página, el aviso y la fila legal son lo que queda a la altura de esos
+     botones, así que se corren hacia adentro para no quedar debajo.
+
+     El carril es lo que ocupa un botón más su separación, menos el margen que
+     el .shell ya deja a cada lado: el gutter, o el sobrante cuando la pantalla
+     es más ancha que el contenedor. En pantallas anchas da cero y el pie no se
+     mueve. */
+  .pie {
+    --pie-carril: max(
+      0px,
+      var(--flotante-margen) + var(--flotante-tamano) + var(--flotante-separacion) -
+        max(var(--gutter), (100vw - var(--container-shell)) / 2)
+    );
+  }
+  .pie p.pie__aviso,
+  .pie__legal {
+    padding-inline: var(--pie-carril);
+  }
+  /* Teléfono: los tres botones van en una sola columna a la derecha, así que
+     el carril de la izquierda sobra. */
+  @media (max-width: 767px) {
+    .pie p.pie__aviso,
+    .pie__legal {
+      padding-inline-start: 0;
+    }
+    .pie p.pie__aviso {
+      text-align: center;
+      font-size: 0.72rem;
+    }
+    .pie__legal {
+      flex-direction: column;
+    }
+    /* El renglón no se fuerza con nowrap: con el texto agrandado desde el
+       widget de accesibilidad se desbordaría. La letra acompaña al ancho de
+       pantalla para que entre, y si aun así no entra, se parte. */
+    .pie__creditos {
+      justify-content: center;
+      column-gap: 0.9em;
+      font-size: clamp(0.62rem, 2.85vw, 0.85rem);
+    }
+  }
   .redes {
     display: flex;
     gap: 10px;
@@ -1894,28 +1966,87 @@
   }
 }
 
-/* ---------- 25. Botón "volver arriba" ----------
-   Racional (§4.4): pieza flotante con estado (data-visible) que combina
-   posición fija, transición de entrada y salida, y visibility para salir del
-   orden de tabulación cuando está oculto. Va acá y no en utilidades porque el
-   estado oculto/visible se expresa en un solo selector. */
+/* ---------- 25. Botones flotantes ----------
+   Racional (§4.4): tres botones comparten tamaño, margen y separación —volver
+   arriba, WhatsApp y el del widget de accesibilidad—, y el tercero ni siquiera
+   es de React. Lo que los mantiene alineados es que los tres leen las mismas
+   variables, no que alguien repita los mismos números en tres archivos.
+
+   Cada botón ocupa un piso de una columna, contado desde abajo:
+
+                  escritorio            teléfono
+     piso 2       —                     volver arriba (der.)
+     piso 1       WhatsApp (izq.)       WhatsApp (der.)
+     piso 0       accesibilidad (izq.)  accesibilidad (der.)
+                  volver arriba (der.)
+
+   En teléfono va todo a la derecha para dejar libre el lado donde arranca el
+   texto del pie; el carril que el pie le cede está en el grupo 7. Volver arriba
+   queda en el piso más alto porque aparece y desaparece: en el medio dejaría
+   un hueco.
+
+   El botón de accesibilidad vive en public/a11y-widget.js, dentro de un shadow
+   root colgado de <html>. Las propiedades personalizadas son lo único que
+   cruza esa frontera, y las --a11yw-lanzador-* son su punto de integración. */
+@layer base {
+  :root {
+    --flotante-tamano: 48px;
+    --flotante-margen: clamp(16px, 3vw, 28px);
+    --flotante-separacion: 12px;
+
+    --a11yw-lanzador-tamano: var(--flotante-tamano);
+    --a11yw-lanzador-bottom: var(--flotante-margen);
+    --a11yw-lanzador-left: var(--flotante-margen);
+    --a11yw-lanzador-right: auto;
+  }
+  @media (max-width: 767px) {
+    :root {
+      --a11yw-lanzador-left: auto;
+      --a11yw-lanzador-right: var(--flotante-margen);
+    }
+  }
+}
 @layer components {
-  .volver-arriba {
+  .flotante {
     position: fixed;
-    right: clamp(16px, 3vw, 28px);
-    bottom: clamp(16px, 3vw, 28px);
+    bottom: calc(
+      var(--flotante-margen) + (var(--flotante-tamano) + var(--flotante-separacion)) *
+        var(--flotante-piso, 0)
+    );
     z-index: 60;
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 48px;
+    width: var(--flotante-tamano);
+    height: var(--flotante-tamano);
     padding: 0;
     border: 0;
     border-radius: 50%;
-    background: var(--color-primary);
     color: var(--color-white);
-    box-shadow: var(--nhigh);
+    box-shadow: var(--shadow-high);
     cursor: pointer;
+    transition: background-color 160ms ease;
+  }
+  .flotante:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
+  }
+
+  .flotante--whatsapp {
+    --flotante-piso: 1;
+    left: var(--flotante-margen);
+    background: var(--color-whatsapp);
+  }
+  .flotante--whatsapp:hover {
+    background: var(--color-whatsapp-800);
+    color: var(--color-white);
+  }
+
+  /* Volver arriba: pieza con estado (data-visible) que combina transición de
+     entrada y salida con visibility, para salir del orden de tabulación cuando
+     está oculto. */
+  .volver-arriba {
+    right: var(--flotante-margen);
+    background: var(--color-primary);
     /* Oculto: sin opacidad, un poco más abajo y fuera del foco. */
     opacity: 0;
     visibility: hidden;
@@ -1934,9 +2065,15 @@
   .volver-arriba:hover {
     background: var(--color-accent);
   }
-  .volver-arriba:focus-visible {
-    outline: 3px solid var(--color-accent);
-    outline-offset: 3px;
+
+  @media (max-width: 767px) {
+    .flotante--whatsapp {
+      left: auto;
+      right: var(--flotante-margen);
+    }
+    .volver-arriba {
+      --flotante-piso: 2;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .volver-arriba {

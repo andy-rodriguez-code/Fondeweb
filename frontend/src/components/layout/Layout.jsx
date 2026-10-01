@@ -3,6 +3,7 @@ import SkipLink from './SkipLink.jsx'
 import UtilityBar from './UtilityBar.jsx'
 import Header from './Header.jsx'
 import Footer from './Footer.jsx'
+import BotonWhatsapp from './BotonWhatsapp.jsx'
 import VolverArriba from './VolverArriba.jsx'
 import useVisor from '../../hooks/useVisor.js'
 import useMetadatos from '../../hooks/useMetadatos.js'
@@ -56,6 +57,7 @@ export default function Layout() {
         </button>
         <img src={src || undefined} alt={alt} />
       </div>
+      <BotonWhatsapp />
       <VolverArriba />
       <ScrollRestoration />
     </>
