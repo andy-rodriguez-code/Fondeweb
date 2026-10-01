@@ -39,5 +39,15 @@
 
   // El backend corre sobre PHP 8.1+ en el hosting; el `declare(strict_types=1)`
   // y los tipos de retorno del código propio se validan contra esa versión.
-  "intelephense.environment.phpVersion": "8.1.0"
+  "intelephense.environment.phpVersion": "8.1.0",
+
+  // Tailwind 4 se configura desde el CSS con directivas propias: @theme,
+  // @source, @utility, @custom-variant. El validador de CSS que trae el editor
+  // solo conoce las del estándar y las marcaba como "Unknown at rule", aunque
+  // el build las procesa sin problema.
+  //
+  // Se apaga esa única regla. El resto de la validación de CSS sigue activa.
+  // El costo: una directiva estándar mal escrita (@meda por @media) tampoco se
+  // avisa en el editor; la detecta el build.
+  "css.lint.unknownAtRules": "ignore"
 }
