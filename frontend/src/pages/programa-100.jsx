@@ -218,7 +218,6 @@ export default function Programa100Page() {
               <img className="registro__logo" src={logotipo} width="200" height="42" alt="Fondefos, tu fondo de servicios" />
               <div className="registro__titulos">
                 <h2>Programa 100</h2>
-                <p>De ahorro voluntario</p>
               </div>
               {/* El consecutivo lo asigna el servidor al radicar: hasta que
                   responde no se inventa un número. */}

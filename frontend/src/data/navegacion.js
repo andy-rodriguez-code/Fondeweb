@@ -21,6 +21,10 @@ export const utilidad = [
 
 export const servicios = [
   { etiqueta: 'Ahorro', href: 'ahorro.html', slug: '/ahorro' },
+  // Fuera del clon (pedido del cliente, 2026-10-01): la página no existía en
+  // el sitio original, por eso no tiene `href`. Va junto a Ahorro porque es
+  // un programa de ahorro.
+  { etiqueta: 'Programa 100', slug: '/programa-100' },
   { etiqueta: 'Crediaportes + 10%', href: 'crediaportes-10.html', slug: '/crediaportes-10' },
   { etiqueta: 'Crédito de confianza', href: 'credito-de-confianza.html', slug: '/credito-de-confianza' },
   { etiqueta: 'Crédito de consumo por bonos', href: 'credito-de-consumo-por-bonos.html', slug: '/credito-de-consumo-por-bonos' },

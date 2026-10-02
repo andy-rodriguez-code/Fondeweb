@@ -2123,15 +2123,6 @@
     color: var(--color-primary);
     line-height: 1.1;
   }
-  .registro__titulos p {
-    margin: 2px 0 0;
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.82rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--color-muted);
-  }
   .registro__consecutivo {
     display: inline-flex;
     align-items: baseline;

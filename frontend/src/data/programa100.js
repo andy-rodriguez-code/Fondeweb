@@ -60,7 +60,7 @@ export const terminos = [
 export const firmasFondo = ['Firma presidente', 'Firma gerente']
 
 export const programa100 = {
-  titulo: 'Programa 100 de ahorro voluntario',
+  titulo: 'Programa 100',
   entrada: 'Ahorra una cuota fija durante doce meses, participa cada mes en el sorteo de $100.000 y recibe todo lo ahorrado al cumplir el año. Diligencia el formulario de inscripción y llévalo a la oficina de FONDEFOS.',
   formulario: {
     titulo: 'Formulario de inscripción',
