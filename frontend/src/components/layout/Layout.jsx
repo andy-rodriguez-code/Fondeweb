@@ -5,6 +5,7 @@ import Header from './Header.jsx'
 import Footer from './Footer.jsx'
 import BotonWhatsapp from './BotonWhatsapp.jsx'
 import VolverArriba from './VolverArriba.jsx'
+import PopupNinos from './PopupNinos.jsx'
 import useVisor from '../../hooks/useVisor.js'
 import useMetadatos from '../../hooks/useMetadatos.js'
 
@@ -59,6 +60,7 @@ export default function Layout() {
       </div>
       <BotonWhatsapp />
       <VolverArriba />
+      <PopupNinos />
       <ScrollRestoration />
     </>
   )

@@ -80,9 +80,35 @@
   --color-whatsapp: #25d366;
   --color-whatsapp-800: #1da851;
 
+  /* --- Popup del Día de los Niños ---
+     Paleta de la pieza que entregó el cliente, ajena a la marca: por eso lleva
+     su propio prefijo y no se mezcla con los tonos del sitio. Los cinco
+     primeros son los colores de las letras del título. */
+  --color-fiesta-furia: #ff3b3b;
+  --color-fiesta-furia-100: #ffe3e3; /* pastilla del ícono */
+  --color-fiesta-furia-50: #fff3f3; /* fondo de la cláusula */
+  --color-fiesta-tristeza: #3d8bff;
+  --color-fiesta-tristeza-100: #e3eeff;
+  --color-fiesta-alegria: #ffc928;
+  --color-fiesta-alegria-100: #fff4cc;
+  --color-fiesta-alegria-800: #e0a800; /* trazo del ícono sobre la pastilla */
+  --color-fiesta-temor: #a066f0;
+  --color-fiesta-desagrado: #2fcb72;
+  --color-fiesta-rosa: #ff5da8;
+  --color-fiesta-tinta: #1d0b52; /* texto principal */
+  --color-fiesta-texto: #4b3f72; /* texto secundario */
+  --color-fiesta-violeta: #2b0a78; /* botón */
+  --color-fiesta-violeta-900: #14034a; /* canto del botón */
+  --color-fiesta-lila: #f1edfb; /* botón de cerrar */
+  --color-fiesta-lila-300: #e4dcfa;
+  --color-fiesta-noche: #1f0159; /* fondo detrás de la imagen */
+  --color-fiesta-noche-claro: #4a1aa8;
+
   /* --- Tipografía --- */
   --font-display: "Montserrat", "Segoe UI", sans-serif;
   --font-body: "Open Sans", "Segoe UI", sans-serif;
+  --font-fiesta: "Carton Six", sans-serif; /* titulares del popup */
+  --font-sistema: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; /* cuerpo del popup */
 
   /* --- Geometría (gramática Comfacundi) --- */
   --radius-sm: 8px;
