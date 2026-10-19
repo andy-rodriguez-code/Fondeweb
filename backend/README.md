@@ -76,6 +76,8 @@ backend/
 │   ├── bd.php                 ← acceso a MySQL con PDO
 │   ├── enviar-funciones.php   ← compartido con la cola
 │   ├── reintentar.php         ← entrega correo y hoja (solo CLI)
+│   ├── phpmailer/
+│   │   └── .htaccess          ← la carpeta entera, denegada por HTTP
 │   └── .htaccess              ← solo enviar.php se sirve por HTTP
 ├── apps-script/
 │   ├── contactenos.gs         ← se pega en el Apps Script de SU hoja
@@ -111,6 +113,7 @@ respaldo de cPanel cubre archivos y base por igual.
 | `backend/config.example.php` | `/home/USUARIO/fondefos-config/config.php`, rellenado |
 | `backend/apps-script/contactenos.gs` | pegado en Extensiones → Apps Script de la hoja «Contáctenos» |
 | `backend/apps-script/programa-100.gs` | pegado en el Apps Script de la hoja del Programa 100 |
+| `backend/api/phpmailer/.htaccess` | `public_html/api/phpmailer/.htaccess` — empieza con punto, y el cliente de FTP lo esconde salvo que le pidas ver los ocultos |
 | — | `public_html/api/phpmailer/` con `PHPMailer.php`, `SMTP.php` y `Exception.php` |
 
 El `config.php` va **fuera** de `public_html` a propósito. La receta habitual
@@ -148,6 +151,17 @@ que no está bajo el directorio público no se sirve nunca.
 
    Permisos `755`; si algo falla al escribir, subir a `775`. Acá ya no hay
    contador ni cola de pendientes: los dos se movieron a MySQL.
+
+   Lo que sí queda acá es el registro mensual, y **se borra solo**: el cron
+   conserva el mes en curso y los `MESES_DE_REGISTRO` anteriores —seis si el
+   config no lo define— y elimina el resto. El registro anota la IP de quien
+   envía, y eso es dato personal de la Ley 1581: se guarda para diagnosticar
+   entregas que fallan y por el tiempo que eso necesite, no para siempre. El
+   archivo `purga-registros.txt` es el testigo de que ya corrió hoy; borrarlo no
+   rompe nada, solo hace que vuelva a correr.
+
+   Las firmas en PNG **no se borran nunca solas**: son la constancia de que
+   alguien se inscribió, así que su tiempo de conservación lo decide el fondo.
 
 4. **Configuración.** Copiar `config.example.php` como
    `/home/USUARIO/fondefos-config/config.php` y rellenarlo. Dejarlo con
@@ -212,7 +226,9 @@ internos y no tiene que saber en qué idioma está el sitio.
 | `correo_invalido` | 422 | no pasó `FILTER_VALIDATE_EMAIL` |
 | `monto_invalido` | 422 | la cuota no es mayor que cero |
 | `falta_autorizacion` | 422 | no marcó la autorización de datos |
+| `falta_aceptacion` | 422 | el formulario pide `acepta-terminos` y no llegó en `Sí`. Se exige acá y no solo en la interfaz: los dos consentimientos tienen el mismo peso |
 | `falta_firma` | 422 | el formulario la exige y no llegó |
+| `firma_demasiado_grande` | 422 | pasó de `MAXIMO_FIRMA_BASE64`. Una firma real pesa decenas de KB; el tope son unos 300 |
 | `correo_no_enviado` | 502 | los datos quedaron guardados, el correo no salió; **incluye el radicado** |
 
 ## Agregar un formulario

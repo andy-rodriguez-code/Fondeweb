@@ -117,5 +117,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!--
+      Widget de accesibilidad. Va acá y no dentro de React a propósito: se monta
+      solo sobre el documento, sin depender de que la aplicación arranque, así
+      que sigue disponible incluso si el bundle falla.
+
+      Vive en public/ y no en src/ por el mismo motivo que og-fondefos.jpg: Vite
+      no le pone hash a lo que está en public/, y la URL de este script tiene que
+      ser la misma en todas las compilaciones.
+    -->
+    <script src="/a11y-widget.js" defer></script>
   </body>
 </html>

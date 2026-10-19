@@ -17,12 +17,18 @@
 -- fallaría en la primera línea. Se ejecuta con la base ya seleccionada.
 --
 -- EL NOMBRE REAL NO ES EL QUE ESCRIBÍS.
--- cPanel antepone el nombre de la cuenta. Si la cuenta es `fondefo1` y
--- escribís `fondefos`, la base real queda `fondefo1_fondefos` y el usuario
--- `fondefo1_fondeweb`. Esos nombres completos son los que van en config.php:
+-- cPanel antepone el nombre de la cuenta. Si la cuenta es `CUENTA` y escribís
+-- `fondefos`, la base real queda `CUENTA_fondefos` y el usuario
+-- `CUENTA_fondeweb`. Esos nombres completos son los que van en config.php:
 --
---     const BD_NOMBRE  = 'fondefo1_fondefos';
---     const BD_USUARIO = 'fondefo1_fondeweb';
+--     const BD_NOMBRE  = 'CUENTA_fondefos';
+--     const BD_USUARIO = 'CUENTA_fondeweb';
+--
+-- `CUENTA` va como marcador y no con el valor verdadero a propósito: este
+-- repositorio es público, y el nombre de la cuenta de cPanel es la mitad de
+-- usuario de tres credenciales —cPanel, webmail y MySQL— además de la pieza que
+-- completa las rutas absolutas del servidor. La contraseña nunca estuvo acá;
+-- el nombre de usuario tampoco tiene por qué estarlo.
 --
 -- utf8mb4 en todo: `utf8` a secas en MySQL no cubre el plano astral y se come
 -- los emoji y algunos caracteres que la gente sí escribe en un mensaje.

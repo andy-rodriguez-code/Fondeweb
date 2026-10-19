@@ -1,0 +1,17 @@
+# PHPMailer es una dependencia de terceros: enviar.php y reintentar.php la
+# incluyen, nadie la pide por URL.
+#
+# La regla va sobre la carpeta entera y no archivo por archivo —como sí se hace
+# en api/.htaccess con los archivos propios— porque acá el contenido no es
+# nuestro: el día que la librería se actualice y traiga un archivo más, la
+# denegación tiene que seguir valiendo sin que haya que acordarse de agregarlo.
+#
+# Sin esto los tres archivos responden 200 con cuerpo vacío. No hay ejecución
+# ni volcado de código, porque solo definen clases, pero un 200 frente a un 404
+# confirma qué librería está instalada y dónde, y de ahí sale la versión. Es
+# reconocimiento gratis para cuando aparezca un aviso de seguridad que aplique.
+#
+# Sintaxis de Apache 2.4, igual que en api/.htaccess: `Require`, no el
+# `Order allow,deny` de 2.2, que en 2.4 se ignora salvo que el hosting cargue
+# mod_access_compat.
+Require all denied

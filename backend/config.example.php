@@ -55,7 +55,12 @@ const SMTP_HOST    = 'mail.fondefos.com.co';
 const SMTP_PUERTO  = 465;            // 465 con SSL/TLS, 587 con STARTTLS
 // La contraseña normal del buzón, la del webmail (puerto 2096). No es una
 // App Password: eso era cosa de Gmail y ya no aplica.
-const SMTP_USUARIO = 'administracion@fondefos.com.co';
+//
+// El buzón va como marcador y no con el valor verdadero: es la mitad de usuario
+// de una credencial de webmail, y este repositorio es público. El dominio sí
+// queda, porque no es un dato a proteger —es la condición de que el correo
+// salga alineado con SPF, DKIM y DMARC, y está explicado arriba—.
+const SMTP_USUARIO = 'REEMPLAZAR@fondefos.com.co';
 const SMTP_CLAVE   = 'REEMPLAZAR';
 const SMTP_NOMBRE  = 'Sitio web FONDEFOS';
 
@@ -126,6 +131,19 @@ const ORIGENES_PERMITIDOS = [
 // y con un tope bajo se bloquean entre ellas. El que frena el spam de verdad es
 // el filtro de contenido; esto es un techo contra una avalancha.
 const LIMITE_POR_IP = 30;
+
+// ── Conservación del registro ─────────────────────────────────────────────
+// Cuántos meses de `registro-AAAA-MM.log` se guardan. Se conserva el mes en
+// curso y los que diga este número; el resto los borra el cron.
+//
+// Existe porque el registro anota la IP de quien envía cada formulario, y eso
+// es dato personal de la Ley 1581 de 2012: se trata para un fin y por el tiempo
+// que ese fin necesite. El fin es diagnosticar entregas que fallan, y para eso
+// un archivo del año pasado no sirve de nada —es el riesgo sin el beneficio—.
+//
+// Opcional: si no está, son 6. Las firmas en PNG no las toca nadie; su tiempo
+// de conservación lo decide el fondo, no este archivo.
+const MESES_DE_REGISTRO = 6;
 
 // ── reCAPTCHA v3 (opcional) ───────────────────────────────────────────────
 // Vacío = desactivado, y es el estado por defecto: con trampa, límite por IP y

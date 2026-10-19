@@ -147,11 +147,42 @@ if (!$autoriza) {
     responder(422, ['ok' => false, 'error' => 'falta_autorizacion']);
 }
 
+// Aceptación de los términos del formato, cuando el formulario la pide. Se
+// exige acá con la misma dureza que la autorización de datos porque los dos
+// consentimientos tienen el mismo peso: sin ellos no hay inscripción.
+//
+// Hacía falta porque `acepta-terminos` viaja dentro de `campos`, y ahí la única
+// regla disponible es «requerido», que `No` cumple igual que `Sí`. Un envío
+// hecho con curl —o un cliente propio mal escrito— quedaba guardado, radicado,
+// enviado por correo y escrito en la hoja declarando en su propia columna que
+// la persona NO aceptó los términos. La interfaz lo bloquea, pero la interfaz
+// no es la que manda: este endpoint se puede llamar sin pasar por el navegador.
+//
+// La condición mira la definición del formulario y no el nombre del formato: el
+// día que otro formulario pida términos, queda cubierto sin tocar esta línea.
+if (isset($definicion['campos']['acepta-terminos'])
+    && ($valores['acepta-terminos'] ?? '') !== 'Sí') {
+    responder(422, ['ok' => false, 'error' => 'falta_aceptacion']);
+}
+
 $firma = '';
 if ($definicion['firma']) {
     $firma = (string) ($entrada['firma'] ?? '');
     if (strpos($firma, 'data:image/png;base64,') !== 0) {
         responder(422, ['ok' => false, 'error' => 'falta_firma']);
+    }
+
+    // Tope de tamaño. `firma` viaja como clave propia del JSON y no dentro de
+    // `campos`, así que no le aplica ningún `max` de la configuración: sin esta
+    // línea, cada envío escribe en disco lo que quepa en el post_max_size del
+    // hosting. Y el disco es compartido con MySQL y con el registro, así que
+    // llenarlo no rompe la firma: deja de recibir envíos el formulario entero.
+    //
+    // Una firma de este lienzo —trazo de 2,2 px sobre un canvas de pantalla—
+    // pesa decenas de KB. 400 000 caracteres de base64 son unos 300 KB: le
+    // sobra a una firma real y es un techo para lo que no lo es.
+    if (strlen($firma) > MAXIMO_FIRMA_BASE64) {
+        responder(422, ['ok' => false, 'error' => 'firma_demasiado_grande']);
     }
 }
 

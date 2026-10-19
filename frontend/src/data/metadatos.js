@@ -67,7 +67,7 @@ export const metadatos = {
       'Escríbenos o acércate a la sede de FONDEFOS en la Torre Milton Salazar de la FOSCAL, Floridablanca. Teléfono, correo y horario de atención.',
   },
   'programa-100': {
-    titulo: `Programa 100 de ahorro voluntario — inscripción | ${MARCA}`,
+    titulo: `Programa 100 — inscripción | ${MARCA}`,
     descripcion:
       'Inscríbete al Programa 100 de ahorro voluntario de FONDEFOS: doce cuotas mensuales, sorteos para los ahorradores al día y seguro sobre lo ahorrado.',
   },

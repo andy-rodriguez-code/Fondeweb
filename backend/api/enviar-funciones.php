@@ -196,6 +196,78 @@ function registrar(string $linea): void
 }
 
 /**
+ * Borra los registros mensuales que ya pasaron el tiempo de conservación.
+ *
+ * El registro guarda la dirección IP de quien envía cada formulario, y eso es
+ * dato personal en los términos de la Ley 1581 de 2012: se puede tratar para un
+ * fin y por el tiempo que ese fin necesite, no para siempre. El fin acá es
+ * diagnosticar entregas que fallan, y para eso no sirve de nada un archivo del
+ * año pasado. Guardarlo era el riesgo sin el beneficio.
+ *
+ * Seis meses por omisión, configurables con MESES_DE_REGISTRO. Se conserva el
+ * mes en curso y los seis anteriores: sobra para ver un patrón estacional y para
+ * reconstruir cualquier incidente que alguien reporte tarde.
+ *
+ * La rotación ya existía sola —`registrar()` escribe un archivo por mes—, lo que
+ * faltaba era el borrado.
+ *
+ * Una vez al día, con un testigo con la fecha, por lo mismo que
+ * avisarUnaVezAlDia(): esto lo llama el cron cada minuto y recorrer el
+ * directorio en cada corrida es trabajo repetido para nada.
+ *
+ * Las firmas en PNG NO se tocan y no es un olvido: la firma es la constancia de
+ * que alguien se inscribió, así que su tiempo de conservación lo decide la vida
+ * del contrato y no un aviso de diagnóstico. Borrarlas es una decisión del
+ * fondo, no del código.
+ */
+function purgarRegistrosViejos(): void
+{
+    $meses = defined('MESES_DE_REGISTRO') ? (int) MESES_DE_REGISTRO : 6;
+
+    // Menos de un mes sería borrar el registro que se está escribiendo ahora.
+    if ($meses < 1) {
+        return;
+    }
+
+    $testigo = RUTA_ESTADO . '/purga-registros.txt';
+    $hoy = date('Y-m-d');
+    if (is_file($testigo) && trim((string) @file_get_contents($testigo)) === $hoy) {
+        return;
+    }
+    @file_put_contents($testigo, $hoy);
+
+    // `first day of this month` antes de restar, y no `-6 months` a secas: un 31
+    // menos seis meses cae en un mes que no tiene 31, PHP lo normaliza al día
+    // siguiente y el corte se iría un mes entero de más. Desde el día 1 la
+    // resta es exacta siempre.
+    $corte = date('Y-m', (int) strtotime('first day of this month -' . $meses . ' months'));
+
+    $borrados = [];
+    foreach (glob(RUTA_ESTADO . '/registro-*.log') ?: [] as $archivo) {
+        if (!preg_match('/registro-(\d{4}-\d{2})\.log$/', $archivo, $partes)) {
+            continue;
+        }
+        if ($partes[1] >= $corte) {
+            continue;
+        }
+        if (@unlink($archivo)) {
+            $borrados[] = $partes[1];
+        }
+    }
+
+    // Solo se anota cuando hubo algo que borrar: una línea diaria diciendo que
+    // no había nada es el ruido que avisarUnaVezAlDia() existe para evitar.
+    if ($borrados !== []) {
+        registrar(sprintf(
+            'PURGA: borrados los registros de %s. Se conservan %s y los %d meses anteriores.',
+            implode(', ', $borrados),
+            date('Y-m'),
+            $meses
+        ));
+    }
+}
+
+/**
  * Emite las cabeceras de CORS solo si el origen está en la lista. Nunca un
  * comodín: con `*` cualquier sitio podría usar el endpoint desde el navegador
  * de un visitante.
@@ -227,6 +299,26 @@ function aplicarCors(): void
 }
 
 /**
+ * Lo más que puede medir la firma que llega del navegador, en caracteres de la
+ * cadena base64.
+ *
+ * Está acá y no suelto en enviar.php porque es el par del control de contenido
+ * de guardarFirma(): los dos acotan lo mismo desde dos ángulos —cuánto pesa y
+ * qué es— y separarlos es garantizar que un día uno cambie sin el otro.
+ *
+ * 400 000 caracteres son unos 300 KB de PNG. Una firma de este lienzo pesa
+ * decenas de KB, así que el margen es amplio a propósito: el objetivo es poner
+ * un techo, no apretar a quien firma con un dedo grande en una pantalla densa.
+ */
+const MAXIMO_FIRMA_BASE64 = 400000;
+
+/**
+ * Los ocho bytes con los que empieza todo PNG. Están en la especificación y no
+ * dependen del programa que lo haya generado.
+ */
+const FIRMA_PNG_BYTES_MAGICOS = "\x89PNG\r\n\x1a\n";
+
+/**
  * Guarda el PNG de la firma fuera de public_html y devuelve su ruta.
  *
  * Va como archivo y no como BLOB en la base: son decenas de KB por envío que
@@ -244,6 +336,24 @@ function guardarFirma(string $radicado, string $firma): string
         true
     );
     if ($binario === false || $binario === '') {
+        return '';
+    }
+
+    // Que la cadena empiece con `data:image/png;base64,` no la hace un PNG: ese
+    // prefijo lo escribe quien envía y no dice nada de los bytes que vienen
+    // detrás. Sin esta comprobación se guardaba con nombre .png cualquier cosa
+    // que decodificara, y eso mismo se adjuntaba al correo del fondo.
+    //
+    // Se mira la firma del formato y además se pide que getimagesizefromstring
+    // lo reconozca: lo primero descarta el contenido que no es PNG, lo segundo
+    // el PNG con la cabecera correcta y el resto roto.
+    //
+    // Devolver '' es lo correcto y no rechazar el envío: acá ya estamos después
+    // de validar, y perder una firma es malo, perder la inscripción entera es
+    // peor. El motivo queda en el registro para poder verlo.
+    if (strncmp($binario, FIRMA_PNG_BYTES_MAGICOS, 8) !== 0
+        || @getimagesizefromstring($binario) === false) {
+        registrar('FIRMA descartada: el contenido no es un PNG (' . $radicado . ')');
         return '';
     }
 
@@ -320,9 +430,35 @@ function limitarPorIp(string $ip): void
     $archivo = RUTA_ESTADO . '/limite.json';
     $ahora = time();
 
-    $registro = is_file($archivo)
-        ? json_decode((string) file_get_contents($archivo), true)
-        : [];
+    // Un solo descriptor con el candado tomado alrededor de leer, contar y
+    // escribir. Antes se leía con file_get_contents y se escribía con
+    // file_put_contents(LOCK_EX), y eso no alcanza: LOCK_EX ahí es un candado
+    // por operación, no una sección crítica. Dos peticiones que se solapan leen
+    // la misma foto del archivo y la última en escribir descarta las marcas de
+    // la otra, así que una ráfaga en paralelo pasaba del tope sin que el
+    // contador se diera cuenta.
+    //
+    // El modo 'c+' abre para leer y escribir, crea el archivo si no está y NO
+    // lo trunca: truncar antes de tomar el candado sería borrar el contador de
+    // las peticiones que están en curso.
+    $puntero = @fopen($archivo, 'c+');
+    if ($puntero === false || !flock($puntero, LOCK_EX)) {
+        // Sin candado no se puede contar bien, y un contador que no cuenta no
+        // es motivo para rechazar a una persona: el que frena el spam de verdad
+        // es el filtro de contenido. Se deja pasar y queda la constancia, que
+        // es lo único que permite enterarse de que el directorio de estado
+        // tiene un problema de permisos.
+        avisarUnaVezAlDia(
+            'sin-candado-limite',
+            'AVISO: no se pudo tomar el candado de ' . $archivo . '; el límite por IP no está contando.'
+        );
+        if ($puntero !== false) {
+            fclose($puntero);
+        }
+        return;
+    }
+
+    $registro = json_decode((string) stream_get_contents($puntero), true);
     if (!is_array($registro)) {
         $registro = [];
     }
@@ -345,12 +481,25 @@ function limitarPorIp(string $ip): void
     $propias = $registro[$ip] ?? [];
     if (count($propias) >= $tope) {
         registrar('LIMITE alcanzado por ' . $ip);
+        // `responder()` termina el proceso, y al terminar el sistema libera el
+        // candado y cierra el descriptor. Es correcto, pero es la razón por la
+        // que entre el flock y esta línea no puede entrar trabajo lento: cada
+        // segundo acá es un segundo que espera la siguiente petición.
         responder(429, ['ok' => false, 'error' => 'limite_alcanzado']);
     }
 
     $propias[] = $ahora;
     $registro[$ip] = $propias;
-    @file_put_contents($archivo, json_encode($registro), LOCK_EX);
+
+    // Truncar y volver al principio antes de escribir: el descriptor quedó
+    // posicionado al final por la lectura, y sin esto el JSON nuevo se pegaría
+    // detrás del viejo y el archivo dejaría de ser válido en el primer envío.
+    ftruncate($puntero, 0);
+    rewind($puntero);
+    fwrite($puntero, json_encode($registro));
+    fflush($puntero);
+    flock($puntero, LOCK_UN);
+    fclose($puntero);
 }
 
 /**

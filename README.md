@@ -145,6 +145,21 @@ diálogos, cierre con Escape, `prefers-reduced-motion` respetado en el contador
 de cifras, y las mayúsculas de los títulos se aplican por CSS para que un lector
 de pantalla no deletree.
 
+**El widget de accesibilidad es un archivo aparte**, `public/a11y-widget.js`,
+sin dependencias y fuera de React: sigue disponible aunque el bundle falle. Es
+el único `.js` del sitio sin hash en el nombre, así que el `.htaccess` lo
+excluye de la caché larga; después de subir una versión nueva conviene purgar
+el CDN. Sus tres decisiones de arquitectura están al inicio del archivo.
+
+**Los botones flotantes comparten un solo sistema de medidas.** Volver arriba,
+WhatsApp y el del widget leen las mismas variables (`--flotante-*`, en
+`paridad.css` grupo 25) y cada uno ocupa un piso de una columna. El del widget
+vive en un shadow root, donde lo único del CSS del sitio que entra son las
+propiedades personalizadas: por eso se lo ubica con `--a11yw-lanzador-*`. En
+teléfono los tres van en una columna a la derecha y el pie les cede un carril
+para que no tapen texto. Un botón flotante nuevo toma la clase `.flotante` y un
+piso; no se le escriben tamaño ni posición a mano.
+
 ## Seguridad
 
 **Nada de credenciales en el repositorio.** Es público. El `config.php` con las
