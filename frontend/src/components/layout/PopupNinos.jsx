@@ -68,15 +68,11 @@ const ICONOS = {
 
 // Reparte los colores letra por letra. Los espacios no consumen color; el salto
 // de renglón sí, porque en la pieza original ocupa un lugar en la rotación.
-function colorearTitulo(lineas) {
+function colorearTitulo(texto) {
   let turno = 0
-  return lineas.map((linea) => {
-    const letras = Array.from(linea).map((letra) =>
-      letra === ' ' ? { letra } : { letra, color: COLORES_LETRA[turno++ % COLORES_LETRA.length] },
-    )
-    turno++
-    return letras
-  })
+  return Array.from(texto).map((letra) =>
+    letra === ' ' ? { letra } : { letra, color: COLORES_LETRA[turno++ % COLORES_LETRA.length] },
+  )
 }
 
 const TITULO = colorearTitulo(popupNinos.titulo)
@@ -145,22 +141,20 @@ export default function PopupNinos() {
               lector de pantalla lo deletrearía. */}
           <h2
             id="popup-ninos-titulo"
-            className="m-0 font-fiesta text-[40px] font-normal leading-[0.95] tracking-[1px] 900:text-[52px]"
-            aria-label={popupNinos.titulo.join(' ')}
+            className="m-0 whitespace-nowrap font-fiesta text-[clamp(30px,11vw,40px)] font-normal leading-[1] tracking-[1px] 900:text-[52px]"
+            aria-label={popupNinos.titulo}
           >
-            {TITULO.map((letras, renglon) => (
-              <span key={renglon} className="block" aria-hidden="true">
-                {letras.map(({ letra, color }, posicion) =>
-                  color ? (
-                    <span key={posicion} className={color}>
-                      {letra}
-                    </span>
-                  ) : (
-                    letra
-                  ),
-                )}
-              </span>
-            ))}
+                        <span aria-hidden="true">
+              {TITULO.map(({ letra, color }, posicion) =>
+                color ? (
+                  <span key={posicion} className={color}>
+                    {letra}
+                  </span>
+                ) : (
+                  letra
+                ),
+              )}
+            </span>
           </h2>
           <p className="mb-3.5 mt-1.5 font-fiesta text-[15px] tracking-[0.5px] text-fiesta-rosa 900:mb-[18px] 900:mt-2 900:text-[18px]">
             {subtitulo}
@@ -202,9 +196,9 @@ export default function PopupNinos() {
             <strong className="text-fiesta-furia">{nota.rotulo}</strong> {nota.texto}
           </p>
 
-          <div className="900:mt-auto">
+          <div className="text-center 900:mt-auto">
             <a
-              className="block rounded-full bg-fiesta-violeta px-5 pb-3 pt-3.5 text-center font-fiesta text-[18px] tracking-[1px] text-white no-underline shadow-[0_5px_0_var(--color-fiesta-violeta-900)] hover:text-white 900:inline-block 900:px-[26px] 900:text-[19px] 900:transition-transform 900:duration-150 900:hover:-translate-y-0.5"
+              className="block rounded-full bg-fiesta-violeta px-5 pb-3 pt-3.5 text-center font-fiesta text-[18px] tracking-[1px] text-white no-underline shadow-[0_5px_0_var(--color-fiesta-violeta-900)] hover:text-white 900:mx-auto 900:w-4/5 900:text-[19px] 900:transition-transform 900:duration-150 900:hover:-translate-y-0.5"
               href={inscripcion.href}
               target="_blank"
               rel="noopener"

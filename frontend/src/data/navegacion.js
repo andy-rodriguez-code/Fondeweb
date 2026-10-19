@@ -12,7 +12,7 @@ export const marca = {
 }
 
 export const utilidad = [
-  { etiqueta: '304 4962328', href: 'tel:+573044962328' },
+  { etiqueta: '317 4357685', href: 'tel:+573174357685' },
   { etiqueta: 'fondo.empleados@foscal.com.co', href: 'mailto:fondo.empleados@foscal.com.co' },
   // Apunta al portal transaccional del fondo, fuera de este sitio. La página
   // interna /estado-de-cuenta sigue existiendo y se llega a ella por el menú.

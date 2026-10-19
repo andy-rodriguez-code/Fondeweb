@@ -1270,40 +1270,165 @@
   }
 }
 
-/* ---------- 16. Notifondo: rejilla de páginas del boletín ----------
-   Racional (§4.4): la rejilla 4→2 columnas con media query 900 y el cursor
-   zoom-in de las hojas son la gramática del visor; el diálogo .visor se
-   agrega en P8 junto con useVisor (la hoja ya porta data-visor-src).
-   Fuente: assets/site.css líneas 1568-1620. */
+/* ---------- 16. Notifondo: revista + tira de publicaciones ----------
+   Racional (§4.4): la sección se presenta como una revista. A la izquierda
+   el texto y el botón "Leer el Notifondo"; a la derecha una pila de tres
+   hojas —la portada (la publicación más reciente) y las dos siguientes
+   asomando detrás— que entra con una animación cuando la sección aparece en
+   pantalla (data-visto, useVisto). Debajo, la tira con TODAS las
+   publicaciones, de la más reciente a la más antigua, con scroll horizontal
+   y snap. Cualquier hoja abre el visor (grupo 18). */
 @layer components {
-  .notifondo {
+  .revista {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(16px, 2vw, 24px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
+    gap: clamp(32px, 6vw, 88px);
   }
-  @media (max-width: 900px) {
-    .notifondo {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  .revista__texto h2 {
+    font-size: clamp(2.2rem, 1.5rem + 3vw, 3.6rem);
+    letter-spacing: -0.025em;
   }
-  .notifondo__hoja {
+  .revista__texto p {
+    max-width: 44ch;
+    font-size: 1.05rem;
+  }
+  .revista__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 20px;
+    margin-top: 28px;
+  }
+  .revista__dato {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.82rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .revista__pila {
+    position: relative;
+    width: min(100%, 400px);
+    margin-inline: auto;
+    padding-right: 12%;
+  }
+  .revista__hoja {
+    position: absolute;
+    inset: 0 12% 0 0;
     display: block;
-    width: 100%;
+    width: auto;
     padding: 0;
-    text-align: left;
-    font: inherit;
-    color: inherit;
-    border: 1px solid var(--color-border);
+    border: 0;
     border-radius: var(--radius-md);
     background: var(--color-white);
     overflow: hidden;
+    box-shadow: 0 2px 6px rgba(21, 34, 56, 0.1), 0 22px 48px rgba(21, 34, 56, 0.22);
+    transform-origin: 50% 100%;
+    transition:
+      transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.5s ease-out;
+  }
+  .revista__hoja img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0;
+  }
+  .revista__portada img {
+    height: auto;
+  }
+  .revista__hoja--3 {
+    z-index: 0;
+    transform: translate(13%, -1%) rotate(11deg);
+    transition-delay: 0s;
+  }
+  .revista__hoja--2 {
+    z-index: 1;
+    transform: translate(7%, -0.5%) rotate(5deg);
+    transition-delay: 90ms;
+  }
+  .revista__portada {
+    position: relative;
+    inset: auto;
+    z-index: 2;
+    width: 100%;
     cursor: zoom-in;
-    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+    transform: rotate(-3deg);
+    transition-delay: 0.18s;
+  }
+  .revista__pila[data-visto="no"] .revista__hoja {
+    opacity: 0;
+    transform: translateY(36px);
+  }
+  .revista__pila[data-visto="si"] .revista__portada:hover,
+  .revista__pila[data-visto="si"] .revista__portada:focus-visible {
+    transform: translateY(-8px) rotate(-1deg) scale(1.02);
+    transition-duration: 0.32s;
+    transition-delay: 0s;
+  }
+  .revista__portada:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-md);
+  }
+  .revista__sello {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: var(--color-white);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transform: rotate(8deg);
+    box-shadow: 0 8px 20px rgba(21, 34, 56, 0.28);
+  }
+
+  /* Tira: ocho hojas a la vista en escritorio, el resto con scroll. */
+  .notifondo {
+    --tira-hueco: clamp(10px, 1.4vw, 18px);
+    display: flex;
+    gap: var(--tira-hueco);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 12px;
+    margin: clamp(44px, 6vw, 84px) -12px 0;
+    padding: clamp(24px, 3vw, 36px) 12px 30px;
+    border-top: 1px solid var(--color-border);
+  }
+  .notifondo__hoja {
+    flex: 0 0 calc((100% - var(--tira-hueco) * 7) / 8);
+    scroll-snap-align: start;
+    display: block;
+    padding: 0;
+    text-align: center;
+    font: inherit;
+    color: inherit;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    overflow: hidden;
+    cursor: zoom-in;
+    box-shadow: 0 1px 3px rgba(21, 34, 56, 0.12), 0 8px 22px rgba(21, 34, 56, 0.16);
+    transition: transform 0.18s, box-shadow 0.18s;
   }
   .notifondo__hoja:hover {
-    border-color: var(--color-primary-300);
-    box-shadow: var(--shadow-low);
-    transform: translateY(-3px);
+    transform: translateY(-5px);
+    box-shadow: 0 2px 4px rgba(21, 34, 56, 0.12), 0 16px 32px rgba(21, 34, 56, 0.24);
+  }
+  .notifondo__hoja:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
   }
   /* Páginas de boletín: son texto legible, van completas y sin recorte. */
   .notifondo__hoja img {
@@ -1315,18 +1440,52 @@
     background: var(--color-white);
   }
   .notifondo__pie {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 12px 16px;
+    display: block;
+    padding: 7px 4px;
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.72rem;
     color: var(--color-ink);
   }
-  .notifondo__pie span:last-child {
-    color: var(--color-interactive-ink);
+  @media (max-width: 900px) {
+    .revista {
+      grid-template-columns: minmax(0, 1fr);
+      text-align: center;
+    }
+    .revista__texto p {
+      margin-inline: auto;
+    }
+    .revista__acciones {
+      justify-content: center;
+    }
+    .revista__pila {
+      width: min(78%, 340px);
+    }
+    .notifondo {
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 6px var(--gutter) 26px;
+      scroll-padding-inline: var(--gutter);
+      border-top: 0;
+    }
+    .notifondo__hoja {
+      flex-basis: 132px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .revista__hoja {
+      transition: opacity 0.3s ease-out;
+    }
+    .revista__pila[data-visto="no"] .revista__hoja--3 {
+      transform: translate(13%, -1%) rotate(11deg);
+    }
+    .revista__pila[data-visto="no"] .revista__hoja--2 {
+      transform: translate(7%, -0.5%) rotate(5deg);
+    }
+    .revista__pila[data-visto="no"] .revista__portada,
+    .revista__pila[data-visto="si"] .revista__portada:hover,
+    .revista__pila[data-visto="si"] .revista__portada:focus-visible {
+      transform: rotate(-3deg);
+    }
   }
 }
 
@@ -1478,6 +1637,97 @@
     background: rgba(255, 255, 255, 0.25);
     border-color: var(--color-white);
     color: var(--color-white);
+  }
+  /* Navegación entre publicaciones: flechas a los lados, contador abajo. */
+  .visor[data-navegable="si"] {
+    padding-bottom: 68px;
+  }
+  .visor__paso {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    background: rgba(21, 34, 56, 0.55);
+    color: var(--color-white);
+    cursor: pointer;
+  }
+  .visor__paso:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: var(--color-white);
+  }
+  .visor__paso--anterior {
+    left: 20px;
+  }
+  .visor__paso--siguiente {
+    right: 20px;
+  }
+  .visor__cuenta {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 6px 16px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-white);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  /* Publicación con enlace (p. ej. el formulario del Día de los Niños): un
+     botón redondo centrado sobre la imagen. La capa no recibe clics, solo el
+     botón, para que el velo siga cerrando el visor. */
+  .visor__enlace {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: inherit;
+    pointer-events: none;
+  }
+  .visor__enlace a {
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    border: 3px solid var(--color-white);
+    border-radius: 50%;
+    background: rgba(21, 34, 56, 0.82);
+    color: var(--color-white);
+    box-shadow: var(--shadow-high);
+    pointer-events: auto;
+    transition: transform 0.15s, background-color 0.15s;
+  }
+  .visor__enlace a:hover {
+    background: rgb(21, 34, 56);
+    color: var(--color-white);
+    transform: scale(1.08);
+  }
+  /* En teléfono las flechas bajan a una fila propia, por encima de los
+     botones flotantes, para no tapar la página. */
+  @media (max-width: 767px) {
+    .visor {
+      --visor-fila: calc(var(--flotante-margen) + var(--flotante-tamano) + 10px);
+    }
+    .visor[data-navegable="si"] {
+      padding-bottom: calc(var(--visor-fila) + 58px);
+    }
+    .visor__paso {
+      top: auto;
+      bottom: var(--visor-fila);
+      transform: none;
+    }
+    .visor__cuenta {
+      bottom: calc(var(--visor-fila) + 7px);
+    }
   }
 }
 

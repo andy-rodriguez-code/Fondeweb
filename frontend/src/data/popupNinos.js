@@ -6,13 +6,13 @@ export const popupNinos = {
   // Ventana en la que el popup se muestra, en hora de Colombia (UTC-5, sin
   // horario de verano). Fuera de ella no aparece y no hay que tocar nada más.
   // `hasta` es el primer instante en que ya no sale: la medianoche que sigue
-  // a las 11:59 p. m. del 12 de octubre, cierre de las inscripciones.
+  // a las 11:59 p. m. del 16 de octubre, cierre de las inscripciones.
   vigencia: {
     desde: '2026-10-01T00:00:00-05:00',
-    hasta: '2026-10-13T00:00:00-05:00',
+    hasta: '2026-10-17T00:00:00-05:00',
   },
-  // Cada línea del título va en su propio renglón.
-  titulo: ['Día de los', 'Niños'],
+  // El título va en un solo renglón; el tamaño se ajusta al ancho.
+  titulo: 'Día de los Niños',
   subtitulo: '¡Un día lleno de emociones!',
   imagenAlt: 'Personajes de Intensamente',
   edad: { antes: 'NIÑOS DE', rango: '2 a 10', despues: 'AÑOS' },
@@ -20,7 +20,7 @@ export const popupNinos = {
     {
       icono: 'lapiz',
       tono: 'alegria',
-      titulo: 'Inscripciones: del 2 al 12 de octubre',
+      titulo: 'Inscripciones: del 2 al 16 de octubre',
     },
     {
       icono: 'calendario',
