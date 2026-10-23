@@ -1,0 +1,2 @@
+# Plantillas de correo: las lee PHP desde el disco, nunca hacen falta por HTTP.
+Require all denied

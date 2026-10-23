@@ -76,12 +76,16 @@ backend/
 │   ├── bd.php                 ← acceso a MySQL con PDO
 │   ├── enviar-funciones.php   ← compartido con la cola
 │   ├── reintentar.php         ← entrega correo y hoja (solo CLI)
+│   ├── cumpleanos.php         ← saludo de cumpleaños (solo CLI, cron cada hora)
+│   ├── cumpleanos-funciones.php
+│   ├── plantillas/cumpleanos.html ← diseño del saludo
 │   ├── phpmailer/
 │   │   └── .htaccess          ← la carpeta entera, denegada por HTTP
 │   └── .htaccess              ← solo enviar.php se sirve por HTTP
 ├── apps-script/
 │   ├── contactenos.gs         ← se pega en el Apps Script de SU hoja
-│   └── programa-100.gs        ← otra hoja, otro script, otra URL /exec
+│   ├── programa-100.gs        ← otra hoja, otro script, otra URL /exec
+│   └── cumpleanos.gs          ← entrega la lista de asociados (no recibe filas)
 ├── sql/
 │   ├── esquema.sql            ← se ejecuta una vez en phpMyAdmin
 │   └── migracion-*.sql        ← cambios sobre una base que ya está viva
@@ -198,6 +202,56 @@ Los pasos con capturas y la configuración de SPF/DKIM están en
 `BACKEND-FORMULARIOS.md`, dentro de `archivos-listos/documentacion-cliente/`.
 Esa carpeta no se versiona: son documentos de trabajo con datos del cliente,
 y este repositorio es público.
+
+## Saludo de cumpleaños
+
+Todos los días, desde las 6:00 de Colombia, se le manda un correo a cada
+asociado que cumple años. La lista es una hoja de Google que el fondo mantiene
+a mano con tres columnas: **Nombre completo · Fecha_Nacimiento · Email**.
+
+```
+cron cada hora → cumpleanos.php → Apps Script de la hoja → ¿quién cumple hoy?
+                                                              ↓
+                              cumpleanos_enviados (MySQL) ← correo por SMTP del dominio
+```
+
+- **El correo sale del servidor, no del Apps Script.** Con MailApp saldría de
+  una cuenta de Gmail y caería en spam; desde `@fondefos.com.co` alinean SPF,
+  DKIM y DMARC.
+- **El cron corre cada hora y el script decide la hora.** Antes de
+  `CUMPLEANOS_HORA` (6) en hora de Bogotá no hace nada, así que no importa en
+  qué zona esté el reloj del servidor. La primera corrida desde las 6 manda;
+  las demás reintentan lo que haya fallado (hasta 3 veces por persona) o se van
+  sin hacer nada si el día ya quedó completo.
+- **Un saludo por persona y por año**, por más veces que corra: lo garantiza la
+  tabla `cumpleanos_enviados`, con clave `(correo, anio)`.
+- **29 de febrero:** en años no bisiestos se saluda el 28.
+- **En `ENTORNO = 'pruebas'`** todos los saludos van a `CORREO_PRUEBAS`, con el
+  destinatario real en el asunto.
+- El diseño es `api/plantillas/cumpleanos.html`, copia de
+  `frontend/src/pages/cumpleanos.html`. Marcadores: `{{NOMBRE}}`, `{{FECHA}}`,
+  `{{PRIMER_NOMBRE}}`, `{{ANIO}}`.
+
+### Instalación
+
+1. Ejecutar `sql/migracion-2026-10-22-cumpleanos.sql` en phpMyAdmin.
+2. En la hoja de cumpleaños: Extensiones → Apps Script, pegar
+   `apps-script/cumpleanos.gs`, agregar la propiedad `TOKEN_HOJA` (el mismo
+   valor de siempre) e implementar como aplicación web (ejecutar como «Yo»,
+   acceso «Cualquier usuario»).
+3. Ejecutar `revisarHoja` desde el editor del script: lista las filas con
+   fecha o correo que no sirven.
+4. En `config.php`: la URL `/exec` en `URLS_APPS_SCRIPT['cumpleanos']`, y las
+   constantes `CUMPLEANOS_HORA` y `CUMPLEANOS_REMITENTE` (ver la plantilla).
+5. Subir `api/cumpleanos.php`, `api/cumpleanos-funciones.php`,
+   `api/plantillas/` y el `.htaccess` actualizado.
+6. Probar: `php cumpleanos.php --simular` (y `--fecha=AAAA-MM-DD` para otro
+   día). No manda nada; muestra quién cumple.
+7. Cron en cPanel, **cada hora**:
+
+   ```
+   0 * * * *  /usr/local/bin/php /home/USUARIO/public_html/api/cumpleanos.php
+   ```
 
 ## Cómo responde
 

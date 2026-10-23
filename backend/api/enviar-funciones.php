@@ -650,7 +650,6 @@ function verificarRecaptcha(string $token): bool
         CURLOPT_TIMEOUT        => 10,
     ]);
     $respuesta = curl_exec($ch);
-    curl_close($ch);
 
     if ($respuesta === false) {
         registrar('ERROR reCAPTCHA: sin respuesta de Google');
@@ -1216,7 +1215,6 @@ function escribirEnHoja(array $carga): bool
     $respuesta = curl_exec($ch);
     $codigo = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $fallo = curl_error($ch);
-    curl_close($ch);
 
     $radicado = $carga['radicado'] ?? 'sin-radicado';
 

@@ -34,6 +34,15 @@ Options -Indexes
     Require all denied
 </Files>
 
+# El saludo de cumpleaños también corre por CLI (cron cada hora) y también
+# verifica PHP_SAPI. Sus funciones, como las de enviar.php, solo se incluyen.
+<Files "cumpleanos.php">
+    Require all denied
+</Files>
+<Files "cumpleanos-funciones.php">
+    Require all denied
+</Files>
+
 # La plantilla de configuración no debería llegar acá, pero si alguien la sube
 # por error, que no se sirva.
 <Files "config.example.php">
