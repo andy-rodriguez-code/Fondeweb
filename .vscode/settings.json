@@ -37,9 +37,10 @@
     "backend/api/phpmailer"
   ],
 
-  // El backend corre sobre PHP 8.1+ en el hosting; el `declare(strict_types=1)`
-  // y los tipos de retorno del código propio se validan contra esa versión.
-  "intelephense.environment.phpVersion": "8.1.0",
+  // El backend apunta a PHP 8.5 (local y hosting desde el 22/10/2026); el
+  // código propio se valida contra esa versión. Sigue siendo compatible con
+  // 7.4, que es lo que corría el hosting hasta ese día.
+  "intelephense.environment.phpVersion": "8.5.0",
 
   // Tailwind 4 se configura desde el CSS con directivas propias: @theme,
   // @source, @utility, @custom-variant. El validador de CSS que trae el editor

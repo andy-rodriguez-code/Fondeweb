@@ -103,12 +103,30 @@ const BD_CLAVE   = 'REEMPLAZAR';
 const URLS_APPS_SCRIPT = [
     'contacto'     => 'https://script.google.com/macros/s/REEMPLAZAR_CONTACTO/exec',
     'programa-100' => 'https://script.google.com/macros/s/REEMPLAZAR_PROGRAMA100/exec',
+    // La hoja de cumpleaños no es un formulario: no recibe filas, las entrega.
+    // La lee api/cumpleanos.php con su propio Apps Script (cumpleanos.gs).
+    'cumpleanos'   => 'https://script.google.com/macros/s/REEMPLAZAR_CUMPLEANOS/exec',
 ];
 
 // El mismo token en los dos Apps Script, como propiedad del script.
 // Sin él, cualquiera que averigüe la URL puede inyectar filas en la hoja del
 // fondo: una URL larga no es una contraseña.
 const TOKEN_HOJA = 'REEMPLAZAR';
+
+// ── Saludo de cumpleaños ──────────────────────────────────────────────────
+// Desde qué hora de Colombia se manda (0–23). El cron de cumpleanos.php corre
+// cada hora y no hace nada antes de esta, así que no importa en qué zona esté
+// el reloj del servidor.
+const CUMPLEANOS_HORA = 6;
+
+// El nombre que ve el asociado en la bandeja. La dirección es SMTP_USUARIO,
+// igual que en todo lo demás: es la única que no cae en spam.
+const CUMPLEANOS_REMITENTE = 'FONDEFOS';
+
+// ── Diagnóstico ───────────────────────────────────────────────────────────
+// Clave de api/diagnostico.php, si alguna vez se vuelve a subir. Vacía = no
+// abre con nada. Va acá y no en el archivo porque este repositorio es público.
+const CLAVE_DIAGNOSTICO = '';
 
 // ── Estado en disco ───────────────────────────────────────────────────────
 // Registro, límite por IP y las firmas en PNG. El consecutivo del radicado y

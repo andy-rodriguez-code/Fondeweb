@@ -212,3 +212,23 @@ WHERE e.formulario = 'programa-100'
 GROUP BY e.id, e.radicado, e.recibido_en, e.autoriza_datos, e.firma_archivo,
          e.correo_enviado, e.hoja_escrita, e.ip
 ORDER BY e.id DESC;
+
+
+-- -------------------------------------------------------------------------
+-- Saludos de cumpleaños ya enviados, uno por correo y por año.
+--
+-- api/cumpleanos.php corre cada hora; esta tabla es la que hace que solo la
+-- primera corrida del día mande. Detalle en migracion-2026-10-22-cumpleanos.sql.
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS cumpleanos_enviados (
+    id           INT UNSIGNED      NOT NULL AUTO_INCREMENT,
+    correo       VARCHAR(190)      NOT NULL,
+    anio         SMALLINT          NOT NULL,
+    nombre       VARCHAR(160)      NOT NULL,
+    enviado_en   DATETIME          NULL,
+    intentos     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    ultimo_error VARCHAR(255)      NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_correo_anio (correo, anio),
+    KEY idx_anio (anio)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

@@ -23,6 +23,13 @@ google-credentials.json
 backend/estado/
 estado/
 
+# El error_log que PHP deja en api/ al correr en el hosting: trae rutas del
+# servidor. Se descarga para diagnosticar, no se versiona.
+error_log
+
+# El ZIP del build para subir a cPanel: es dist/ empaquetado, sale de npm run build.
+frontend/dist.zip
+
 # Material de trabajo que queda suelto en la raíz. Este repositorio es PÚBLICO:
 # un `git add .` distraído publica cualquier cosa que esté acá, y un recibo o un
 # volcado de una página del cliente no se borran del historial borrando el
