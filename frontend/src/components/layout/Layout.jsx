@@ -25,6 +25,7 @@ import useMetadatos from '../../hooks/useMetadatos.js'
 export default function Layout() {
   const {
     abierto,
+    grupo,
     src,
     alt,
     enlace,
@@ -59,7 +60,7 @@ export default function Layout() {
         data-navegable={navegable ? 'si' : 'no'}
         role="dialog"
         aria-modal="true"
-        aria-label="Notifondo ampliado"
+        aria-label={grupo === 'mural' ? 'Foto del mural ampliada' : 'Notifondo ampliado'}
         ref={visorRef}
         {...gestos}
         onClick={(e) => {

@@ -3,6 +3,7 @@ import Banda from '../sections/Banda.jsx'
 import Seccion from '../sections/Seccion.jsx'
 import Split from '../sections/Split.jsx'
 import NotifondoGrid from '../sections/NotifondoGrid.jsx'
+import MuralFotos from '../sections/MuralFotos.jsx'
 import LineasGrid from '../sections/LineasGrid.jsx'
 import Rotulo from '../components/ui/Rotulo.jsx'
 import TituloDual from '../components/ui/TituloDual.jsx'
@@ -120,6 +121,7 @@ export default function PortadaPage() {
 
       <Seccion id="notifondo" data-od-id="seccion-notifondo">
         <NotifondoGrid />
+        <MuralFotos />
       </Seccion>
 
       <Seccion tono="tinta" data-od-id="seccion-accesos">
