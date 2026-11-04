@@ -5,7 +5,7 @@ import useVisto from '../hooks/useVisto.js'
 // MuralFotos — mural de fotos del fondo, debajo de la tira del Notifondo.
 // Ocupa todo el ancho de la pantalla.
 //
-// Escritorio: tres hileras de tres fotos visibles que se deslizan sin fin
+// Escritorio: tres hileras de cinco fotos visibles que se deslizan sin fin
 // (la primera y la tercera hacia la derecha, la del medio hacia la
 // izquierda). Teléfono: una sola hilera con todas las fotos hacia la
 // izquierda. Al entrar en pantalla (useVisto) las fotos "caen" desde el
@@ -76,7 +76,7 @@ function Hilera({ fotos, sentido, base = 0, className = '' }) {
               copia={copia}
               // Escalonado de la caída: las primeras de cada hilera, que son
               // las que se ven, caen una tras otra; las demás, juntas al final.
-              orden={Math.min(i, 4) + base}
+              orden={Math.min(i, 6) + base}
               i={i + base}
               key={`${copia ? 'b' : 'a'}-${foto.numero}`}
             />

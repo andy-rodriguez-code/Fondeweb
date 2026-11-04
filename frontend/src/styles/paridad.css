@@ -1491,7 +1491,7 @@
 
 /* ---------- 16b. Mural de fotos (MuralFotos.jsx) ----------
    Racional: debajo de la tira del Notifondo, a todo el ancho. Escritorio:
-   tres hileras con tres fotos a la vista que se deslizan sin fin, la 1.ª y
+   tres hileras con cinco fotos a la vista que se deslizan sin fin, la 1.ª y
    la 3.ª hacia la derecha y la 2.ª hacia la izquierda, lentas, y se detienen
    bajo el puntero para poder elegir. Teléfono (≤767px): una sola hilera hacia
    la izquierda. Cada pista lleva la hilera duplicada y se traslada el 50 %
@@ -1533,7 +1533,7 @@
   .mural__pista {
     display: flex;
     width: max-content;
-    animation: mural-izquierda calc(var(--cantidad) * 22s) linear infinite;
+    animation: mural-izquierda calc(var(--cantidad) * 14s) linear infinite;
     will-change: transform;
   }
   .mural__hilera--derecha .mural__pista {
@@ -1551,8 +1551,8 @@
   .mural__foto {
     position: relative;
     flex: 0 0 auto;
-    width: calc((100cqi - var(--mural-hueco) * 2) / 3);
-    aspect-ratio: 3 / 2;
+    width: calc((100cqi - var(--mural-hueco) * 4) / 5);
+    aspect-ratio: 4 / 3;
     margin-right: var(--mural-hueco);
     padding: 0;
     border: 0;
@@ -1588,9 +1588,9 @@
     z-index: 1;
     left: 50%;
     top: 50%;
-    width: 64px;
-    height: 64px;
-    margin: -32px 0 0 -32px;
+    width: 54px;
+    height: 54px;
+    margin: -27px 0 0 -27px;
     border-radius: 50%;
     background:
       radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08) 60%),
