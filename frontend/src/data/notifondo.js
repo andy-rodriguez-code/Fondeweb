@@ -30,6 +30,14 @@ export const notifondo = {
         etiqueta: 'Ir al formulario de inscripción del Día de los Niños',
       },
     },
+    // Foto de la ganadora del Plan 100 recibiendo su cheque de $100.000.
+    {
+      pagina: 'Ganadora Plan 100',
+      src: 'assets/images/notifondo/ganadora-plan100.webp',
+      alt: 'Feliz ganadora del Plan 100 de Fondefos sosteniendo su cheque por $100.000 y el premio en efectivo.',
+      ancho: 960,
+      alto: 1280,
+    },
     // Ganadores de julio de 2026. Las imágenes salen de los PDF que entregó
     // el fondo (primera y única página de cada uno, 1448×2048).
     {
