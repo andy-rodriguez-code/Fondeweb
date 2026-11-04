@@ -7,6 +7,7 @@ import BotonWhatsapp from './BotonWhatsapp.jsx'
 import Icono from '../ui/Icono.jsx'
 import VolverArriba from './VolverArriba.jsx'
 import PopupNinos from './PopupNinos.jsx'
+import PopupDatos from './PopupDatos.jsx'
 import useVisor from '../../hooks/useVisor.js'
 import useMetadatos from '../../hooks/useMetadatos.js'
 
@@ -25,6 +26,7 @@ import useMetadatos from '../../hooks/useMetadatos.js'
 export default function Layout() {
   const {
     abierto,
+    grupo,
     src,
     alt,
     enlace,
@@ -59,7 +61,7 @@ export default function Layout() {
         data-navegable={navegable ? 'si' : 'no'}
         role="dialog"
         aria-modal="true"
-        aria-label="Notifondo ampliado"
+        aria-label={grupo === 'mural' ? 'Foto del mural ampliada' : 'Notifondo ampliado'}
         ref={visorRef}
         {...gestos}
         onClick={(e) => {
@@ -115,6 +117,7 @@ export default function Layout() {
       <BotonWhatsapp />
       <VolverArriba />
       <PopupNinos />
+      <PopupDatos />
       <ScrollRestoration />
     </>
   )

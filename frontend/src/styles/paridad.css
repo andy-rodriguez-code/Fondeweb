@@ -1489,6 +1489,239 @@
   }
 }
 
+/* ---------- 16b. Mural de fotos (MuralFotos.jsx) ----------
+   Racional: debajo de la tira del Notifondo, a todo el ancho. Escritorio:
+   tres hileras con cinco fotos a la vista que se deslizan sin fin, la 1.ª y
+   la 3.ª hacia la derecha y la 2.ª hacia la izquierda, lentas, y se detienen
+   bajo el puntero para poder elegir. Teléfono (≤767px): una sola hilera hacia
+   la izquierda. Cada pista lleva la hilera duplicada y se traslada el 50 %
+   (cada foto aporta su hueco como margin-right, así la mitad es exacta).
+   Al entrar en pantalla las fotos caen desde el frente: llegan grandes,
+   desenfocadas, inclinadas (--giro) y con sombra larga, y se asientan con un
+   rebote corto; --orden escalona la caída. La animación usa fill "backwards"
+   para no bloquear el hover después. Radio de 10px pedido por el fondo. */
+@layer components {
+  .mural-seccion {
+    margin-top: clamp(56px, 7vw, 104px);
+  }
+  .mural__encabezado {
+    max-width: 58ch;
+    margin-bottom: clamp(26px, 3vw, 40px);
+    text-align: center;
+  }
+  .mural__encabezado p {
+    margin-inline: auto;
+    font-size: 1.05rem;
+  }
+  .mural {
+    --mural-hueco: clamp(10px, 1vw, 16px);
+    --mural-radio: 10px;
+    container-type: inline-size;
+    overflow: hidden;
+    padding-block: 6px;
+  }
+  .mural__escritorio {
+    display: grid;
+    gap: var(--mural-hueco);
+  }
+  .mural__movil {
+    display: none;
+  }
+  .mural__hilera {
+    overflow: hidden;
+  }
+  .mural__pista {
+    display: flex;
+    width: max-content;
+    animation: mural-izquierda calc(var(--cantidad) * 14s) linear infinite;
+    will-change: transform;
+  }
+  .mural__hilera--derecha .mural__pista {
+    animation-name: mural-derecha;
+  }
+  @media (hover: hover) {
+    .mural__hilera:hover .mural__pista {
+      animation-play-state: paused;
+    }
+  }
+  .mural__hilera:focus-within .mural__pista {
+    animation-play-state: paused;
+  }
+
+  .mural__foto {
+    position: relative;
+    flex: 0 0 auto;
+    width: calc((100cqi - var(--mural-hueco) * 4) / 5);
+    aspect-ratio: 4 / 3;
+    margin-right: var(--mural-hueco);
+    padding: 0;
+    border: 0;
+    border-radius: var(--mural-radio);
+    background: var(--color-surface-low);
+    overflow: hidden;
+    cursor: zoom-in;
+    box-shadow: 0 1px 3px rgba(21, 34, 56, 0.12), 0 10px 26px rgba(21, 34, 56, 0.16);
+    transition: box-shadow 0.35s ease-out;
+  }
+  .mural__foto img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 30%;
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s;
+  }
+  /* Velo y emblema de "ampliar": anillo de cristal con dos anillos
+     concéntricos y un + al centro; aparece y gira un cuarto de vuelta. */
+  .mural__foto::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(21, 34, 56, 0) 45%, rgba(21, 34, 56, 0.55));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    opacity: 0;
+    transition: opacity 0.35s;
+  }
+  .mural__lupa {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    width: 54px;
+    height: 54px;
+    margin: -27px 0 0 -27px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08) 60%),
+      rgba(21, 34, 56, 0.35);
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    box-shadow:
+      inset 0 0 0 6px rgba(255, 255, 255, 0.12),
+      inset 0 0 0 7px rgba(255, 255, 255, 0.4),
+      0 10px 24px rgba(21, 34, 56, 0.35);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    transform: scale(0.6) rotate(-90deg);
+    transition: opacity 0.3s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .mural__lupa::before,
+  .mural__lupa span {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 20px;
+    height: 2.5px;
+    margin: -1.25px 0 0 -10px;
+    border-radius: 2px;
+    background: var(--color-white);
+  }
+  .mural__lupa span {
+    transform: rotate(90deg);
+  }
+  .mural__foto:hover,
+  .mural__foto:focus-visible {
+    box-shadow: 0 2px 6px rgba(21, 34, 56, 0.16), 0 22px 44px rgba(21, 34, 56, 0.3);
+  }
+  .mural__foto:hover img,
+  .mural__foto:focus-visible img {
+    transform: scale(1.06);
+  }
+  .mural__foto:hover::after,
+  .mural__foto:focus-visible::after {
+    opacity: 1;
+  }
+  .mural__foto:hover .mural__lupa,
+  .mural__foto:focus-visible .mural__lupa {
+    opacity: 1;
+    transform: none;
+  }
+  .mural__foto:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: -3px;
+  }
+
+  /* La caída desde el frente. */
+  .mural[data-visto="no"] .mural__foto {
+    opacity: 0;
+  }
+  .mural[data-visto="si"] .mural__foto {
+    animation: mural-caida 1.15s cubic-bezier(0.2, 0.85, 0.3, 1.08) backwards;
+    animation-delay: calc(var(--orden) * 90ms);
+  }
+
+  @keyframes mural-izquierda {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-50%, 0, 0); }
+  }
+  @keyframes mural-derecha {
+    from { transform: translate3d(-50%, 0, 0); }
+    to { transform: translate3d(0, 0, 0); }
+  }
+  @keyframes mural-caida {
+    0% {
+      opacity: 0;
+      transform: perspective(900px) translate3d(0, -14%, 420px) rotateX(16deg) rotate(var(--giro));
+      filter: blur(8px) brightness(1.15);
+      box-shadow: 0 60px 90px rgba(21, 34, 56, 0.45);
+    }
+    45% {
+      opacity: 1;
+      filter: blur(0) brightness(1);
+    }
+    72% {
+      transform: perspective(900px) translate3d(0, 0, -18px) rotateX(-2deg) rotate(calc(var(--giro) * -0.25));
+      box-shadow: 0 2px 4px rgba(21, 34, 56, 0.2), 0 6px 14px rgba(21, 34, 56, 0.18);
+    }
+    100% {
+      transform: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .mural__escritorio {
+      display: none;
+    }
+    .mural__movil {
+      display: block;
+    }
+    .mural__movil .mural__foto {
+      width: 66cqi;
+      aspect-ratio: 1;
+    }
+    .mural__movil .mural__pista {
+      animation-duration: calc(var(--cantidad) * 12s);
+    }
+    .mural__lupa {
+      display: none;
+    }
+  }
+
+  /* Sin movimiento: hileras con scroll a mano, sin copia ni caída. */
+  @media (prefers-reduced-motion: reduce) {
+    .mural__hilera {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+    }
+    .mural__pista {
+      animation: none;
+    }
+    .mural__foto {
+      scroll-snap-align: start;
+    }
+    .mural__foto[aria-hidden="true"] {
+      display: none;
+    }
+    .mural[data-visto="si"] .mural__foto {
+      animation: none;
+    }
+    .mural[data-visto="no"] .mural__foto {
+      opacity: 1;
+    }
+  }
+}
+
 /* ---------- 17. Contacto: rejilla, formulario y aviso de envío ----------
    Racional (§4.4): bloque cohesionado de la página de contacto — la rejilla
    asimétrica 1fr/1.1fr con colapso 880, los estilos de campos
@@ -2827,5 +3060,287 @@
   to {
     opacity: 0;
     transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* ---------- 28b. Popup de actualización de datos (PopupDatos.jsx) ----------
+   Racional: reutiliza .popup/.popup__tarjeta (velo, entrada y salida del grupo
+   28) pero en la paleta del sitio y no en la de la fiesta. El arte cuenta la
+   idea sin texto: un "reel" de vidrio sobre azul profundo, con botón de
+   reproducción naranja y dos ondas que laten, y tres campos de formulario que
+   se van marcando en secuencia (--paso) y vuelven a empezar. Todo el
+   movimiento es decorativo y se apaga con prefers-reduced-motion. */
+@layer components {
+  .popup--datos {
+    background: rgba(13, 26, 48, 0.66);
+  }
+  .popup-datos__arte {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 200px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(0, 168, 198, 0.35), transparent 55%),
+      radial-gradient(circle at 15% 100%, rgba(243, 111, 33, 0.28), transparent 45%),
+      linear-gradient(160deg, var(--color-primary) 0%, var(--color-primary-900) 100%);
+  }
+  /* Retícula de puntos, apenas visible, para dar textura al azul. */
+  .popup-datos__arte::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1.5px);
+    background-size: 18px 18px;
+    mask-image: radial-gradient(circle at 50% 45%, black, transparent 75%);
+  }
+  .popup-datos__halo {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+      0 0 0 34px rgba(255, 255, 255, 0.035),
+      0 0 0 70px rgba(255, 255, 255, 0.025);
+    animation: datos-giro 40s linear infinite;
+  }
+  .popup-datos__halo::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 12px var(--color-accent);
+  }
+
+  .popup-datos__reel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 116px;
+    height: 176px;
+    padding: 12px 12px 14px;
+    border-radius: 22px;
+    background: linear-gradient(170deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.07));
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 24px 50px rgba(5, 14, 32, 0.5);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    transform: rotate(-6deg);
+    animation: datos-flota 6s ease-in-out infinite;
+  }
+  .popup-datos__marca {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: var(--color-white);
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .popup-datos__marca svg {
+    width: 9px;
+    height: 9px;
+    fill: currentColor;
+  }
+  .popup-datos__play {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin: 12px 0 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--color-accent-300), var(--color-accent) 60%, var(--color-accent-700));
+    box-shadow:
+      inset 0 -3px 6px rgba(120, 40, 0, 0.35),
+      inset 0 2px 3px rgba(255, 255, 255, 0.45),
+      0 8px 20px rgba(243, 111, 33, 0.55);
+  }
+  .popup-datos__play svg {
+    width: 22px;
+    height: 22px;
+    margin-left: 3px;
+    fill: var(--color-white);
+    filter: drop-shadow(0 1px 1px rgba(120, 40, 0, 0.4));
+  }
+  .popup-datos__onda {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(243, 111, 33, 0.7);
+    animation: datos-onda 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+  }
+  .popup-datos__onda--2 {
+    animation-delay: 1.2s;
+  }
+
+  .popup-datos__campos {
+    display: grid;
+    gap: 7px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .popup-datos__campos li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .popup-datos__linea {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.55);
+    transform-origin: left;
+    animation: datos-escribe 6s ease-out infinite;
+    animation-delay: calc(var(--paso) * 0.9s);
+  }
+  .popup-datos__campos svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: var(--color-success);
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 22;
+    animation: datos-marca 6s ease-out infinite;
+    animation-delay: calc(var(--paso) * 0.9s);
+  }
+
+  .popup-datos__cta {
+    box-shadow: 0 6px 0 var(--color-accent-800), 0 14px 26px rgba(243, 111, 33, 0.32);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .popup-datos__cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 var(--color-accent-800), 0 18px 30px rgba(243, 111, 33, 0.38);
+  }
+  .popup-datos__cta:active {
+    transform: translateY(3px);
+    box-shadow: 0 3px 0 var(--color-accent-800), 0 8px 16px rgba(243, 111, 33, 0.3);
+  }
+  .popup-datos__cta:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 4px;
+  }
+
+  @media (min-width: 900px) {
+    .popup-datos__arte {
+      height: auto;
+      min-height: 500px;
+    }
+    .popup-datos__halo {
+      width: 380px;
+      height: 380px;
+    }
+    .popup-datos__reel {
+      width: 170px;
+      height: 270px;
+      padding: 16px 16px 20px;
+      border-radius: 28px;
+    }
+    .popup-datos__play {
+      width: 78px;
+      height: 78px;
+      margin: 34px 0 30px;
+    }
+    .popup-datos__play svg {
+      width: 30px;
+      height: 30px;
+    }
+    .popup-datos__campos {
+      gap: 10px;
+    }
+    .popup-datos__campos li {
+      height: 24px;
+    }
+    .popup-datos__campos svg {
+      width: 15px;
+      height: 15px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .popup-datos__halo,
+    .popup-datos__reel,
+    .popup-datos__onda,
+    .popup-datos__linea,
+    .popup-datos__campos svg {
+      animation: none;
+    }
+    .popup-datos__onda {
+      opacity: 0;
+    }
+  }
+}
+@keyframes datos-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes datos-flota {
+  0%,
+  100% {
+    transform: rotate(-6deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-4deg) translateY(-8px);
+  }
+}
+@keyframes datos-onda {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+@keyframes datos-escribe {
+  0% {
+    transform: scaleX(0);
+  }
+  12%,
+  85% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+@keyframes datos-marca {
+  0%,
+  12% {
+    stroke-dashoffset: 22;
+  }
+  20%,
+  85% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 22;
   }
 }

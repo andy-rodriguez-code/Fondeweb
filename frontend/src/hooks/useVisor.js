@@ -14,17 +14,25 @@ import { imagenNotifondo } from '../lib/imagenesNotifondo.js'
 // son la misma publicación). Flechas en pantalla, ←/→ en el teclado y
 // deslizar en el teléfono. Si la publicación trae data-visor-enlace, el visor
 // muestra un botón que lo abre.
+//
+// Grupos: un disparador con data-visor-grupo (p. ej. el mural de fotos) arma
+// su secuencia solo con los de su mismo grupo, para que las fotos y las
+// publicaciones no se mezclen. Si la clave no es una publicación del
+// Notifondo, data-visor-src ya es la URL final de la imagen.
 
 const UMBRAL_GESTO = 48
 
-const leerSecuencia = () => {
+const grupoDe = (nodo) => nodo.getAttribute('data-visor-grupo') || ''
+
+const leerSecuencia = (grupo) => {
   const lista = []
   document.querySelectorAll('[data-visor-src]').forEach((nodo) => {
+    if (grupoDe(nodo) !== grupo) return
     const clave = nodo.getAttribute('data-visor-src')
     if (lista.some((item) => item.clave === clave)) return
     lista.push({
       clave,
-      src: imagenNotifondo(clave),
+      src: imagenNotifondo(clave) ?? clave,
       alt: nodo.getAttribute('data-visor-alt') || '',
       enlace: nodo.getAttribute('data-visor-enlace') || '',
       enlaceEtiqueta: nodo.getAttribute('data-visor-enlace-etiqueta') || '',
@@ -37,6 +45,7 @@ export default function useVisor() {
   const [abierto, setAbierto] = useState(false)
   const [secuencia, setSecuencia] = useState([])
   const [indice, setIndice] = useState(0)
+  const [grupo, setGrupo] = useState('')
   const visorRef = useRef(null)
   const origenRef = useRef(null)
   const toqueRef = useRef(null)
@@ -50,9 +59,11 @@ export default function useVisor() {
   }, [])
 
   const abrir = useCallback((boton) => {
-    const lista = leerSecuencia()
+    const grupoBoton = grupoDe(boton)
+    const lista = leerSecuencia(grupoBoton)
     const clave = boton.getAttribute('data-visor-src')
     origenRef.current = boton
+    setGrupo(grupoBoton)
     setSecuencia(lista)
     setIndice(Math.max(0, lista.findIndex((item) => item.clave === clave)))
     setAbierto(true)
@@ -124,6 +135,7 @@ export default function useVisor() {
   const actual = secuencia[indice]
   return {
     abierto,
+    grupo,
     src: actual?.src ?? '',
     alt: actual?.alt ?? '',
     enlace: actual?.enlace ?? '',
