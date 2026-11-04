@@ -22,6 +22,9 @@
   --color-success-800: #6a931b;
   --color-accent: #F36F21;
   --color-accent-100: #fde9de;
+  --color-accent-300: #ff9a5c; /* brillo del botón play (popup de datos) */
+  --color-accent-700: #d4560f; /* sombra del botón play */
+  --color-accent-800: #c4561a; /* canto del botón "Ver el video" */
 
   --color-ink: #152238;
   --color-text: #3d4a5c;
